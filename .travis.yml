@@ -1,0 +1,42 @@
+language: c
+os: linux
+dist: xenial
+addons:
+  apt:
+    packages:
+      - build-essential
+      - cmake
+      - libgmp3-dev
+      - gengetopt
+      - libpcap-dev
+      - flex
+      - byacc
+      - libjson-c-dev
+      - pkg-config
+      - libunistring-dev
+      - libsasl2-dev
+      - python-dev
+      - python-pip
+      - libhiredis-dev
+before_install:
+  - pip install --user sh
+  - export PATH=/opt/bin:$PATH
+before_script:
+  - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
+  - echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-6.0 main" | sudo tee -a /etc/apt/sources.list
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+  - sudo apt-get install libstdc++-4.9-dev libllvm6.0 clang-format-6.0
+script:
+  - mkdir __build
+  - cd __build
+  - cmake -DENABLE_DEVELOPMENT=ON -DWITH_JSON=ON -DWITH_REDIS=ON $TRAVIS_BUILD_DIR
+  - make
+  - cd $TRAVIS_BUILD_DIR
+  - python ./scripts/check_manfile.py
+compiler: clang
+notifications:
+  email:
+    - idealeer521@gmail.com
+  slack:
+    secure: WaFUBQz19oVEZL5lu3+GCU9q/e45POGYgH27jlbrBOtIUebIey219oSDC2G+5sG1L547nVlkrVa95L7C6sT5RP3D6aT8gWI0aDubaGjp4Wc1crau0LepxfRwpLOG/cYhQsaG31R/c5a3JIvgasV9P70bPyY9fhKbVxD7LbkWF7v7GB3jaJMjBZHHqWCXuzBoqowkqZARI13AAD7wbJJpkw8C/Tkw0xx1BvQsH+5DpPgd/0UfHBMotT4SMP2oHWUAjwL1KaxUxn/a4IpYTxMp4vHrTmtj7GxsQGPf2QQ80f2s5fCzd5veyqZfo3sMRbu/LgomwHTPsIhK8l3t4EXwSuxxmwQFqrEl+wQ0qM764cgKmIoqoeHMPt9RBQl9x7j8wPw46n5S/bNpTqAS2w3cuqpkkVqdD4wEST9rg4p4ERnJgvLvmdxAHFzl72qVwXwb+KhTEzdDgS/1OjdBGJDjLe6tBFdvCrNd6LQHx3NfDCxbQG3FyALIGMDsxDP3SLS0M8zkkCkEeShIrGDlshQQc8dL3YjTY08euTauaC6Esm6fZy4dWRM9EuRwYXFwwpyXTs/HWkIm+DUEk1IU2/m4YLb5IXnTQ+wjAPB2+oZqIZPDK6izo6tE3tCWWZuCr67Z8BQsM3oIAY98LDy3Nu34jJOuOjq0fwEoSEEgNoeB9zc=

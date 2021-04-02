@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv='content-type' value='text/html;charset=utf8'>
+  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
+  <title>xmap(1) - The Fast Internet Scanner</title>
+  <style type='text/css' media='all'>
+  /* style: man */
+  body#manpage {margin:0}
+  .mp {max-width:100ex;padding:0 9ex 1ex 4ex}
+  .mp p,.mp pre,.mp ul,.mp ol,.mp dl {margin:0 0 20px 0}
+  .mp h2 {margin:10px 0 0 0}
+  .mp > p,.mp > pre,.mp > ul,.mp > ol,.mp > dl {margin-left:8ex}
+  .mp h3 {margin:0 0 0 4ex}
+  .mp dt {margin:0;clear:left}
+  .mp dt.flush {float:left;width:8ex}
+  .mp dd {margin:0 0 0 9ex}
+  .mp h1,.mp h2,.mp h3,.mp h4 {clear:left}
+  .mp pre {margin-bottom:20px}
+  .mp pre+h2,.mp pre+h3 {margin-top:22px}
+  .mp h2+pre,.mp h3+pre {margin-top:5px}
+  .mp img {display:block;margin:auto}
+  .mp h1.man-title {display:none}
+  .mp,.mp code,.mp pre,.mp tt,.mp kbd,.mp samp,.mp h3,.mp h4 {font-family:monospace;font-size:14px;line-height:1.42857142857143}
+  .mp h2 {font-size:16px;line-height:1.25}
+  .mp h1 {font-size:20px;line-height:2}
+  .mp {text-align:justify;background:#fff}
+  .mp,.mp code,.mp pre,.mp pre code,.mp tt,.mp kbd,.mp samp {color:#131211}
+  .mp h1,.mp h2,.mp h3,.mp h4 {color:#030201}
+  .mp u {text-decoration:underline}
+  .mp code,.mp strong,.mp b {font-weight:bold;color:#131211}
+  .mp em,.mp var {font-style:italic;color:#232221;text-decoration:none}
+  .mp a,.mp a:link,.mp a:hover,.mp a code,.mp a pre,.mp a tt,.mp a kbd,.mp a samp {color:#0000ff}
+  .mp b.man-ref {font-weight:normal;color:#434241}
+  .mp pre {padding:0 4ex}
+  .mp pre code {font-weight:normal;color:#434241}
+  .mp h2+pre,h3+pre {padding-left:0}
+  ol.man-decor,ol.man-decor li {margin:3px 0 10px 0;padding:0;float:left;width:33%;list-style-type:none;text-transform:uppercase;color:#999;letter-spacing:1px}
+  ol.man-decor {width:100%}
+  ol.man-decor li.tl {text-align:left}
+  ol.man-decor li.tc {text-align:center;letter-spacing:4px}
+  ol.man-decor li.tr {text-align:right;float:right}
+  </style>
+</head>
+<!--
+  The following styles are deprecated and will be removed at some point:
+  div#man, div#man ol.man, div#man ol.head, div#man ol.man.
+
+  The .man-page, .man-decor, .man-head, .man-foot, .man-title, and
+  .man-navigation should be used instead.
+-->
+<body id='manpage'>
+  <div class='mp' id='man'>
+
+  <div class='man-navigation' style='display:none'>
+    <a href="#NAME">NAME</a>
+    <a href="#SYNOPSIS">SYNOPSIS</a>
+    <a href="#DESCRIPTION">DESCRIPTION</a>
+    <a href="#OPTIONS">OPTIONS</a>
+    <a href="#Examples">Examples</a>
+  </div>
+
+  <ol class='man-decor man-head man head'>
+    <li class='tl'>xmap(1)</li>
+    <li class='tc'></li>
+    <li class='tr'>xmap(1)</li>
+  </ol>
+
+  <h2 id="NAME">NAME</h2>
+<p class="man-name">
+  <code>xmap</code> - <span class="man-whatis">The Fast Internet Scanner</span>
+</p>
+
+<h2 id="SYNOPSIS">SYNOPSIS</h2>
+
+<p>xmap [ -4 | -6 ] [ -x &lt;len&gt; ] [ -p &lt;port&gt; ] [ -o &lt;outfile&gt; ] [ OPTIONS... ] [ ip|domain|range ]</p>
+
+<h2 id="DESCRIPTION">DESCRIPTION</h2>
+
+<p><em>XMap</em> is a network tool for scanning any IPv6 &amp; IPv4 address space (or large samples), reimplemented and improved thoroughly from ZMap. XMap is capable of scanning the 32-bits network space in around 45 minutes on a gigabit network connection, reaching ~98% theoretical line speed.</p>
+
+<h2 id="OPTIONS">OPTIONS</h2>
+
+<h3 id="BASIC-OPTIONS">BASIC OPTIONS</h3>
+
+<dl>
+<dt> <code>-6</code>, <code>--ipv6</code></dt><dd><p> Scanning the IPv6 networks (default).</p></dd>
+<dt> <code>-4</code>, <code>--ipv4</code></dt><dd><p> Scanning the IPv4 networks.</p></dd>
+<dt> <code>-x</code>, <code>--max-len=len</code></dt><dd><p> Max IP bit length to scan (default = <code>32</code>).</p></dd>
+<dt> <code>ip</code>|<code>domain</code>|<code>range</code></dt><dd><p> IP addresses or DNS hostnames to scan. Accept IP ranges in CIDR block notation. Max length of domains is 256, e.g, 2001::/64, 192.168.0.1/16, and www.qq.com/32. Default to <code>::/0</code> and <code>0.0.0.0/0</code>.</p></dd>
+<dt> <code>-p</code>, <code>--target-port=port|range</code></dt><dd><p> TCP or UDP port(s) number to scan (for SYN scans and basic UDP scans). Accepts port ranges with <code>,</code> and <code>-</code>, e.g., <code>80,443,8080-8081</code>. With <code>--target-port</code>, one target is a <strong>&lt;ip/x, port></strong>.</p></dd>
+<dt> <code>-o</code>, <code>--output-file=name</code></dt><dd><p> When using an output module that uses a file, write results to this file. Use <code>-</code> for stdout.</p></dd>
+<dt> <code>-b</code>, <code>--blacklist-file=path</code></dt><dd><p> File of subnets to exclude, accept DNS hostnames, in CIDR notation, one-per line. It is recommended you use this to exclude RFC 1918 addresses, multicast, IANA reserved space, and other IANA special-purpose addresses. An example blacklist file <strong>blacklist4.conf</strong> for this purpose.</p></dd>
+<dt> <code>-w</code>, <code>--whitelist-file=path</code></dt><dd><p> File of subnets to include, accept DNS hostnames, in CIDR notation, one-per line. Specifying a whitelist file is equivalent to specifying to ranges directly on the command line interface, but allows specifying a large number of subnets. <strong>Note</strong>: if you are specifying a large number of individual IP addresses (more than 1 million), you should instead use <code>--list-of-ips-file</code>. An example whitelist file <strong>whitelist6.conf</strong> for this purpose.</p></dd>
+<dt> <code>-I</code>, <code>--list-of-ips-file=path</code></dt><dd><p> File of individual IP addresses to scan, one-per line. This feature allows you to scan a large number of unrelated addresses. If you have a small number of IPs, it is faster to specify these on the command line or by using <code>--whitelist-file</code>. <strong>Note</strong>: this should only be used when scanning more  than 1 million addresses. When used in with <code>--whitelist-file</code>, only hosts in the intersection of both sets will be scanned. Hosts specified here, but included in the <code>--blacklist-file</code> will be excluded.</p></dd>
+</dl>
+
+
+<h3 id="SCAN-OPTIONS">SCAN OPTIONS</h3>
+
+<dl>
+<dt> <code>-R</code>, <code>--rate=pps</code></dt><dd><p> Set the send rate in pkts/sec. Note: when combined with <code>--probes</code> or <code>--retries</code>,  this is total packets per second, not target number per second. Setting the rate to <code>0</code> will scan at full line rate (no sleep). Default to <code>1</code> pps.</p></dd>
+<dt> <code>-B</code>, <code>--bandwidth=bps</code></dt><dd><p> Set the send rate in bits/sec (supports suffixes G/g, M/m, and K/k, e.g. -B 10M for 10 mbps). This overrides the <code>--rate</code> flag. Default to <code>0</code> bps.</p></dd>
+<dt> <code>--batch=num</code></dt><dd><p> Number of packets to send in a burst between checks to the ratelimit. A batch size above 1 allows the sleep-based rate-limiter to be used with proportionally higher rates. This can reduce CPU usage, in exchange for a bursty send rate (default = <code>1</code>).</p></dd>
+<dt> <code>--probes=num</code></dt><dd><p> Number of probes to send to each target (default = <code>1</code>).</p></dd>
+<dt> <code>--retries=num</code></dt><dd><p> Number of times to try resending a packet if the sendto call fails (default = <code>1</code>).</p></dd>
+<dt> <code>-n</code>, <code>--max-targets=num</code></dt><dd><p> Capture number of targets to probe (default = <code>-1</code>).</p></dd>
+<dt> <code>-k</code>, <code>--max-packets=num</code></dt><dd><p> Capture number of packets to send (default = <code>-1</code>).</p></dd>
+<dt> <code>-t</code>, <code>--max-runtime=secs</code></dt><dd><p> Capture length of time for sending packets (default = <code>-1</code>).</p></dd>
+<dt> <code>-N</code>, <code>--max-results=num</code></dt><dd><p> Exit after receiving this many results (default = <code>-1</code>).</p></dd>
+<dt> <code>-E</code>, <code>--est-elements=num</code></dt><dd><p> Estimated number of results for unique (default = <code>5e8</code>). <strong>Note</strong>: XMap uses the bloomfilter to check the duplicate results, which costs some of the memory. Choose the proper <code>--est-elements</code> to adapt to your memory capacity.</p></dd>
+<dt> <code>-c</code>, <code>--cooldown-secs=secs</code></dt><dd><p> How long to continue receiving after sending has completed (default = <code>5</code>).</p></dd>
+<dt> <code>-e</code>, <code>--seed=num</code></dt><dd><p> Seed used to select address permutation. Use this if you want to scan addresses in the same order for multiple XMap runs (default = <code>0</code>).</p></dd>
+<dt> <code>--shards=num</code></dt><dd><p> Split the scan up into N shards/partitions among different instances of xmap (default = <code>1</code>). When sharding, <code>--seed</code> is required.</p></dd>
+<dt> <code>--shard=num</code></dt><dd><p> Set which shard to scan (default = <code>0</code>). Shards are 0-indexed in the range [0, N), where N is the total number of shards. When sharding<code>--seed</code> is required.</p></dd>
+</dl>
+
+
+<h3 id="NETWORK-OPTIONS">NETWORK OPTIONS</h3>
+
+<dl>
+<dt> <code>-s</code>, <code>--source-port=port|range</code></dt><dd><p> Source port(s) to send packets from. Accept port ranges with <code>-</code>, e.g., <code>12345-54321</code>. Default to <code>32768-61000</code>.</p></dd>
+<dt> <code>-S</code>, <code>--source-ip=ip|range</code></dt><dd><p> Source address(es) to send packets from. Either single IP or range. Accept ip ranges with <code>,</code> and <code>-</code>, e.g., 2001::1, 2001::2-2001::10.</p></dd>
+<dt> <code>-G</code>, <code>--gateway-mac=mac</code></dt><dd><p> Gateway MAC address to send packets to (in case auto-detection fails).</p></dd>
+<dt> <code>--source-mac=mac</code></dt><dd><p> Source MAC address to send packets from (in case auto-detection fails).</p></dd>
+<dt> <code>-i</code>, <code>--interface=name</code></dt><dd><p> Network interface to use.</p></dd>
+<dt> <code>-X</code>, <code>--iplayer</code></dt><dd><p> Send IP layer packets instead of ethernet packets (for non-Ethernet interface).</p></dd>
+</dl>
+
+
+<h3 id="PROBE-OPTIONS">PROBE OPTIONS</h3>
+
+<p>XMap allows users to specify and write their own probe modules. Probe modules are responsible for generating probe packets to send, and processing responses from hosts.</p>
+
+<dl>
+<dt> <code>--list-probe-modules</code></dt><dd><p> List available probe modules (e.g., tcp_syn).</p></dd>
+<dt> <code>-M</code>, <code>--probe-module=name</code></dt><dd><p> Select probe module (default = <code>icmp_echo</code>).</p></dd>
+<dt> <code>--probe-args=args</code></dt><dd><p> Arguments to pass to probe module.</p></dd>
+<dt> <code>--probe-ttl=hops</code></dt><dd><p> Set TTL value for probe IP packets (default = <code>255</code>).</p></dd>
+<dt> <code>--list-output-fields</code></dt><dd><p> List the fields the selected probe module can send to the output module.</p></dd>
+</dl>
+
+
+<h3 id="OUTPUT-OPTIONS">OUTPUT OPTIONS</h3>
+
+<p>XMap allows users to specify and write their own output modules for use with XMap. Output modules are responsible for processing the fieldsets returned by the probe module, and outputting them to the user. Users can specify output fields, and write filters over the output fields.</p>
+
+<dl>
+<dt> <code>--list-output-modules</code></dt><dd> List available output modules (e.g., csv).</dd>
+<dt> <code>-O</code>, <code>--output-module=name</code></dt><dd> Select output module (default = <code>csv</code>).</dd>
+<dt> <code>--output-args=args</code></dt><dd> Arguments to pass to output module.</dd>
+<dt> <code>-f</code>, <code>--output-fields=fields</code></dt><dd> Comma-separated list of fields to output. Accept fields with <code>,</code> and <code>*</code>.</dd>
+<dt> <code>--output-filter</code></dt><dd> Specify an output filter over the fields defined by the probe module. See the output filter section for more details.</dd>
+</dl>
+
+
+<h3 id="IID-OPTIONS">IID OPTIONS</h3>
+
+<p>XMap allows users to specify and write their own iid modules for use with XMap. IID modules are responsible for filling the left bits behind the probed prefix, and creating a whole target address.</p>
+
+<p>processing the fieldsets returned by the probe module, and outputting them to the user. Users can specify output fields, and write filters over the output fields.</p>
+
+<dl>
+<dt> <code>--list-iid-modules</code></dt><dd><p> List available iid modules (e.g., low).</p></dd>
+<dt> <code>-U</code>, <code>--iid-module=name</code></dt><dd><p> Select iid module (default = <code>low</code>).</p></dd>
+<dt> <code>--iid-args=args</code></dt><dd><p> Arguments to pass to iid module.</p></dd>
+<dt> <code>--iid-num=num</code></dt><dd><p> Number of iid for one target prefix.</p></dd>
+</dl>
+
+
+<h3 id="LOGGING-AND-METADATA-OPTIONS">LOGGING AND METADATA OPTIONS</h3>
+
+<dl>
+<dt> <code>-q</code>, <code>--quiet</code></dt><dd><p> Do not print status updates once per second.</p></dd>
+<dt> <code>-v</code>, <code>--verbosity=n</code></dt><dd><p> Level of log detail (0-5, default = <code>3</code>).</p></dd>
+<dt> <code>-l</code>, <code>--log-file=filename</code></dt><dd><p> Output file for log messages. By default, <code>stderr</code>.</p></dd>
+<dt> <code>-L</code>, <code>--log-directory=path</code></dt><dd><p> Write log entries to a timestamped file in this directory.</p></dd>
+<dt> <code>-m</code>, <code>--metadata-file=filename</code></dt><dd><p> Output file for scan metadata (JSON).</p></dd>
+<dt> <code>-u</code>, <code>--status-updates-file</code></dt><dd><p> Write scan progress updates to CSV file.</p></dd>
+<dt> <code>--disable-syslog</code></dt><dd><p> Disables logging messages to syslog.</p></dd>
+<dt> <code>--notes=notes</code></dt><dd><p> Inject user-specified notes into scan metadata.</p></dd>
+<dt> <code>--user-metadata=json</code></dt><dd><p> Inject user-specified JSON metadata into scan metadata.</p></dd>
+</dl>
+
+
+<h3 id="ADDITIONAL-OPTIONS">ADDITIONAL OPTIONS</h3>
+
+<dl>
+<dt> <code>-T</code>, <code>--sender-threads=num</code></dt><dd><p> Threads used to send packets. XMap will attempt to detect the optimal number of send threads based on the number of processor cores.</p></dd>
+<dt> <code>-C</code>, <code>--config=filename</code></dt><dd><p> Read a configuration file, which can specify any other options.</p></dd>
+<dt> <code>-d</code>, <code>--dryrun</code></dt><dd><p> Print out each packet to stdout instead of sending it (useful for debugging).</p></dd>
+<dt> <code>--max-sendto-failures=num</code></dt><dd><p> Maximum NIC sendto failures before scan is aborted.</p></dd>
+<dt> <code>--min-hitrate=rate</code></dt><dd><p> Minimum hitrate that scan can hit before scan is aborted.</p></dd>
+<dt> <code>--cores</code></dt><dd><p> Comma-separated list of cores to pin to.</p></dd>
+<dt> <code>--ignore-blacklist-error</code></dt><dd><p>  Ignore invalid, malformed, or unresolvable entries in <code>--whitelist-file</code> and <code>--blacklist-file</code>.</p></dd>
+<dt> <code>--ignore-filelist-error</code></dt><dd><p>  Ignore invalid, malformed, or unresolvable entries in <code>--list-of-ips-file</code>.</p></dd>
+<dt> <code>-h</code>, <code>--help</code></dt><dd><p> Print help and exit.</p></dd>
+<dt> <code>-V</code>, <code>--version</code></dt><dd><p> Print version and exit.</p></dd>
+</dl>
+
+
+<h3 id="OUTPUT-FILTERS">OUTPUT FILTERS</h3>
+
+<p>Results generated by a probe module can be filtered before being passed to the output module. Filters are defined over the output fields of a probe module. Filters are written in a simple filtering language, similar to SQL, and are passed to XMap using the <code>--output-filter</code> option. Output filters are commonly used to filter out duplicate results, or to only pass only successful responses to the output module.</p>
+
+<p>Filter expressions are of the form <code>&lt;fieldname> &lt;operation> &lt;value></code>. The type of <code>&lt;value></code> must be either a string or unsigned integer literal, and match the type of <code>&lt;fieldname></code>. The valid operations for integer comparisons are <code>=</code>, <code>!=</code>, <code>&lt;</code>, <code>></code>, <code>&lt;=</code>, <code>>=</code>. The operations for string comparisons are <code>=</code>, <code>!=</code>. The<code>--list-output-fields</code> flag will print what fields and types are available for the selected probe module, and then exit.</p>
+
+<p>Compound filter expressions may be constructed by combining filter expressions using parenthesis to specify order of operations, the <code>&amp;&amp;</code> (logical AND) and <code>||</code> (logical OR) operators.</p>
+
+<p>For example, a filter for only successful, non-duplicate responses would be written as: <code>--output-filter="success = 1 &amp;&amp; repeat = 0"</code>.</p>
+
+<h3 id="UDP-PROBE-MODULE-OPTIONS">UDP PROBE MODULE OPTIONS</h3>
+
+<p>These arguments are all passed using the <code>--probe-args=args</code> option. Only one argument may be passed at a time.</p>
+
+<dl>
+<dt> <code>file:/path/to/file</code></dt><dd><p> Path to payload file to send to each host over UDP.</p></dd>
+<dt> <code>text:&lt;text></code></dt><dd><p> ASCII text to send to each destination host.</p></dd>
+<dt> <code>hex:&lt;hex></code></dt><dd><p> Hex-encoded binary to send to each destination host.</p></dd>
+<dt> <code>dir:/directory/to/file</code></dt><dd><p> Directory to payload file to send to each host over UDP when probing multiple ports.
+ File extension priority: <code>pkt</code>><code>txt</code>><code>hex</code>. Each file is named by the port number, e.g., 53.pkt for DNS payload.</p></dd>
+<dt> <code>template:/path/to/template</code></dt><dd><p> Path to template file. For each destination host, the template file is populated, set as the UDP payload, and sent.</p></dd>
+<dt> <code>template-fields</code></dt><dd><p> Print information about the allowed template fields and exit.</p></dd>
+<dt> <code>icmp-type-code-str</code></dt><dd><p> Print value of the icmp related filters and exit.</p></dd>
+</dl>
+
+
+<h3 id="MID-SCAN-CHANGES">MID-SCAN CHANGES</h3>
+
+<p>You can change the rate at which XMap is scanning mid-scan by sending SIGUSR1 (increase) and SIGUSR2 (decrease) signals to XMap. These will result in the scan rate increasing or decreasing by 5%.</p>
+
+<h2 id="Examples">Examples</h2>
+
+<pre><code>xmap
+    scan the ::/0-32 space by Echo ping and output to stdout
+xmap -4
+    scan the 0.0.0.0/0-32 space by Echo ping and output to stdout
+xmap -N 5 -B 10M
+    find 5 alive IPv6 hosts, scanning at 10 Mb/s
+xmap 2001::/8 2002::/16
+    scan both subnets for 2001::/8-32 and 2002::/16-32 space
+xmap -x 64 2001::/32 -U rand
+    scan 2001::/32-64 with random IID, e.g., 2001::1783:ab42:9247:cb38
+xmap -M icmp_echo -O csv -U low -h
+    show help text for modules icmp_echo, csv, and low
+xmap -M tcp_syn -p 80,443,8080-8081
+    scan the ::/0-32 space for port 80,443,8080,8081 by TCP SYN ping        
+</code></pre>
+
+
+  <ol class='man-decor man-foot man foot'>
+    <li class='tl'></li>
+    <li class='tc'>April 2021</li>
+    <li class='tr'>xmap(1)</li>
+  </ol>
+
+  </div>
+</body>
+</html>

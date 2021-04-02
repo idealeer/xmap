@@ -1,0 +1,223 @@
+# xmap option description to be processed by gengetopt
+
+package "xmap"
+version "@XMAP_VERSION@"
+purpose "A fast Internet-wide scanner for both IPv6 & IPv4."
+
+section "Basic arguments"
+option "ipv6"                   6 "Scanning the IPv6 networks (default)"
+    optional
+option "ipv4"                   4 "Scanning the IPv4 networks"
+    optional
+option "max-len"                x "Max IP bit length to scan"
+    typestr="len"
+    default="32"
+    optional int
+option "target-port"            p "Port(s) number to scan (for TCP and UDP scans), use `,' and `-', with this option, one target is a <ip/x, port>"
+    typestr="port|range"
+    optional string
+option "output-file"            o "Output file, use `-' for stdout"
+    typestr="name"
+    optional string
+option "blacklist-file"         b "File of subnets to exclude, in CIDR notation, e.g., 2001::/64, 192.168.0.0/16, www.qq.com/32 (max len of domain: 256)"
+    typestr="path"
+    optional string
+option "whitelist-file"         w "File of subnets to include, in CIDR notation, e.g., 2001::/64, 192.168.0.0/16, www.qq.com/32 (max len of domain: 256)"
+    typestr="path"
+    optional string
+option "list-of-ips-file"		I "List of individual addresses to scan in random order, e.g., 2001:db8::1, 192.168.0.1"
+    typestr="path"
+    optional string
+
+section "Scan options"
+option "rate"                   R "Set send rate in pkts/sec"
+    typestr="pps"
+    optional int
+option "bandwidth"              B "Set send rate in bits/sec (supports suffixes G/g, M/m, and K/k)"
+    typestr="bps"
+    optional string
+option "batch"                  - "Number of continuous targets probed before sleeping"
+    typestr="num"
+    default="1"
+    optional int
+option "probes"                 - "Number of probes to send to each target"
+    typestr="num"
+    default="1"
+    optional int
+option "retries"                - "Max number of times to try to send packets if send fails"
+    typestr="num"
+    default="1"
+    optional int
+option "max-targets"            n "Capture number of targets to probe (default: no limit)"
+    typestr="num"
+    optional longlong
+option "max-packets"            k "Capture number of packets to send (default: no limit)"
+    typestr="num"
+    optional longlong
+option "max-runtime"            t "Capture length of time for sending packets (default: no limit)"
+    typestr="secs"
+    optional int
+option "max-results"            N "Capture number of results to return (default: no limit)"
+    typestr="num"
+    optional longlong
+option "est-elements"           E "Estimated number of results for unique, adapt to your memory capacity"
+    typestr="num"
+    default="500000000"
+    optional longlong
+option "cooldown-secs"          c "How long to continue receiving after sending last probe"
+    typestr="secs"
+    default="5"
+    optional int
+option "seed"                   e "Seed used to select address permutation"
+    typestr="num"
+    optional longlong
+option "shards"                 - "Set the total number of shards"
+    typestr="num"
+    optional int
+    default="1"
+option "shard"                  - "Set which shard this scan is (0 indexed)"
+    typestr="num"
+    optional int
+    default="0"
+
+section "Network options"
+option "source-port"            s "Source port(s) for scan packets, use `-'"
+    typestr="port|range"
+    optional string
+option "source-ip"              S "Source address(es) for scan packets, use `,' and `-'"
+    typestr="ip|range"
+    optional string
+option "gateway-mac"            G "Specify gateway MAC address, e.g., 12:34:56:78:90:ab"
+    typestr="mac"
+    optional string
+option "source-mac"             - "Specify source MAC address, e.g., 12:34:56:78:90:ab"
+    typestr="mac"
+    optional string
+option "interface"              i "Specify network interface to use"
+    typestr="name"
+    optional string
+option "iplayer"                X "Sends IP packets instead of Ethernet (for VPNs)"
+    optional
+
+section "Probe Modules"
+option "probe-module"           M "Select probe module (default=`icmp_echo')"
+    typestr="name"
+    default="default"
+    optional string
+option "probe-args"             - "Arguments to pass to probe module"
+    typestr="args"
+    optional string
+option "probe-ttl"              - "Set TTL value for probe IP packets"
+    typestr="hops"
+    default="255"
+    optional int
+option "list-probe-modules"     - "List available probe modules"
+    optional
+
+section "Output Modules"
+option "output-module"          O "Select output module (default=`csv')"
+    typestr="name"
+    default="default"
+    optional string
+option "output-args"            - "Arguments to pass to output module"
+    typestr="args"
+    optional string
+option "output-fields"          f "Fields that should be output in result set, use `,' and `*'"
+    typestr="fields"
+    optional string
+option "output-filter"          - "Specify a filter over the response fields to limit what responses get sent to the output module"
+    typestr="filter"
+    optional string
+option "list-output-modules"    - "List available output modules"
+    optional
+option "list-output-fields"     - "List all fields that can be output by selected probe module"
+    optional
+
+section "IID Modules"
+option "iid-module"             U "Select iid module (default=`low')"
+    typestr="name"
+    default="default"
+    optional string
+option "iid-args"               - "Arguments to pass to iid module"
+    typestr="args"
+    optional string
+option "iid-num"                - "Number of iid for one IP prefix"
+    typestr="num"
+    default="1"
+    optional int
+option "list-iid-modules"       - "List available iid modules"
+    optional
+
+section "Logging and Metadata"
+option "quiet"                  q "Do not print status updates"
+    optional
+option "verbosity"              v "Level of log detail (0-5)"
+    typestr="num"
+    default="3"
+    optional int
+option "log-file"               l "Write log entries to file"
+    typestr="name"
+    optional string
+option "log-directory"          L "Write log entries to a timestamped file in this directory"
+    typestr="path"
+    optional string
+option "metadata-file"          m "Output file for scan metadata (JSON)"
+    typestr="name"
+    optional string
+option "status-updates-file"    u "Write scan progress updates to CSV file"
+    typestr="name"
+    optional string
+option "disable-syslog"         - "Disables logging messages to syslog"
+    optional
+option "notes"                  - "Inject user-specified notes into scan metadata"
+    typestr="notes"
+    optional string
+option "user-metadata"          - "Inject user-specified JSON metadata into scan metadata"
+    typestr="json"
+    optional string
+
+section "Additional options"
+option "sender-threads"         T "Threads used to send packets"
+    typestr="num"
+    default="1"
+    optional int
+option "config"                 C "Read a configuration file, which can specify any of these options"
+    typestr="filename"
+    default="/etc/xmap/xmap.conf"
+    optional string
+option "dryrun"                 d "Do not actually send packets, just show"
+    optional
+option "max-sendto-failures"    - "Maximum NIC sendto failures before scan is aborted"
+    typestr="num"
+    default="-1"
+    optional int
+option "min-hitrate"            - "Minimum hitrate that scan can hit before scan is aborted"
+    typestr="rate"
+    default="0.0"
+    optional float
+option "cores"                  - "Comma-separated list of cores to pin to"
+    optional string
+option "ignore-blacklist-error" - "Ignore invalid entries in `--whitelist-file/blacklist-file'"
+    optional
+option "ignore-filelist-error"  - "Ignore invalid entries in `--list-of-ips-file'"
+    optional
+option "help"                   h "Print help and exit"
+    optional
+option "version"                V "Print version and exit"
+    optional
+
+text "\nExamples:
+    xmap
+        scan the ::/0-32 space by Echo ping and output to stdout
+    xmap -4
+        scan the 0.0.0.0/0-32 space by Echo ping and output to stdout
+    xmap -N 5 -B 10M
+        find 5 alive IPv6 hosts, scanning at 10 Mb/s
+    xmap 2001::/8 2002::/16
+        scan both subnets for 2001::/8-32 and 2002::/16-32 space
+    xmap -x 64 2001::/32 -U rand
+        scan 2001::/32-64 with random IID, e.g., 2001::1783:ab42:9247:cb38
+    xmap -M icmp_echo -O csv -U low -h
+        show help text for modules icmp_echo, csv, and low
+    xmap -M tcp_syn -p 80,443,8080-8081
+        scan the ::/0-32 space for port 80,443,8080,8081 by TCP SYN ping"

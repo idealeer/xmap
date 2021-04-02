@@ -1,0 +1,353 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "XMAP" "1" "April 2021" "" ""
+.
+.SH "NAME"
+\fBxmap\fR \- The Fast Internet Scanner
+.
+.SH "SYNOPSIS"
+xmap [ \-4 | \-6 ] [ \-x <len> ] [ \-p <port> ] [ \-o <outfile> ] [ OPTIONS\.\.\. ] [ ip|domain|range ]
+.
+.SH "DESCRIPTION"
+\fIXMap\fR is a network tool for scanning any IPv6 & IPv4 address space (or large samples), reimplemented and improved thoroughly from ZMap\. XMap is capable of scanning the 32\-bits network space in around 45 minutes on a gigabit network connection, reaching ~98% theoretical line speed\.
+.
+.SH "OPTIONS"
+.
+.SS "BASIC OPTIONS"
+.
+.TP
+\fB\-6\fR, \fB\-\-ipv6\fR
+Scanning the IPv6 networks (default)\.
+.
+.TP
+\fB\-4\fR, \fB\-\-ipv4\fR
+Scanning the IPv4 networks\.
+.
+.TP
+\fB\-x\fR, \fB\-\-max\-len=len\fR
+Max IP bit length to scan (default = \fB32\fR)\.
+.
+.TP
+\fBip\fR|\fBdomain\fR|\fBrange\fR
+IP addresses or DNS hostnames to scan\. Accept IP ranges in CIDR block notation\. Max length of domains is 256, e\.g, 2001::/64, 192\.168\.0\.1/16, and www\.qq\.com/32\. Default to \fB::/0\fR and \fB0\.0\.0\.0/0\fR\.
+.
+.TP
+\fB\-p\fR, \fB\-\-target\-port=port|range\fR
+TCP or UDP port(s) number to scan (for SYN scans and basic UDP scans)\. Accepts port ranges with \fB,\fR and \fB\-\fR, e\.g\., \fB80,443,8080\-8081\fR\. With \fB\-\-target\-port\fR, one target is a \fB<ip/x, port>\fR\.
+.
+.TP
+\fB\-o\fR, \fB\-\-output\-file=name\fR
+When using an output module that uses a file, write results to this file\. Use \fB\-\fR for stdout\.
+.
+.TP
+\fB\-b\fR, \fB\-\-blacklist\-file=path\fR
+File of subnets to exclude, accept DNS hostnames, in CIDR notation, one\-per line\. It is recommended you use this to exclude RFC 1918 addresses, multicast, IANA reserved space, and other IANA special\-purpose addresses\. An example blacklist file \fBblacklist4\.conf\fR for this purpose\.
+.
+.TP
+\fB\-w\fR, \fB\-\-whitelist\-file=path\fR
+File of subnets to include, accept DNS hostnames, in CIDR notation, one\-per line\. Specifying a whitelist file is equivalent to specifying to ranges directly on the command line interface, but allows specifying a large number of subnets\. \fBNote\fR: if you are specifying a large number of individual IP addresses (more than 1 million), you should instead use \fB\-\-list\-of\-ips\-file\fR\. An example whitelist file \fBwhitelist6\.conf\fR for this purpose\.
+.
+.TP
+\fB\-I\fR, \fB\-\-list\-of\-ips\-file=path\fR
+File of individual IP addresses to scan, one\-per line\. This feature allows you to scan a large number of unrelated addresses\. If you have a small number of IPs, it is faster to specify these on the command line or by using \fB\-\-whitelist\-file\fR\. \fBNote\fR: this should only be used when scanning more than 1 million addresses\. When used in with \fB\-\-whitelist\-file\fR, only hosts in the intersection of both sets will be scanned\. Hosts specified here, but included in the \fB\-\-blacklist\-file\fR will be excluded\.
+.
+.SS "SCAN OPTIONS"
+.
+.TP
+\fB\-R\fR, \fB\-\-rate=pps\fR
+Set the send rate in pkts/sec\. Note: when combined with \fB\-\-probes\fR or \fB\-\-retries\fR, this is total packets per second, not target number per second\. Setting the rate to \fB0\fR will scan at full line rate (no sleep)\. Default to \fB1\fR pps\.
+.
+.TP
+\fB\-B\fR, \fB\-\-bandwidth=bps\fR
+Set the send rate in bits/sec (supports suffixes G/g, M/m, and K/k, e\.g\. \-B 10M for 10 mbps)\. This overrides the \fB\-\-rate\fR flag\. Default to \fB0\fR bps\.
+.
+.TP
+\fB\-\-batch=num\fR
+Number of packets to send in a burst between checks to the ratelimit\. A batch size above 1 allows the sleep\-based rate\-limiter to be used with proportionally higher rates\. This can reduce CPU usage, in exchange for a bursty send rate (default = \fB1\fR)\.
+.
+.TP
+\fB\-\-probes=num\fR
+Number of probes to send to each target (default = \fB1\fR)\.
+.
+.TP
+\fB\-\-retries=num\fR
+Number of times to try resending a packet if the sendto call fails (default = \fB1\fR)\.
+.
+.TP
+\fB\-n\fR, \fB\-\-max\-targets=num\fR
+Capture number of targets to probe (default = \fB\-1\fR)\.
+.
+.TP
+\fB\-k\fR, \fB\-\-max\-packets=num\fR
+Capture number of packets to send (default = \fB\-1\fR)\.
+.
+.TP
+\fB\-t\fR, \fB\-\-max\-runtime=secs\fR
+Capture length of time for sending packets (default = \fB\-1\fR)\.
+.
+.TP
+\fB\-N\fR, \fB\-\-max\-results=num\fR
+Exit after receiving this many results (default = \fB\-1\fR)\.
+.
+.TP
+\fB\-E\fR, \fB\-\-est\-elements=num\fR
+Estimated number of results for unique (default = \fB5e8\fR)\. \fBNote\fR: XMap uses the bloomfilter to check the duplicate results, which costs some of the memory\. Choose the proper \fB\-\-est\-elements\fR to adapt to your memory capacity\.
+.
+.TP
+\fB\-c\fR, \fB\-\-cooldown\-secs=secs\fR
+How long to continue receiving after sending has completed (default = \fB5\fR)\.
+.
+.TP
+\fB\-e\fR, \fB\-\-seed=num\fR
+Seed used to select address permutation\. Use this if you want to scan addresses in the same order for multiple XMap runs (default = \fB0\fR)\.
+.
+.TP
+\fB\-\-shards=num\fR
+Split the scan up into N shards/partitions among different instances of xmap (default = \fB1\fR)\. When sharding, \fB\-\-seed\fR is required\.
+.
+.TP
+\fB\-\-shard=num\fR
+Set which shard to scan (default = \fB0\fR)\. Shards are 0\-indexed in the range [0, N), where N is the total number of shards\. When sharding\fB\-\-seed\fR is required\.
+.
+.SS "NETWORK OPTIONS"
+.
+.TP
+\fB\-s\fR, \fB\-\-source\-port=port|range\fR
+Source port(s) to send packets from\. Accept port ranges with \fB\-\fR, e\.g\., \fB12345\-54321\fR\. Default to \fB32768\-61000\fR\.
+.
+.TP
+\fB\-S\fR, \fB\-\-source\-ip=ip|range\fR
+Source address(es) to send packets from\. Either single IP or range\. Accept ip ranges with \fB,\fR and \fB\-\fR, e\.g\., 2001::1, 2001::2\-2001::10\.
+.
+.TP
+\fB\-G\fR, \fB\-\-gateway\-mac=mac\fR
+Gateway MAC address to send packets to (in case auto\-detection fails)\.
+.
+.TP
+\fB\-\-source\-mac=mac\fR
+Source MAC address to send packets from (in case auto\-detection fails)\.
+.
+.TP
+\fB\-i\fR, \fB\-\-interface=name\fR
+Network interface to use\.
+.
+.TP
+\fB\-X\fR, \fB\-\-iplayer\fR
+Send IP layer packets instead of ethernet packets (for non\-Ethernet interface)\.
+.
+.SS "PROBE OPTIONS"
+XMap allows users to specify and write their own probe modules\. Probe modules are responsible for generating probe packets to send, and processing responses from hosts\.
+.
+.TP
+\fB\-\-list\-probe\-modules\fR
+List available probe modules (e\.g\., tcp_syn)\.
+.
+.TP
+\fB\-M\fR, \fB\-\-probe\-module=name\fR
+Select probe module (default = \fBicmp_echo\fR)\.
+.
+.TP
+\fB\-\-probe\-args=args\fR
+Arguments to pass to probe module\.
+.
+.TP
+\fB\-\-probe\-ttl=hops\fR
+Set TTL value for probe IP packets (default = \fB255\fR)\.
+.
+.TP
+\fB\-\-list\-output\-fields\fR
+List the fields the selected probe module can send to the output module\.
+.
+.SS "OUTPUT OPTIONS"
+XMap allows users to specify and write their own output modules for use with XMap\. Output modules are responsible for processing the fieldsets returned by the probe module, and outputting them to the user\. Users can specify output fields, and write filters over the output fields\.
+.
+.TP
+\fB\-\-list\-output\-modules\fR
+List available output modules (e\.g\., csv)\.
+.
+.TP
+\fB\-O\fR, \fB\-\-output\-module=name\fR
+Select output module (default = \fBcsv\fR)\.
+.
+.TP
+\fB\-\-output\-args=args\fR
+Arguments to pass to output module\.
+.
+.TP
+\fB\-f\fR, \fB\-\-output\-fields=fields\fR
+Comma\-separated list of fields to output\. Accept fields with \fB,\fR and \fB*\fR\.
+.
+.TP
+\fB\-\-output\-filter\fR
+Specify an output filter over the fields defined by the probe module\. See the output filter section for more details\.
+.
+.SS "IID OPTIONS"
+XMap allows users to specify and write their own iid modules for use with XMap\. IID modules are responsible for filling the left bits behind the probed prefix, and creating a whole target address\.
+.
+.P
+processing the fieldsets returned by the probe module, and outputting them to the user\. Users can specify output fields, and write filters over the output fields\.
+.
+.TP
+\fB\-\-list\-iid\-modules\fR
+List available iid modules (e\.g\., low)\.
+.
+.TP
+\fB\-U\fR, \fB\-\-iid\-module=name\fR
+Select iid module (default = \fBlow\fR)\.
+.
+.TP
+\fB\-\-iid\-args=args\fR
+Arguments to pass to iid module\.
+.
+.TP
+\fB\-\-iid\-num=num\fR
+Number of iid for one target prefix\.
+.
+.SS "LOGGING AND METADATA OPTIONS"
+.
+.TP
+\fB\-q\fR, \fB\-\-quiet\fR
+Do not print status updates once per second\.
+.
+.TP
+\fB\-v\fR, \fB\-\-verbosity=n\fR
+Level of log detail (0\-5, default = \fB3\fR)\.
+.
+.TP
+\fB\-l\fR, \fB\-\-log\-file=filename\fR
+Output file for log messages\. By default, \fBstderr\fR\.
+.
+.TP
+\fB\-L\fR, \fB\-\-log\-directory=path\fR
+Write log entries to a timestamped file in this directory\.
+.
+.TP
+\fB\-m\fR, \fB\-\-metadata\-file=filename\fR
+Output file for scan metadata (JSON)\.
+.
+.TP
+\fB\-u\fR, \fB\-\-status\-updates\-file\fR
+Write scan progress updates to CSV file\.
+.
+.TP
+\fB\-\-disable\-syslog\fR
+Disables logging messages to syslog\.
+.
+.TP
+\fB\-\-notes=notes\fR
+Inject user\-specified notes into scan metadata\.
+.
+.TP
+\fB\-\-user\-metadata=json\fR
+Inject user\-specified JSON metadata into scan metadata\.
+.
+.SS "ADDITIONAL OPTIONS"
+.
+.TP
+\fB\-T\fR, \fB\-\-sender\-threads=num\fR
+Threads used to send packets\. XMap will attempt to detect the optimal number of send threads based on the number of processor cores\.
+.
+.TP
+\fB\-C\fR, \fB\-\-config=filename\fR
+Read a configuration file, which can specify any other options\.
+.
+.TP
+\fB\-d\fR, \fB\-\-dryrun\fR
+Print out each packet to stdout instead of sending it (useful for debugging)\.
+.
+.TP
+\fB\-\-max\-sendto\-failures=num\fR
+Maximum NIC sendto failures before scan is aborted\.
+.
+.TP
+\fB\-\-min\-hitrate=rate\fR
+Minimum hitrate that scan can hit before scan is aborted\.
+.
+.TP
+\fB\-\-cores\fR
+Comma\-separated list of cores to pin to\.
+.
+.TP
+\fB\-\-ignore\-blacklist\-error\fR
+Ignore invalid, malformed, or unresolvable entries in \fB\-\-whitelist\-file\fR and \fB\-\-blacklist\-file\fR\.
+.
+.TP
+\fB\-\-ignore\-filelist\-error\fR
+Ignore invalid, malformed, or unresolvable entries in \fB\-\-list\-of\-ips\-file\fR\.
+.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help and exit\.
+.
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version and exit\.
+.
+.SS "OUTPUT FILTERS"
+Results generated by a probe module can be filtered before being passed to the output module\. Filters are defined over the output fields of a probe module\. Filters are written in a simple filtering language, similar to SQL, and are passed to XMap using the \fB\-\-output\-filter\fR option\. Output filters are commonly used to filter out duplicate results, or to only pass only successful responses to the output module\.
+.
+.P
+Filter expressions are of the form \fB<fieldname> <operation> <value>\fR\. The type of \fB<value>\fR must be either a string or unsigned integer literal, and match the type of \fB<fieldname>\fR\. The valid operations for integer comparisons are \fB=\fR, \fB!=\fR, \fB<\fR, \fB>\fR, \fB<=\fR, \fB>=\fR\. The operations for string comparisons are \fB=\fR, \fB!=\fR\. The\fB\-\-list\-output\-fields\fR flag will print what fields and types are available for the selected probe module, and then exit\.
+.
+.P
+Compound filter expressions may be constructed by combining filter expressions using parenthesis to specify order of operations, the \fB&&\fR (logical AND) and \fB||\fR (logical OR) operators\.
+.
+.P
+For example, a filter for only successful, non\-duplicate responses would be written as: \fB\-\-output\-filter="success = 1 && repeat = 0"\fR\.
+.
+.SS "UDP PROBE MODULE OPTIONS"
+These arguments are all passed using the \fB\-\-probe\-args=args\fR option\. Only one argument may be passed at a time\.
+.
+.TP
+\fBfile:/path/to/file\fR
+Path to payload file to send to each host over UDP\.
+.
+.TP
+\fBtext:<text>\fR
+ASCII text to send to each destination host\.
+.
+.TP
+\fBhex:<hex>\fR
+Hex\-encoded binary to send to each destination host\.
+.
+.TP
+\fBdir:/directory/to/file\fR
+Directory to payload file to send to each host over UDP when probing multiple ports\. File extension priority: \fBpkt\fR>\fBtxt\fR>\fBhex\fR\. Each file is named by the port number, e\.g\., 53\.pkt for DNS payload\.
+.
+.TP
+\fBtemplate:/path/to/template\fR
+Path to template file\. For each destination host, the template file is populated, set as the UDP payload, and sent\.
+.
+.TP
+\fBtemplate\-fields\fR
+Print information about the allowed template fields and exit\.
+.
+.TP
+\fBicmp\-type\-code\-str\fR
+Print value of the icmp related filters and exit\.
+.
+.SS "MID\-SCAN CHANGES"
+You can change the rate at which XMap is scanning mid\-scan by sending SIGUSR1 (increase) and SIGUSR2 (decrease) signals to XMap\. These will result in the scan rate increasing or decreasing by 5%\.
+.
+.SH "Examples"
+.
+.nf
+
+xmap
+    scan the ::/0\-32 space by Echo ping and output to stdout
+xmap \-4
+    scan the 0\.0\.0\.0/0\-32 space by Echo ping and output to stdout
+xmap \-N 5 \-B 10M
+    find 5 alive IPv6 hosts, scanning at 10 Mb/s
+xmap 2001::/8 2002::/16
+    scan both subnets for 2001::/8\-32 and 2002::/16\-32 space
+xmap \-x 64 2001::/32 \-U rand
+    scan 2001::/32\-64 with random IID, e\.g\., 2001::1783:ab42:9247:cb38
+xmap \-M icmp_echo \-O csv \-U low \-h
+    show help text for modules icmp_echo, csv, and low
+xmap \-M tcp_syn \-p 80,443,8080\-8081
+    scan the ::/0\-32 space for port 80,443,8080,8081 by TCP SYN ping
+.
+.fi
+

@@ -1,0 +1,8 @@
+NOTIFY * HTTP/1.1
+Host:239.255.255.250:1900
+Cache-control:max-age=1800
+Location:http://[2402:f000:4:1:808::45]/description.xml
+Nt:upnp:rootdevice
+Nts:ssdp:alive
+Usn:uuid:de5d6118-bfcb-918e-0000-00001eccef34::upnp:rootdevice
+
