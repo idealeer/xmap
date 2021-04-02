@@ -20,7 +20,9 @@ The latest stable release of XMap is version 1.0.0 and supports Linux, macOS, an
 Usage
 -----
 
-A guide to using XMap is found in our [GitHub Wiki](https://github.com/idealeer/xmap/wiki).
+A guide to using XMap can be found in our [GitHub Wiki](https://github.com/idealeer/xmap/wiki).
+
+Simple commands and options to using XMap can be found in [USAGE](https://github.com/idealeer/xmap/blob/master/src/xmap.1.ronn).
 
 ## Paper
 
