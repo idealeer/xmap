@@ -28,17 +28,17 @@ Simple commands and options to using XMap can be found in [USAGE](https://github
 
 Fast IPv6 Network Periphery Discovery and Security Implications.
 
-**Abstract.** IPv6 fundamentally changes address allocation principles, making brute-force scanning of the 128-bits IPv6 network space impractical. Although significant efforts have been devoted to enumerating active IPv6 hosts, limited by technique efficiency and accuracy, large-scale empirical measurement studies under the IPv6 network are still infeasible now.
+**Abstract.** Numerous measurement researches have been performed to discover the IPv4 network security issues by leveraging the fast Internet-wide scanning techniques. However, IPv6 brings the 128-bits address space and renders brute-force network scanning impractical. Although significant efforts have been dedicated to enumerating active IPv6 hosts, limited by technique efficiency and probing accuracy, large-scale empirical measurement studies under the increasing IPv6 networks are infeasible now. 
 
-To fill this research gap, by leveraging the extensively adopted IPv6 address allocation strategy, we propose a novel IPv6 network periphery discovery approach. Specifically, *XMap*, a fast network scanner, is developed to find the periphery, such as a home router. We evaluate it on twelve prominent Internet service providers and harvest *52M* active peripheries. Grounded on these found devices, we explore IPv6 network risks of the unintended exposed security services and the flawed traffic routing strategies. First, we demonstrate the unintended exposed security services in IPv6 networks, such as DNS, and HTTP, have become emerging security risks by analyzing *4.7M* peripheries. Second, by inspecting the periphery's packet routing strategies, we present the flawed implementations of IPv6 routing protocol affecting *5.8M* router devices. Attackers can exploit this common vulnerability to conduct effective routing loop attacks, inducing DoS to the ISP's and home routers with an amplification factor of *>200*. We responsibly disclose those issues to all involved vendors and ASes and discuss mitigation solutions. Our research results indicate that the security community should revisit IPv6 network strategies immediately.
+To fill this research gap, by leveraging the extensively adopted IPv6 address allocation strategy, we propose a novel IPv6 network periphery discovery approach. Specifically, *XMap*, a fast network scanner, is developed to find the periphery, such as a home router. We evaluate it on twelve prominent Internet service providers and harvest *52M* active peripheries. Grounded on these found devices, we explore IPv6 network risks of the unintended exposed security services and the flawed traffic routing strategies. First, we demonstrate the unintended exposed security services in IPv6 networks, such as DNS, and HTTP, have become emerging security risks by analyzing *4.7M* peripheries. Second, by inspecting the periphery’s packet routing strategies, we present the flawed implementations of IPv6 routing protocol affecting *5.8M* router devices. Attackers can exploit this common vulnerability to conduct effective routing loop attacks, inducing DoS to the ISP’s and home routers with an amplification factor of >*200*. We responsibly disclose those issues to all involved vendors and ASes and discuss mitigation solutions. Our research results indicate that the security community should revisit IPv6 network strategies immediately.
 
 **Authors.** [Xiang Li](https://netsec.ccert.edu.cn/people/lx19), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20/), Xiaofeng Zheng, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), Youjun Huang.
 
 **Conference.** Proceedings of the 2021 IEEE/IFIP International Conference on Dependable Systems and Networks (DSN '21) 
 
-**Paper.** [Abstract], [PDF], [Slides] and [Video].
+**Paper.** [[PDF]](https://idealeer.github.io/publication/dsn21/dsn21-ipv6-paper.pdf), [[Slides]](http://idealeer.github.io/publication/dsn21/dsn21-ipv6-slides.pdf) and [Video].
 
-**CNVD/CVE.** [[Lists]](https://netsec.ccert.edu.cn/people/lx19).
+**CNVD/CVE.** [[Lists]](https://idealeer.github.io/publication/dsn21/).
 
 License and Copyright
 ---------------------
