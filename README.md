@@ -15,7 +15,7 @@ Installation
 
 The latest stable release of XMap is version 1.0.0 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
 
-**Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/README.md).
+**Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/INSTALL.md).
 
 Usage
 -----
@@ -36,7 +36,7 @@ To fill this research gap, by leveraging the extensively adopted IPv6 address al
 
 **Conference.** Proceedings of the 2021 IEEE/IFIP International Conference on Dependable Systems and Networks (DSN '21) 
 
-**Paper.** [[PDF]](https://idealeer.github.io/publication/dsn21/dsn21-ipv6-paper.pdf), [[Slides]](http://idealeer.github.io/publication/dsn21/dsn21-ipv6-slides.pdf) and [Video].
+**Paper.** [[PDF]](https://idealeer.github.io/publication/dsn21/dsn21-paper-li.pdf), [[Slides]](https://idealeer.github.io/publication/dsn21/dsn21-slides-li.pdf) and [[Video]](https://www.youtube.com/watch?v=aMlo_91-RlY).
 
 **CNVD/CVE.** [[Lists]](https://idealeer.github.io/publication/dsn21/).
 
