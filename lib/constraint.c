@@ -477,6 +477,7 @@ void constraint_lookup_index_for_ipvx(mpz_t ipvx, constraint_t *con,
         mpz_ior(ipvx, con->radix[mpz_get_ui(radix_idx)],
                 radix_offset); // TODO radix_idx is no more than int32
         mpz_clear(radix_offset);
+        mpz_clear(radix_idx);
         return;
     }
     mpz_clear(radix_idx);

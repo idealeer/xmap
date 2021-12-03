@@ -83,7 +83,7 @@ struct state_conf {
     int rate;
     // rate in bits per second
     uint64_t bandwidth;
-    uint8_t  batch;
+    int      batch;
     int      packet_streams;
     int      num_retries;
     // how many seconds after the termination of the sender will the receiver
