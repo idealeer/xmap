@@ -14,7 +14,7 @@
 
 #define IP_MAX_BYTES 16
 
-uint8_t IID[IP_MAX_BYTES]; // both for ipv4 & ipv6
+extern uint8_t IID[IP_MAX_BYTES]; // both for ipv4 & ipv6
 
 // called at sender initialization
 typedef int (*iid_global_init_cb)(struct state_conf *conf);
