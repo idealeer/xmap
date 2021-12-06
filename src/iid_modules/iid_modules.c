@@ -19,6 +19,8 @@ extern iid_module_t module_set;
 extern iid_module_t module_low_fill;
 // Add your module here
 
+uint8_t IID[IP_MAX_BYTES];
+
 iid_module_t *iid_modules[] = {
     &module_full, &module_low, &module_low_fill,
     &module_rand, &module_set, &module_zero,
