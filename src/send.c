@@ -460,7 +460,7 @@ int send_run(sock_t st, shard_t *sd) {
                         sd->state.packets_tried++;
                         if (rc < 0) { // failed
                             char addr_str[64];
-                            inet_in2str(dst_ip, addr_str, 64, 6);
+                            inet_in2str(dst_ip, addr_str, 64, xconf.ipv46_flag);
                             log_debug("send", "send_packet failed for %s. %s",
                                       addr_str, strerror(errno));
                         } else {

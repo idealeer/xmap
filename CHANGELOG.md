@@ -12,3 +12,8 @@
 * XMap 1.0.2 Minor Release.
 * Fix Bugs:
     * Prevent multiple definitions of global variable IID when GCC >= 10 (thanks for @juergenhoetzel)
+
+# 1.0.3 2021-12-29
+* XMap 1.0.3 Minor Release.
+* Fix Bugs:
+  * Fix multiple port scanning modules, enabling `-p 0-65535`

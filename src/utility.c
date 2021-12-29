@@ -134,7 +134,7 @@ void parse_target_ports(char given_string[]) {
 void init_target_port() {
     log_debug("parse", "init target port");
     int full = 1;
-    for (int i = 1; i <= 16; i++) {
+    for (int i = 1; i <= 17; i++) {
         if (xconf.target_port_num <= full) {
             log_debug("parse", "target port number: %d", xconf.target_port_num);
             log_debug("parse", "target port bits: %d", xconf.target_port_bits);
@@ -149,5 +149,6 @@ void init_target_port() {
         xconf.target_port_full   = full;
         xconf.max_probe_port_len = xconf.max_probe_len + xconf.target_port_bits;
     }
-    log_fatal("parse", "too many target ports (%d)", xconf.target_port_num);
+    log_fatal("parse", "too many target ports (%d), should be <= %d",
+              xconf.target_port_num, full / 2);
 }

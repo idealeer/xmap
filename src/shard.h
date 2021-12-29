@@ -48,8 +48,8 @@ typedef struct shard {
         uint64_t total;
         FILE *   fp;
         long     pos;
-        uint16_t port_current;
-        uint16_t port_total;
+        uint32_t port_current;
+        uint32_t port_total;
     } ip_target_file_params;
     mpz_t             current;
     uint64_t          iterations;
