@@ -26,4 +26,6 @@ int ip_target_file_get_ip(void *ip, shard_t *shard);
 
 port_h_t ip_target_file_get_port(shard_t *shard);
 
+index_h_t ip_target_file_get_index(shard_t *shard);
+
 #endif // XMAP_IP_TARGET_FILE_H

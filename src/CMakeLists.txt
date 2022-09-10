@@ -48,10 +48,18 @@ set(SOURCES_PROBE_MODULES
         probe_modules/module_icmp6_echo.c
         probe_modules/module_icmp6_echo_gw.c
         probe_modules/module_icmp6_echo_tmxd.c
+        probe_modules/module_tcp_scan.c
         probe_modules/module_tcp_syn.c
         probe_modules/module_tcp6_syn.c
         probe_modules/module_udp.c
         probe_modules/module_udp6.c
+        probe_modules/module_dns.c
+        probe_modules/module_dnsr.c
+        probe_modules/module_dnsx.c
+        probe_modules/module_dnsf.c
+        probe_modules/module_dnsz.c
+        probe_modules/module_dnss.c
+        probe_modules/module_dnsv.c
         )
 
 set(SOURCES_IID_MODULES

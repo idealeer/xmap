@@ -20,10 +20,11 @@
 
 #define PACKET_VALID 1
 #define PACKET_INVALID 0
+#define PACKET_AGAIN 2
 
 typedef struct probe_response_type {
     const uint8_t is_success;
-    const char *  name;
+    const char   *name;
 } response_type_t;
 
 typedef int (*probe_global_init_cb)(struct state_conf *);
@@ -34,15 +35,16 @@ typedef int (*probe_thread_init_cb)(void *packet_buf, macaddr_t *src_mac,
 typedef int (*probe_make_packet_cb)(void *packet_buf, size_t *buf_len,
                                     ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
                                     port_h_t dst_port, uint8_t ttl,
-                                    int probe_num, void *arg);
+                                    int probe_num, index_h_t index, void *arg);
 
 typedef void (*probe_print_packet_cb)(FILE *, void *packet_buf);
 
 typedef int (*probe_validate_packet_cb)(const struct ip *ip_hdr, uint32_t len,
-                                        int *is_repeat);
+                                        int *is_repeat, void *packet_buf,
+                                        size_t *buf_len, uint8_t ttl);
 
 typedef void (*probe_classify_packet_cb)(const u_char *packet_buf, uint32_t len,
-                                         fieldset_t *          fs,
+                                         fieldset_t           *fs,
                                          const struct timespec ts);
 
 typedef int (*probe_close_cb)(struct state_conf *, struct state_send *,
@@ -67,9 +69,9 @@ typedef struct probe_module {
     probe_classify_packet_cb process_packet;
     probe_close_cb           close;
     int                      output_type;
-    fielddef_t *             fields;
+    fielddef_t              *fields;
     int                      numfields;
-    const char *             helptext;
+    const char              *helptext;
 
 } probe_module_t;
 

@@ -18,4 +18,8 @@ void parse_target_ports(char given_string[]);
 
 void init_target_port();
 
+char *strupr(char *str);
+
+void init_target_index();
+
 #endif // XMAP_UTILITY_H

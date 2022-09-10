@@ -62,7 +62,7 @@ json_object *field_to_jsonobj(field_t *f) {
     } else if (f->type == FS_BOOL) {
         return json_object_new_boolean(f->value.num);
     } else if (f->type == FS_BINARY) {
-        char *       encoded = hex_encode(f->value.ptr, f->len);
+        char        *encoded = hex_encode(f->value.ptr, f->len);
         json_object *t       = json_object_new_string(encoded);
         free(encoded);
         return t;

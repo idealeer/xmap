@@ -181,7 +181,7 @@ iterator_t *send_init(void) {
     if (xconf.number_source_ips == 1) {
         srcip_offset = 0;
     } else {
-        uint32_t offset = (uint32_t)(aesrand_getword(xconf.aes) & 0xFFFFFFFF);
+        uint32_t offset = (uint32_t) (aesrand_getword(xconf.aes) & 0xFFFFFFFF);
         srcip_offset    = offset % (xconf.number_source_ips);
     }
 
@@ -311,21 +311,20 @@ int send_run(sock_t st, shard_t *sd) {
     // Get the initial IP to scan.
     ipaddr_n_t dst_ip[xconf.ipv46_bytes];
     port_h_t   dst_port;
+    index_h_t  index;
     memset(dst_ip, 0, xconf.ipv46_bytes);
     if (xconf.list_of_ips_filename) {
         if (ip_target_file_get_ip(dst_ip, sd) == EXIT_FAILURE)
             memset(dst_ip, 0, xconf.ipv46_bytes);
         dst_port = ip_target_file_get_port(sd);
+        index    = ip_target_file_get_index(sd);
     } else
-        dst_port = shard_get_current_ip_prefix_port(dst_ip, sd);
+        shard_get_current_ip_prefix_port_index(dst_ip, sd, &dst_port, &index);
 
     ipaddr_n_t current_ip_suffix[xconf.ipv46_bytes];
     uint32_t   idx = 0; // pfring buffer index
     mpz_t      temp;    // temp using
     mpz_init(temp);
-
-    log_debug("send", "1st scanned IPv%d prefix: %s", xconf.ipv46_flag,
-              inet_in2constr(dst_ip, xconf.ipv46_flag));
 
     int b = 0;
     // while for sending
@@ -375,17 +374,6 @@ int send_run(sock_t st, shard_t *sd) {
                 }
 
                 count++;
-                ipaddr_n_t *src_ip = get_src_ip(dst_ip, i);
-                uint8_t     ttl    = xconf.probe_ttl;
-                size_t      length = xconf.probe_module->packet_length;
-                xconf.probe_module->make_packet(buff, &length, src_ip, dst_ip,
-                                                dst_port, ttl, i, probe_data);
-                if (length > MAX_PACKET_SIZE) {
-                    log_fatal("send",
-                              "send thread %hhu set length (%zu) larger than "
-                              "MAX (%zu)",
-                              sd->thread_id, length, MAX_PACKET_SIZE);
-                }
 
                 // sleeping, maybe send batch before sleeping
                 if (b >= xconf.batch) {
@@ -433,6 +421,19 @@ int send_run(sock_t st, shard_t *sd) {
                     b = 1;
                 } else {
                     b++;
+                }
+
+                ipaddr_n_t *src_ip = get_src_ip(dst_ip, i);
+                uint8_t     ttl    = xconf.probe_ttl;
+                size_t      length = xconf.probe_module->packet_length;
+                xconf.probe_module->make_packet(buff, &length, src_ip, dst_ip,
+                                                dst_port, ttl, i, index,
+                                                probe_data);
+                if (length > MAX_PACKET_SIZE) {
+                    log_fatal("send",
+                              "send thread %hhu set length (%zu) larger than "
+                              "MAX (%zu)",
+                              sd->thread_id, length, MAX_PACKET_SIZE);
                 }
 
                 if (xconf.dryrun) { // just generating packet
@@ -487,8 +488,9 @@ int send_run(sock_t st, shard_t *sd) {
             if (ip_target_file_get_ip(dst_ip, sd) == EXIT_FAILURE)
                 memset(dst_ip, 0, xconf.ipv46_bytes);
             dst_port = ip_target_file_get_port(sd);
+            index    = ip_target_file_get_index(sd);
         } else
-            dst_port = shard_get_next_ip_prefix_port(dst_ip, sd);
+            shard_get_next_ip_prefix_port_index(dst_ip, sd, &dst_port, &index);
     }
 
 cleanup:

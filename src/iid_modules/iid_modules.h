@@ -29,12 +29,12 @@ typedef int (*iid_get_cb)(void *iid, int iid_num, void *args);
 typedef int (*iid_close_cb)(void);
 
 typedef struct iid_module {
-    const char *       name;
+    const char        *name;
     iid_global_init_cb global_init;
     iid_thread_init_cb thread_init;
     iid_get_cb         get_current_iid;
     iid_close_cb       close;
-    const char *       helptext;
+    const char        *helptext;
 } iid_module_t;
 
 iid_module_t *get_iid_module_by_name(const char *name);

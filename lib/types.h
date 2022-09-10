@@ -15,5 +15,6 @@
 typedef uint8_t       ipaddr_n_t; // IPv4/6 address network order
 typedef uint16_t      port_h_t;   // port host order
 typedef unsigned char macaddr_t;
+typedef uint32_t      index_h_t; // index host order
 
 #endif // XMAP_TYPES_H

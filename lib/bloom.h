@@ -49,13 +49,13 @@ typedef struct bloom_filter {
     unsigned int number_hashes;
     uint64_t     number_bits;
     /* bloom filter */
-    unsigned char *   bloom;
+    unsigned char    *bloom;
     long              bloom_length;
     uint64_t          elements_added;
     BloomHashFunction hash_function;
     /* on disk handeling */
     short    __is_on_disk;
-    FILE *   filepointer;
+    FILE    *filepointer;
     uint64_t __filesize;
 } BloomFilter;
 
@@ -77,7 +77,7 @@ __inline__ static int bloom_filter_init(BloomFilter *bf,
  * larger than available RAM */
 int bloom_filter_init_on_disk_alt(BloomFilter *bf, uint64_t estimated_elements,
                                   float             false_positive_rate,
-                                  const char *      filepath,
+                                  const char       *filepath,
                                   BloomHashFunction hash_function);
 
 __inline__ static int bloom_filter_init_on_disk(BloomFilter *bf,
@@ -93,7 +93,7 @@ int bloom_filter_import_alt(BloomFilter *bf, const char *filepath,
                             BloomHashFunction hash_function);
 
 __inline__ static int bloom_filter_import(BloomFilter *bf,
-                                          const char * filepath) {
+                                          const char  *filepath) {
     return bloom_filter_import_alt(bf, filepath, NULL);
 }
 
@@ -104,7 +104,7 @@ int bloom_filter_import_on_disk_alt(BloomFilter *bf, const char *filepath,
                                     BloomHashFunction hash_function);
 
 __inline__ static int bloom_filter_import_on_disk(BloomFilter *bf,
-                                                  const char * filepath) {
+                                                  const char  *filepath) {
     return bloom_filter_import_on_disk_alt(bf, filepath, NULL);
 }
 
@@ -120,12 +120,12 @@ int bloom_filter_import_hex_string_alt(BloomFilter *bf, const char *hex,
                                        BloomHashFunction hash_function);
 
 __inline__ static int bloom_filter_import_hex_string(BloomFilter *bf,
-                                                     char *       hex) {
+                                                     char        *hex) {
     return bloom_filter_import_hex_string_alt(bf, hex, NULL);
 }
 
 /* Set or change the hashing function */
-void bloom_filter_set_hash_function(BloomFilter *     bf,
+void bloom_filter_set_hash_function(BloomFilter      *bf,
                                     BloomHashFunction hash_function);
 
 /* Print out statistics about the bloom filter */

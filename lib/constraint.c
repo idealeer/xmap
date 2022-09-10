@@ -43,11 +43,11 @@
 //
 
 // As an optimization, we precompute lookups for every prefix of this length.
-// Mem at least is 2^len * 16B(for a mpz_t).
+// Mem at least is 2^len * 16B (for a mpz_t).
 
 // As an extension, we build a constraint accepting any MAX IP length. Further,
-// the IPvX below could consist of a max IP length and max port length for
-// genning random <ip-prefix, port>
+// the IPvX below could consist of a max IP length and a max port length and
+// a max index length for generating random <ip-prefix, port, index>
 
 // IPvX mask
 static int IPVX_MAX_PREFIX_LEN = 0;
@@ -67,7 +67,7 @@ typedef struct node {
 
 struct _constraint {
     node_t *root;  // root node of the tree
-    mpz_t * radix; // array of prefixes (/RADIX_LENGTH) that
+    mpz_t  *radix; // array of prefixes (/RADIX_LENGTH) that
     // are painted paint_value
     size_t radix_len;   // number of prefixes in radix array
     int    painted;     // have we precomputed counts for each node?
@@ -90,7 +90,7 @@ static node_t *_create_leaf(const mpz_t value) {
 
 // calculate the initial IPvX mask
 static void cal_ipvx_mask(size_t ip_max_len) {
-    assert(0 < ip_max_len && ip_max_len <= 144);
+    assert(0 < ip_max_len);
 
     if (!IPVX_MASK_FLAG) {
         log_debug("constraint", "calculating mask for IPvX, max-len=%d",

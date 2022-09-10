@@ -41,7 +41,7 @@ const char *icmp_usage_error =
 
 static size_t       icmp_payload_len         = 0;
 static const size_t icmp_payload_default_len = 8;
-static char *       icmp_payload             = NULL;
+static char        *icmp_payload             = NULL;
 
 static int icmp_echo_global_init(struct state_conf *conf) {
     if (!(conf->probe_args && strlen(conf->probe_args) > 0)) {
@@ -168,16 +168,17 @@ static int icmp_echo_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 static int icmp_echo_make_packet(void *buf, UNUSED size_t *buf_len,
                                  ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
                                  UNUSED port_h_t dst_port, uint8_t ttl,
-                                 UNUSED int probe_num, UNUSED void *arg) {
+                                 UNUSED int probe_num, UNUSED index_h_t index,
+                                 UNUSED void *arg) {
     struct ether_header *eth_header  = (struct ether_header *) buf;
-    struct ip *          ip_header   = (struct ip *) (&eth_header[1]);
-    struct icmp *        icmp_header = (struct icmp *) (&ip_header[1]);
+    struct ip           *ip_header   = (struct ip *) (&eth_header[1]);
+    struct icmp         *icmp_header = (struct icmp *) (&ip_header[1]);
 
     uint8_t validation[VALIDATE_BYTES];
     validate_gen(src_ip, dst_ip, 0, validation);
 
-    uint16_t icmp_idnum  = icmp_get_idnum(validation);
-    uint16_t icmp_seqnum = icmp_get_seqnum(validation);
+    uint16_t icmp_idnum  = get_icmp_idnum(validation);
+    uint16_t icmp_seqnum = get_icmp_seqnum(validation);
 
     ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
     ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
@@ -197,8 +198,8 @@ static int icmp_echo_make_packet(void *buf, UNUSED size_t *buf_len,
 
 static void icmp_echo_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header  = (struct ether_header *) packet;
-    struct ip *          ip_header   = (struct ip *) &eth_header[1];
-    struct icmp *        icmp_header = (struct icmp *) (&ip_header[1]);
+    struct ip           *ip_header   = (struct ip *) &eth_header[1];
+    struct icmp         *icmp_header = (struct icmp *) (&ip_header[1]);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip_header(fp, ip_header);
@@ -218,7 +219,9 @@ static void icmp_echo_print_packet(FILE *fp, void *packet) {
 }
 
 static int icmp_echo_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                                     int *is_repeat) {
+                                     UNUSED int *is_repeat, UNUSED void *buf,
+                                     UNUSED size_t *buf_len,
+                                     UNUSED uint8_t ttl) {
     if (ip_hdr->ip_p != IPPROTO_ICMP) {
         return 0;
     }
@@ -270,10 +273,10 @@ static int icmp_echo_validate_packet(const struct ip *ip_hdr, uint32_t len,
     }
 
     // validate icmp id and seqnum
-    if (icmp_idnum != icmp_get_idnum(validation)) {
+    if (icmp_idnum != get_icmp_idnum(validation)) {
         return 0;
     }
-    if (icmp_seqnum != icmp_get_seqnum(validation)) {
+    if (icmp_seqnum != get_icmp_seqnum(validation)) {
         return 0;
     }
 
@@ -291,9 +294,9 @@ static int icmp_echo_validate_packet(const struct ip *ip_hdr, uint32_t len,
 }
 
 static void icmp_echo_process_packet(const u_char *packet, uint32_t len,
-                                     fieldset_t *           fs,
+                                     fieldset_t            *fs,
                                      UNUSED struct timespec ts) {
-    struct ip *  ip_header = (struct ip *) &packet[sizeof(struct ether_header)];
+    struct ip   *ip_header = (struct ip *) &packet[sizeof(struct ether_header)];
     struct icmp *icmp_header =
         (struct icmp *) ((char *) ip_header + 4 * ip_header->ip_hl);
     uint32_t hdrlen = sizeof(struct ether_header) + 4 * ip_header->ip_hl +
@@ -376,10 +379,10 @@ probe_module_t module_icmp_echo = {
     .fields          = fields,
     .numfields       = sizeof(fields) / sizeof(fields[0]),
     .helptext        = "Probe module that sends ICMP echo requests to hosts.\n"
-                "Payload of ICMP packets will consist of 8 bytes zero unless "
-                "you customize it with:\n"
-                "    --probe-args=file:/path_to_payload_file\n"
-                "    --probe-args=text:SomeText\n"
-                "    --probe-args=hex:5061796c6f6164\n"
-                "    --probe-args=icmp-type-code-str",
+                       "Payload of ICMP packets will consist of 8 bytes zero unless "
+                       "you customize it with:\n"
+                       "    --probe-args=file:/path_to_payload_file\n"
+                       "    --probe-args=text:SomeText\n"
+                       "    --probe-args=hex:5061796c6f6164\n"
+                       "    --probe-args=icmp-type-code-str",
 };

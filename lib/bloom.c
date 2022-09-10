@@ -71,7 +71,7 @@ int bloom_filter_init_alt(BloomFilter *bf, uint64_t estimated_elements,
     bf->false_positive_probability = false_positive_rate;
     __calculate_optimal_hashes(bf);
     bf->bloom          = calloc(bf->bloom_length + 1,
-                       sizeof(char)); // pad to ensure no running off the end
+                                sizeof(char)); // pad to ensure no running off the end
     bf->elements_added = 0;
     bloom_filter_set_hash_function(bf, hash_function);
     bf->__is_on_disk = 0; // not on disk
@@ -80,7 +80,7 @@ int bloom_filter_init_alt(BloomFilter *bf, uint64_t estimated_elements,
 
 int bloom_filter_init_on_disk_alt(BloomFilter *bf, uint64_t estimated_elements,
                                   float             false_positive_rate,
-                                  const char *      filepath,
+                                  const char       *filepath,
                                   BloomHashFunction hash_function) {
     if (estimated_elements <= 0 || estimated_elements > UINT64_MAX ||
         false_positive_rate <= 0.0 || false_positive_rate >= 1.0) {
@@ -102,7 +102,7 @@ int bloom_filter_init_on_disk_alt(BloomFilter *bf, uint64_t estimated_elements,
     return bloom_filter_import_on_disk_alt(bf, filepath, hash_function);
 }
 
-void bloom_filter_set_hash_function(BloomFilter *     bf,
+void bloom_filter_set_hash_function(BloomFilter      *bf,
                                     BloomHashFunction hash_function) {
     bf->hash_function =
         (hash_function == NULL) ? __default_hash : hash_function;
@@ -337,7 +337,7 @@ int bloom_filter_import_hex_string_alt(BloomFilter *bf, const char *hex,
 }
 
 uint64_t bloom_filter_export_size(BloomFilter *bf) {
-    return (uint64_t)(bf->bloom_length * sizeof(unsigned char)) +
+    return (uint64_t) (bf->bloom_length * sizeof(unsigned char)) +
            (2 * sizeof(uint64_t)) + sizeof(float);
 }
 
@@ -425,12 +425,13 @@ float bloom_filter_jaccard_index(BloomFilter *bf1, BloomFilter *bf2) {
         BLOOM_FAILURE) { // use bf1 as res
         return (float) BLOOM_FAILURE;
     }
-    float set_union_bits = (float) bloom_filter_count_union_bits_set(bf1, bf2);
+    float set_union_bits =
+        (float) (bloom_filter_count_union_bits_set(bf1, bf2));
     if (set_union_bits == 0.0) { // check for divide by 0 error
         return (float) 1.0; // they must be both empty for this to occur and are
         // therefore the same
     }
-    return (float) bloom_filter_count_intersection_bits_set(bf1, bf2) /
+    return (float) (bloom_filter_count_intersection_bits_set(bf1, bf2)) /
            set_union_bits;
 }
 

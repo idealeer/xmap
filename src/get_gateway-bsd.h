@@ -112,7 +112,7 @@ static int _get_default_gw(uint8_t *gw_ip, char **iface) {
 
 char *get_default_iface(void) {
     uint8_t t[16];
-    char *  retv = NULL;
+    char   *retv = NULL;
     _get_default_gw(t, &retv);
 
     return retv;
@@ -204,8 +204,8 @@ int get_default_gw_ip(uint8_t *gw_ip, const char *iface) {
 
 int get_hw_addr(const uint8_t *gw_ip_, UNUSED const char *iface,
                 unsigned char *hw_mac) {
-    struct in_addr * gw_ip = (struct in_addr *) gw_ip_;
-    arp_t *          arp;
+    struct in_addr  *gw_ip = (struct in_addr *) gw_ip_;
+    arp_t           *arp;
     struct arp_entry entry;
 
     if (!gw_ip || !hw_mac) {

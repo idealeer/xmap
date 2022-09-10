@@ -130,10 +130,11 @@ double compute_remaining_time(double age, uint64_t hosts_scanned,
     if (!xsend.complete) {
         double remaining[] = {INFINITY, INFINITY, INFINITY,
                               INFINITY, INFINITY, INFINITY};
+        if (xconf.target_index_num > 1) hosts_scanned = packets_sent;
         if (xconf.list_of_ips_filename) {
             // Estimate progress using group iterations
             double done =
-                (double) hosts_scanned / (xconf.list_of_ip_port_count);
+                (double) packets_sent / (xconf.list_of_ip_port_index_count);
             remaining[0] = (1. - done) * (age / done) + xconf.cooldown_secs;
         }
         if (xsend.max_targets) {
@@ -153,16 +154,17 @@ double compute_remaining_time(double age, uint64_t hosts_scanned,
             double done  = (double) xrecv.filter_success / xconf.max_results;
             remaining[4] = (1. - done) * (age / done);
         }
-        if (mpz_not_zero(xconf.total_allowed_ip_port_actual)) {
-            mpf_t host_scanned_t, max_ip_port_num_t;
+        if (mpz_not_zero(xconf.total_allowed_ip_port_index_actual)) {
+            mpf_t host_scanned_t, max_ip_port_index_num_t;
             mpf_init_set_d(host_scanned_t,
                            (double) hosts_scanned * xconf.total_shards);
-            mpf_init(max_ip_port_num_t);
-            mpf_set_z(max_ip_port_num_t, xconf.total_allowed_ip_port_actual);
-            mpf_div(host_scanned_t, host_scanned_t, max_ip_port_num_t);
+            mpf_init(max_ip_port_index_num_t);
+            mpf_set_z(max_ip_port_index_num_t,
+                      xconf.total_allowed_ip_port_index_actual);
+            mpf_div(host_scanned_t, host_scanned_t, max_ip_port_index_num_t);
             double done = mpf_get_d(host_scanned_t);
             mpf_clear(host_scanned_t);
-            mpf_clear(max_ip_port_num_t);
+            mpf_clear(max_ip_port_index_num_t);
             remaining[5] = (1. - done) * (age / done) + xconf.cooldown_secs;
         }
         return min_d(remaining, sizeof(remaining) / sizeof(double));
@@ -480,7 +482,7 @@ void monitor_init(void) {
 void monitor_run(iterator_t *it, pthread_mutex_t *lock) {
     log_debug("monitor", "thread started");
 
-    int_status_t *   internal_status = xmalloc(sizeof(int_status_t));
+    int_status_t    *internal_status = xmalloc(sizeof(int_status_t));
     export_status_t *export_status   = xmalloc(sizeof(export_status_t));
 
     while (!(xsend.complete && xrecv.complete)) {

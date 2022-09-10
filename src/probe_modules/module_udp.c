@@ -36,12 +36,12 @@
 #define ICMP_UNREACH_HEADER_SIZE 8
 #define UDP_SEND_MSG_EXT_NUM 3
 
-static char *                  udp_send_msg           = NULL;
+static char                   *udp_send_msg           = NULL;
 static int                     udp_send_msg_len       = 0;
 static int                     udp_send_substitutions = 0;
 static udp_payload_template_t *udp_template           = NULL;
 
-static char *      udp_send_msg_list[MAX_PORT_NUM];
+static char       *udp_send_msg_list[MAX_PORT_NUM];
 static int         udp_send_msg_len_list[MAX_PORT_NUM];
 static const char *udp_send_msg_ext_list[UDP_SEND_MSG_EXT_NUM] = {"pkt", "txt",
                                                                   "hex"};
@@ -149,7 +149,7 @@ static int udp_load_payload(const char *dir) {
     strncpy(dir_new, dir, strlen(dir));
     if (dir[strlen(dir) - 1] != '/') strcat(dir_new, "/");
 
-    FILE *       inp;
+    FILE        *inp;
     unsigned int n, f;
     int          port;
 
@@ -250,7 +250,7 @@ int udp_global_init(struct state_conf *conf) {
     if (!(conf->probe_args && strlen(conf->probe_args) > 0))
         return EXIT_SUCCESS;
 
-    char *       args, *c;
+    char        *args, *c;
     int          i;
     unsigned int n;
 
@@ -412,10 +412,10 @@ int udp_thread_init(void *buf, macaddr_t *src, macaddr_t *gw, void **arg_ptr) {
 
 int udp_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
                     ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                    int probe_num, UNUSED void *arg) {
+                    int probe_num, UNUSED index_h_t index, void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
-    struct ip *          ip_header  = (struct ip *) (&eth_header[1]);
-    struct udphdr *      udp_header = (struct udphdr *) &ip_header[1];
+    struct ip           *ip_header  = (struct ip *) (&eth_header[1]);
+    struct udphdr       *udp_header = (struct udphdr *) &ip_header[1];
 
     ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
     ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
@@ -481,8 +481,8 @@ int udp_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
 
 void udp_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header = (struct ether_header *) packet;
-    struct ip *          ip_header  = (struct ip *) &eth_header[1];
-    struct udphdr *      udp_header = (struct udphdr *) (&ip_header[1]);
+    struct ip           *ip_header  = (struct ip *) &eth_header[1];
+    struct udphdr       *udp_header = (struct udphdr *) (&ip_header[1]);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip_header(fp, ip_header);
@@ -498,7 +498,8 @@ void udp_print_packet(FILE *fp, void *packet) {
 }
 
 int udp_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                        UNUSED int *is_repeat) {
+                        UNUSED int *is_repeat, UNUSED void *buf,
+                        UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
     uint16_t dport;
     if (ip_hdr->ip_p == IPPROTO_UDP) {
         if ((4 * ip_hdr->ip_hl + sizeof(struct udphdr)) > len) {
@@ -697,13 +698,13 @@ int udp_template_build(udp_payload_template_t *t, char *out, unsigned int len,
                        struct ip *ip_hdr, struct udphdr *udp_hdr,
                        aesrand_t *aes) {
     udp_payload_field_t *c;
-    char *               p;
-    char *               max;
+    char                *p;
+    char                *max;
     char                 tmp[256];
     int                  full = 0;
     unsigned int         x, y;
-    uint32_t *           u32;
-    uint16_t *           u16;
+    uint32_t            *u32;
+    uint16_t            *u16;
 
     max = out + len;
     p   = out;
@@ -858,7 +859,7 @@ void udp_template_free(udp_payload_template_t *t) {
 }
 
 // Add a new field to the template
-void udp_template_add_field(udp_payload_template_t * t,
+void udp_template_add_field(udp_payload_template_t  *t,
                             udp_payload_field_type_t ftype, unsigned int length,
                             char *data) {
     udp_payload_field_t *c;
@@ -884,7 +885,7 @@ void udp_template_add_field(udp_payload_template_t * t,
 // Convert a string field name to a field type, parsing any specified length
 // value
 int udp_template_lookup_field(char *vname, udp_payload_field_t *c) {
-    char *       param;
+    char        *param;
     unsigned int f;
     unsigned int olen   = 0;
     unsigned int fcount = sizeof(udp_payload_template_fields) /
@@ -934,7 +935,7 @@ udp_payload_template_t *udp_template_load(char *buf, unsigned int len) {
     // Track the index into the template
     char *p = buf;
 
-    char *       tmp;
+    char        *tmp;
     unsigned int tlen;
 
     udp_payload_field_t c;

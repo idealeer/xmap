@@ -78,10 +78,26 @@ static int recover_thread_file_params(shard_t *shard) {
     return EXIT_SUCCESS;
 }
 
+static int recover_thread_file_params_(shard_t *shard) {
+    if (shard->ip_target_file_params.index_current + 1 >=
+        shard->ip_target_file_params.index_total) {
+        shard->ip_target_file_params.index_current = 0;
+        if (recover_thread_file_params(shard)) return EXIT_FAILURE;
+    } else {
+        shard->ip_target_file_params.index_current++;
+        shard->ip_target_file_params.current =
+            shard->ip_target_file_params.first;
+        rewind(shard->ip_target_file_params.fp);
+        fseek(shard->ip_target_file_params.fp, shard->ip_target_file_params.pos,
+              SEEK_SET);
+    }
+    return EXIT_SUCCESS;
+}
+
 int ip_target_file_get_ip(void *ip, shard_t *shard) {
     if (shard->ip_target_file_params.current >=
         shard->ip_target_file_params.last)
-        if (recover_thread_file_params(shard)) return EXIT_FAILURE;
+        if (recover_thread_file_params_(shard)) return EXIT_FAILURE;
 
     FILE *fp = shard->ip_target_file_params.fp;
     assert(fp);
@@ -132,4 +148,8 @@ int ip_target_file_get_ip(void *ip, shard_t *shard) {
 
 port_h_t ip_target_file_get_port(shard_t *shard) {
     return xconf.target_port_list[shard->ip_target_file_params.port_current];
+}
+
+index_h_t ip_target_file_get_index(shard_t *shard) {
+    return shard->ip_target_file_params.index_current;
 }

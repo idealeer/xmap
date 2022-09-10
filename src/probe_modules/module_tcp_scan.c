@@ -9,7 +9,7 @@
  * of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-// probe module for performing TCP SYN scans
+// probe module for performing TCP Full scans
 
 #include <assert.h>
 #include <stdint.h>
@@ -24,16 +24,16 @@
 #include "probe_modules.h"
 #include "validate.h"
 
-probe_module_t  module_tcp_syn;
+probe_module_t  module_tcp_scan;
 static uint32_t tcp_num_sports;
 
-static int tcp_syn_global_init(struct state_conf *state) {
+static int tcp_scan_global_init(struct state_conf *state) {
     tcp_num_sports = state->source_port_last - state->source_port_first + 1;
     return EXIT_SUCCESS;
 }
 
-static int tcp_syn_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
-                               UNUSED void **arg_ptr) {
+static int tcp_scan_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
+                                UNUSED void **arg_ptr) {
     memset(buf, 0, MAX_PACKET_SIZE);
 
     struct ether_header *eth_header = (struct ether_header *) buf;
@@ -49,10 +49,10 @@ static int tcp_syn_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
     return EXIT_SUCCESS;
 }
 
-static int tcp_syn_make_packet(void *buf, UNUSED size_t *buf_len,
-                               ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
-                               port_h_t dst_port, uint8_t ttl, int probe_num,
-                               UNUSED index_h_t index, UNUSED void *arg) {
+static int tcp_scan_make_packet(void *buf, UNUSED size_t *buf_len,
+                                ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
+                                port_h_t dst_port, uint8_t ttl, int probe_num,
+                                UNUSED index_h_t index, UNUSED void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
     struct ip           *ip_header  = (struct ip *) (&eth_header[1]);
     struct tcphdr       *tcp_header = (struct tcphdr *) (&ip_header[1]);
@@ -64,6 +64,7 @@ static int tcp_syn_make_packet(void *buf, UNUSED size_t *buf_len,
     ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
     ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
     ip_header->ip_ttl        = ttl;
+
     tcp_header->th_sport =
         htons(get_src_port(tcp_num_sports, probe_num, validation));
     tcp_header->th_dport = htons(dst_port);
@@ -80,7 +81,7 @@ static int tcp_syn_make_packet(void *buf, UNUSED size_t *buf_len,
 }
 
 // not static because used by synack scan
-void tcp_syn_print_packet(FILE *fp, void *packet) {
+void tcp_scan_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header = (struct ether_header *) packet;
     struct ip           *ip_header  = (struct ip *) &eth_header[1];
     struct tcphdr       *tcp_header = (struct tcphdr *) &ip_header[1];
@@ -105,9 +106,9 @@ void tcp_syn_print_packet(FILE *fp, void *packet) {
     fprintf(fp, "------------------------------------------------------\n");
 }
 
-static int tcp_syn_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                                   UNUSED int *is_repeat, UNUSED void *buf,
-                                   UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
+static int tcp_scan_validate_packet(const struct ip *ip_hdr, uint32_t len,
+                                    UNUSED int *is_repeat, void *buf,
+                                    UNUSED size_t *buf_len, uint8_t ttl) {
     if (ip_hdr->ip_p != IPPROTO_TCP) {
         return PACKET_INVALID;
     }
@@ -144,28 +145,79 @@ static int tcp_syn_validate_packet(const struct ip *ip_hdr, uint32_t len,
         }
     } else {
         // For non RST packets, recv(ack) == sent(seq) + 1
-        if (htonl(tcp_header->th_ack) != htonl(tcp_seq) + 1) {
+        if (htonl(tcp_header->th_ack) > htonl(tcp_seq) + 3 ||
+            htonl(tcp_header->th_ack) <= htonl(tcp_seq)) {
             return PACKET_INVALID;
         }
     }
 
-    // whether repeat: reply ip + dport
-    char ip_port_str[xconf.ipv46_bytes + 2];
+    // whether repeat: reply ip + dport + (char) seq_num
+    char ip_port_str[xconf.ipv46_bytes + 3];
     memcpy(ip_port_str, (char *) &(ip_hdr->ip_src.s_addr), xconf.ipv46_bytes);
     ip_port_str[xconf.ipv46_bytes]     = (char) (dport >> 8u);
     ip_port_str[xconf.ipv46_bytes + 1] = (char) (dport & 0xffu);
+    ip_port_str[xconf.ipv46_bytes + 2] = (char) (ntohl(tcp_header->th_seq));
     if (bloom_filter_check_string(&xrecv.bf, (const char *) ip_port_str,
-                                  xconf.ipv46_bytes + 2) == BLOOM_FAILURE) {
+                                  xconf.ipv46_bytes + 3) == BLOOM_FAILURE) {
         bloom_filter_add_string(&xrecv.bf, (const char *) ip_port_str,
-                                xconf.ipv46_bytes + 2);
+                                xconf.ipv46_bytes + 3);
         *is_repeat = 0;
     }
 
-    return PACKET_VALID;
+    if (tcp_header->th_flags & TH_SYN && tcp_header->th_flags & TH_ACK) {
+        struct ether_header *eth_header   = (struct ether_header *) buf;
+        struct ip           *ip_header    = (struct ip *) (&eth_header[1]);
+        struct tcphdr       *tcp_header_n = (struct tcphdr *) (&ip_header[1]);
+
+        ip_header->ip_src.s_addr = *(uint32_t *) &(ip_hdr->ip_dst);
+        ip_header->ip_dst.s_addr = *(uint32_t *) &(ip_hdr->ip_src);
+        ip_header->ip_ttl        = ttl;
+
+        tcp_header_n->th_sport = htons(sport);
+        tcp_header_n->th_dport = htons(dport);
+        tcp_header_n->th_seq   = tcp_header->th_ack;
+        tcp_header_n->th_ack   = htonl(ntohl(tcp_header->th_seq) + 1);
+        tcp_header_n->th_flags = TH_FIN | TH_ACK;
+        tcp_header_n->th_sum   = 0;
+        tcp_header_n->th_sum =
+            tcp_checksum(sizeof(struct tcphdr), ip_header->ip_src.s_addr,
+                         ip_header->ip_dst.s_addr, tcp_header_n);
+
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+
+        return PACKET_AGAIN;
+    } else if (tcp_header->th_flags & TH_FIN && tcp_header->th_flags & TH_ACK) {
+        struct ether_header *eth_header   = (struct ether_header *) buf;
+        struct ip           *ip_header    = (struct ip *) (&eth_header[1]);
+        struct tcphdr       *tcp_header_n = (struct tcphdr *) (&ip_header[1]);
+
+        ip_header->ip_src.s_addr = *(uint32_t *) &(ip_hdr->ip_dst);
+        ip_header->ip_dst.s_addr = *(uint32_t *) &(ip_hdr->ip_src);
+        ip_header->ip_ttl        = ttl;
+
+        tcp_header_n->th_sport = htons(sport);
+        tcp_header_n->th_dport = htons(dport);
+        tcp_header_n->th_seq   = tcp_header->th_ack;
+        tcp_header_n->th_ack   = htonl(ntohl(tcp_header->th_seq) + 1);
+        tcp_header_n->th_flags = TH_ACK;
+        tcp_header_n->th_sum   = 0;
+        tcp_header_n->th_sum =
+            tcp_checksum(sizeof(struct tcphdr), ip_header->ip_src.s_addr,
+                         ip_header->ip_dst.s_addr, tcp_header_n);
+
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+
+        return PACKET_AGAIN;
+    } else if (tcp_header->th_flags & TH_ACK)
+        return PACKET_VALID;
+
+    return PACKET_INVALID;
 }
 
-static void tcp_syn_process_packet(const u_char *packet, UNUSED uint32_t len,
-                                   fieldset_t *fs, UNUSED struct timespec ts) {
+static void tcp_scan_process_packet(const u_char *packet, UNUSED uint32_t len,
+                                    fieldset_t *fs, UNUSED struct timespec ts) {
     struct ip *ip_heaher = (struct ip *) &packet[sizeof(struct ether_header)];
     struct tcphdr *tcp_header =
         (struct tcphdr *) ((char *) ip_heaher + 4 * ip_heaher->ip_hl);
@@ -179,9 +231,20 @@ static void tcp_syn_process_packet(const u_char *packet, UNUSED uint32_t len,
     if (tcp_header->th_flags & TH_RST) { // RST packet
         fs_add_string(fs, "clas", (char *) "rst", 0);
         fs_add_bool(fs, "success", 0);
-    } else { // SYNACK packet
+    } else if (tcp_header->th_flags & TH_SYN &&
+               tcp_header->th_flags & TH_ACK) { // SYNACK packet
         fs_add_string(fs, "clas", (char *) "synack", 0);
         fs_add_bool(fs, "success", 1);
+    } else if (tcp_header->th_flags & TH_FIN &&
+               tcp_header->th_flags & TH_ACK) { // FINACK packet
+        fs_add_string(fs, "clas", (char *) "finack", 0);
+        fs_add_bool(fs, "success", 1);
+    } else if (tcp_header->th_flags & TH_ACK) { // ACK packet
+        fs_add_string(fs, "clas", (char *) "ack", 0);
+        fs_add_bool(fs, "success", 1);
+    } else {
+        fs_add_string(fs, "clas", (char *) "other", 0);
+        fs_add_bool(fs, "success", 0);
     }
 }
 
@@ -199,24 +262,25 @@ static fielddef_t fields[] = {
      .type = "bool",
      .desc = "is response considered success"}};
 
-probe_module_t module_tcp_syn = {
+probe_module_t module_tcp_scan = {
     .ipv46_flag      = 4,
-    .name            = "tcp_syn",
+    .name            = "tcp_scan",
     .packet_length   = 14 + 20 + 20,
-    .pcap_filter     = "ip && tcp && (tcp[13] & 4 != 0 || tcp[13] == 18)",
+    .pcap_filter     = "ip && tcp",
     .pcap_snaplen    = 14 + 20 + 20 + 40,
     .port_args       = 1,
-    .global_init     = &tcp_syn_global_init,
-    .thread_init     = &tcp_syn_thread_init,
-    .make_packet     = &tcp_syn_make_packet,
-    .print_packet    = &tcp_syn_print_packet,
-    .process_packet  = &tcp_syn_process_packet,
-    .validate_packet = &tcp_syn_validate_packet,
+    .global_init     = &tcp_scan_global_init,
+    .thread_init     = &tcp_scan_thread_init,
+    .make_packet     = &tcp_scan_make_packet,
+    .print_packet    = &tcp_scan_print_packet,
+    .process_packet  = &tcp_scan_process_packet,
+    .validate_packet = &tcp_scan_validate_packet,
     .close           = NULL,
     .output_type     = OUTPUT_TYPE_STATIC,
     .fields          = fields,
     .numfields       = sizeof(fields) / sizeof(fields[0]),
-    .helptext        = "Probe module that sends a TCP SYN packet to a specific "
-                       "port. Possible classifications are: synack and rst. A "
-                       "SYN-ACK packet is considered a success and a reset packet "
-                       "is considered a failed response."};
+    .helptext =
+        "Probe module that sends full TCP Scan packets to a specific "
+        "port. Possible classifications are: synack, finack, ack, and "
+        "rst. A SYN-ACK (FIN-ACK or ACK) packet is considered a success "
+        "and a reset packet is considered a failed response."};

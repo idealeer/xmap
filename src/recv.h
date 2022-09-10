@@ -12,10 +12,11 @@
 #ifndef XMAP_RECV_H
 #define XMAP_RECV_H
 
+#include "socket.h"
 #include <pthread.h>
 
 int recv_update_stats(void);
 
-int recv_run(pthread_mutex_t *recv_ready_mutex);
+int recv_run(pthread_mutex_t *recv_ready_mutex, sock_t);
 
 #endif // XMAP_RECV_H

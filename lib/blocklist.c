@@ -26,17 +26,24 @@
 #define ADDR_ALLOWED 1
 
 // scanning range on right, like 28 of 2001::/20-28 we just take bits from 0 to
-// 28 for blocklisting as if a new IPvX is defined with max-length 28 new
-// version: port range added we append the port bits to the end of the IPvX bits
-// to gen random <IP, port> IPvX: ip + port
+// 28 for blocklisting as if a new IPvX is defined with max-length 28.
+// new version: port range added (08/28/2020)
+// we append the port bits to the end of the IPvX bits
+// to generate random <IP, port> (IPvX: ip + port).
+// new version: index range added (04/28/2021)
+// we append the index bits to the end of the <IPvX, port> bits
+// to generate random <IP, port, index> (IPvX: ip + port + index)
 
-static int IPVX_MAX_PREFIX_LEN = 128; // max IP bits
-static int PORT_MAX_BITS       = 16;  // max port bits
-static int IPVX_PORT_MAX_BITS  = 144; // max IP + port bits
+static int IPVX_MAX_PREFIX_LEN      = 128; // max IP bits
+static int PORT_MAX_BITS            = 16;  // max port bits
+static int IPVX_PORT_MAX_BITS       = 144; // max IP + port bits
+static int INDEX_MAX_BITS           = 24;  // max index bits
+static int PORT_INDEX_MAX_BITS      = 40;  // max port + index bits
+static int IPVX_PORT_INDEX_MAX_BITS = 168; // max IP + port + index bits
 
 static int IPV46_FLAG          = 6;   // IPv4/IPv6 flag
 static int IP_MAX_PREFIX_LEN   = 128; // IPv4/IPv6 max bits
-static int IP_MAX_PREFIX_BYTES = 16;  // IPv4/IPv6 max bits
+static int IP_MAX_PREFIX_BYTES = 16;  // IPv4/IPv6 max bytes
 
 typedef struct bl_linked_list {
     bl_cidr_node_t *first;
@@ -55,16 +62,16 @@ bl_cidr_node_t *get_blocklisted_cidrs(void) { return blocklisted_cidrs->first; }
 
 bl_cidr_node_t *get_allowlisted_cidrs(void) { return allowlisted_cidrs->first; }
 
-void blocklist_lookup_index_for_ipvx_port(mpz_t ipvx, const mpz_t index) {
+void blocklist_lookup_index_for_ipvx_port_index(mpz_t ipvx, const mpz_t index) {
     constraint_lookup_index_for_ipvx_ui(ipvx, constraint, index, ADDR_ALLOWED);
 }
 
 // check whether a single IP address is allowed to be scanned.
-// appending port bits
+// appending port + index bits
 int blocklist_is_allowed_ipvx(const mpz_t ipvx) {
     mpz_t ipvx_p;
     mpz_init(ipvx_p);
-    mpz_mul_2exp(ipvx_p, ipvx, PORT_MAX_BITS);
+    mpz_mul_2exp(ipvx_p, ipvx, PORT_INDEX_MAX_BITS);
     int ret =
         constraint_lookup_ipvx_for_value_ui(constraint, ipvx_p) == ADDR_ALLOWED;
     mpz_clear(ipvx_p);
@@ -98,12 +105,12 @@ static void bl_ll_add(bl_ll_t *l, const mpz_t addr, uint16_t p) {
     mpz_add_ui(l->len, l->len, 1);
 }
 
-// appending port bits for constraint
+// appending port + index bits for constraint
 // not for cidr list
 static void _add_constraint(const mpz_t prefix, int prefix_len, int value) {
     mpz_t ipvx_p;
     mpz_init(ipvx_p);
-    mpz_mul_2exp(ipvx_p, prefix, PORT_MAX_BITS);
+    mpz_mul_2exp(ipvx_p, prefix, PORT_INDEX_MAX_BITS);
     constraint_set_ui(constraint, ipvx_p, prefix_len, value);
     mpz_clear(ipvx_p);
 
@@ -310,30 +317,44 @@ static void init_from_array(char **cidrs, size_t len, const char *name,
     }
 }
 
+// allowed: ip x port x index
+void blocklist_count_allowed_ip_port_index(mpz_t count) {
+    assert(constraint);
+    constraint_count_ipvx_of_value_ui(count, constraint, ADDR_ALLOWED);
+}
+
 // allowed: ip x port
 void blocklist_count_allowed_ip_port(mpz_t count) {
     assert(constraint);
     constraint_count_ipvx_of_value_ui(count, constraint, ADDR_ALLOWED);
+    mpz_fdiv_q_2exp(count, count, INDEX_MAX_BITS);
 }
 
 // allowed: ip
 void blocklist_count_allowed_ip(mpz_t count) {
     assert(constraint);
     constraint_count_ipvx_of_value_ui(count, constraint, ADDR_ALLOWED);
-    mpz_fdiv_q_2exp(count, count, PORT_MAX_BITS);
+    mpz_fdiv_q_2exp(count, count, PORT_INDEX_MAX_BITS);
+}
+
+// not allowed: ip x port x index
+void blocklist_count_not_allowed_ip_port_index(mpz_t count) {
+    assert(constraint);
+    constraint_count_ipvx_of_value_ui(count, constraint, ADDR_DISALLOWED);
 }
 
 // not allowed: ip x port
 void blocklist_count_not_allowed_ip_port(mpz_t count) {
     assert(constraint);
     constraint_count_ipvx_of_value_ui(count, constraint, ADDR_DISALLOWED);
+    mpz_fdiv_q_2exp(count, count, INDEX_MAX_BITS);
 }
 
 // not allowed: ip
 void blocklist_count_not_allowed_ip(mpz_t count) {
     assert(constraint);
     constraint_count_ipvx_of_value_ui(count, constraint, ADDR_DISALLOWED);
-    mpz_fdiv_q_2exp(count, count, PORT_MAX_BITS);
+    mpz_fdiv_q_2exp(count, count, PORT_INDEX_MAX_BITS);
 }
 
 uint32_t blocklist_ipvx_for_value(const mpz_t ipvx) {
@@ -345,14 +366,20 @@ int blocklist_init(char *allowlist_filename, char *blocklist_filename,
                    char **allowlist_entries, size_t allowlist_entries_len,
                    char **blocklist_entries, size_t blocklist_entries_len,
                    int ignore_invalid_hosts, size_t ipvx_max_len,
-                   size_t port_max_len, size_t ipv46_flag) {
+                   size_t port_max_len, size_t ipv46_flag,
+                   size_t index_max_len) {
     assert(!constraint);
-    if (port_max_len < 0 || port_max_len > 65535)
+    if (port_max_len < 0 || (int) port_max_len > PORT_MAX_BITS)
         log_fatal("blocklist", "port bits number:%d > max bits number:%d",
                   port_max_len, PORT_MAX_BITS);
 
+    if (index_max_len < 0 || (int) index_max_len > INDEX_MAX_BITS)
+        log_fatal("blocklist", "index bits number:%d > max bits number:%d",
+                  index_max_len, INDEX_MAX_BITS);
+
     IPVX_MAX_PREFIX_LEN = ipvx_max_len;
     PORT_MAX_BITS       = port_max_len;
+    INDEX_MAX_BITS      = index_max_len;
     IPV46_FLAG          = ipv46_flag;
     switch (IPV46_FLAG) {
     case IPV6_FLAG:
@@ -373,12 +400,15 @@ int blocklist_init(char *allowlist_filename, char *blocklist_filename,
         log_fatal("blocklist", "not supported IPv%d", IPV46_FLAG);
     }
 
-    IPVX_PORT_MAX_BITS = IPVX_MAX_PREFIX_LEN + PORT_MAX_BITS;
-    log_debug("blocklist", "IPVX_MAX_PREFIX_LEN=%d", IPVX_MAX_PREFIX_LEN);
+    IPVX_PORT_MAX_BITS       = IPVX_MAX_PREFIX_LEN + PORT_MAX_BITS;
+    PORT_INDEX_MAX_BITS      = PORT_MAX_BITS + INDEX_MAX_BITS;
+    IPVX_PORT_INDEX_MAX_BITS = IPVX_MAX_PREFIX_LEN + PORT_INDEX_MAX_BITS;
     log_debug("blocklist", "IPv%d_MAX_PREFIX_LEN=%d", IPV46_FLAG,
               IP_MAX_PREFIX_LEN);
+    log_debug("blocklist", "IPVX_MAX_PREFIX_LEN=%d", IPVX_MAX_PREFIX_LEN);
     log_debug("blocklist", "PORT_MAX_BITS=%d", PORT_MAX_BITS);
-    log_debug("blocklist", "max blocklist len=%d", IPVX_PORT_MAX_BITS);
+    log_debug("blocklist", "INDEX_MAX_BITS=%d", INDEX_MAX_BITS);
+    log_debug("blocklist", "max blocklist len=%d", IPVX_PORT_INDEX_MAX_BITS);
 
     blocklisted_cidrs = xcalloc(1, sizeof(bl_ll_t));
     mpz_init_set_ui(blocklisted_cidrs->len, 0);
@@ -393,9 +423,10 @@ int blocklist_init(char *allowlist_filename, char *blocklist_filename,
 
     if (allowlist_filename || allowlist_entries_len > 0) {
         // using a allowlist, so default to allowing nothing
-        constraint = constraint_init_ui(ADDR_DISALLOWED, IPVX_PORT_MAX_BITS);
-        log_debug("blocklist", "blocklisting: all /%d+%d(port)",
-                  IPVX_MAX_PREFIX_LEN, PORT_MAX_BITS);
+        constraint =
+            constraint_init_ui(ADDR_DISALLOWED, IPVX_PORT_INDEX_MAX_BITS);
+        log_debug("blocklist", "blocklisting: all /%d+%d(port)+%d(index)",
+                  IPVX_MAX_PREFIX_LEN, PORT_MAX_BITS, INDEX_MAX_BITS);
         if (allowlist_filename) {
             init_from_file(allowlist_filename, "allowlist", ADDR_ALLOWED,
                            ignore_invalid_hosts);
@@ -408,9 +439,9 @@ int blocklist_init(char *allowlist_filename, char *blocklist_filename,
         // no allowlist, so default to allowing everything
         log_debug("blocklist",
                   "no allowlist file or allowlist entries provided, set to "
-                  "allow all /%d+%d(port)",
-                  IPVX_MAX_PREFIX_LEN, PORT_MAX_BITS);
-        constraint = constraint_init_ui(ADDR_ALLOWED, IPVX_PORT_MAX_BITS);
+                  "allow all /%d+%d(port)+%d(index)",
+                  IPVX_MAX_PREFIX_LEN, PORT_MAX_BITS, INDEX_MAX_BITS);
+        constraint = constraint_init_ui(ADDR_ALLOWED, IPVX_PORT_INDEX_MAX_BITS);
     }
 
     if (blocklist_filename) {

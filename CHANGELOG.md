@@ -17,3 +17,8 @@
 * XMap 1.0.3 Minor Release.
 * Fix Bugs:
   * Fix multiple port scanning modules, enabling `-p 0-65535`
+
+# 1.1.0 2022-09-10
+* XMap 1.1.0 Major Release.
+* New Features:
+  * DNS scan modules enabled (base module: `-M dnsx`, query for software version: `-M dnsv`, spoofing source address: `-M dnsf`, and so on)

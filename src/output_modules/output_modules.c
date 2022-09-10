@@ -33,7 +33,7 @@ output_module_t *output_modules[] = {
     &module_json_file,
 #endif
 #ifdef REDIS
-    &module_redis,    &module_redis_csv,
+    &module_redis,     &module_redis_csv,
 #endif
 #ifdef MONGODB
     &module_mongodb,

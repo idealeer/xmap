@@ -37,6 +37,10 @@ IP addresses or DNS hostnames to scan\. Accept IP ranges in CIDR block notation\
 TCP or UDP port(s) number to scan (for SYN scans and basic UDP scans)\. Accepts port ranges with \fB,\fR and \fB\-\fR, e\.g\., \fB80,443,8080\-8081\fR\. With \fB\-\-target\-port\fR, one target is a \fB<ip/x, port>\fR\.
 .
 .TP
+\fB\-P\fR, \fB\-\-target\-index=num\fR
+Payload number to scan\. With \fB\-\-target\-index\fR, one target is a \fB<ip/x, (port), index>\fR\.
+.
+.TP
 \fB\-o\fR, \fB\-\-output\-file=name\fR
 When using an output module that uses a file, write results to this file\. Use \fB\-\fR for stdout\.
 .
@@ -118,7 +122,7 @@ Source port(s) to send packets from\. Accept port ranges with \fB\-\fR, e\.g\., 
 .
 .TP
 \fB\-S\fR, \fB\-\-source\-ip=ip|range\fR
-Source address(es) to send packets from\. Either single IP or range\. Accept ip ranges with \fB,\fR and \fB\-\fR, e\.g\., 2001::1, 2001::2\-2001::10\.
+Source address(es) to send packets from\. Either single IP or range\. Accept ip ranges with \fB,\fR and \fB\-\fR (max=\fB1024\fR), e\.g\., 2001::1, 2001::2\-2001::10\.
 .
 .TP
 \fB\-G\fR, \fB\-\-gateway\-mac=mac\fR

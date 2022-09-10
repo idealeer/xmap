@@ -63,11 +63,12 @@ typedef struct send_args {
 
 typedef struct recv_args {
     uint32_t cpu;
+    sock_t   sock;
 } recv_args_t;
 
 typedef struct mon_start_args {
     uint32_t         cpu;
-    iterator_t *     it;
+    iterator_t      *it;
     pthread_mutex_t *recv_ready_mutex;
 } mon_start_args_t;
 
@@ -95,7 +96,7 @@ static void *start_recv(void *args) {
     log_debug("xmap", "pinning receive thread to core %u", r->cpu);
 
     set_cpu(r->cpu);
-    recv_run(&recv_ready_mutex);
+    recv_run(&recv_ready_mutex, r->sock);
 
     return NULL;
 }
@@ -201,8 +202,8 @@ static void start_xmap(void) {
     uint32_t metadata_len  = 0;
     uint32_t numa_node     = 0; // TODO
     xconf.pf.cluster       = pfring_zc_create_cluster(
-        PMAP_PF_ZC_CLUSTER_ID, PMAP_PF_BUFFER_SIZE, metadata_len, total_buffers,
-        numa_node, NULL, 0);
+              PMAP_PF_ZC_CLUSTER_ID, PMAP_PF_BUFFER_SIZE, metadata_len, total_buffers,
+              numa_node, NULL, 0);
     if (xconf.pf.cluster == NULL) {
         log_fatal("xmap", "Could not create zc cluster: %s", strerror(errno));
     }
@@ -269,7 +270,7 @@ static void start_xmap(void) {
     pthread_t *tsend, trecv, tmon;
 
     // recv thread
-    if (!xconf.dryrun) { // TODO how many target will reply? <ip, port>
+    if (!xconf.dryrun) { // TODO how many target will reply? <ip, port, index>
         if (bloom_filter_init(&xrecv.bf, xconf.est_elements, (float) 1e-5) ==
             BLOOM_FAILURE) {
             log_fatal("xmap",
@@ -277,9 +278,18 @@ static void start_xmap(void) {
         }
         log_debug("xmap", "bloomfilter for unique results <= 4e9");
 
+        sock_t sock; // used for sending pkt in recv thread for stateful probing
+        if (xconf.dryrun) {
+            sock = get_dryrun_socket();
+        } else {
+            sock = get_socket(xconf.senders);
+        }
+
         recv_args_t *recv_arg = xmalloc(sizeof(recv_args_t));
         recv_arg->cpu         = xconf.pin_cores[cpu % xconf.pin_cores_len];
+        recv_arg->sock        = sock;
         cpu += 1;
+
         int r = pthread_create(&trecv, NULL, start_recv, recv_arg);
         if (r != 0) {
             log_fatal("xmap", "unable to create recv thread");
@@ -412,6 +422,9 @@ static void init_state() {
     mpz_init(xconf.total_allowed_ip);
     mpz_init(xconf.total_disallowed_ip);
     mpz_init(xconf.total_allowed_ip_port_actual);
+    mpz_init(xconf.total_allowed_ip_port_index);
+    mpz_init(xconf.total_disallowed_ip_port_index);
+    mpz_init(xconf.total_allowed_ip_port_index_actual);
 
     // init for xsend state
     mpz_init(xsend.first_scanned);
@@ -426,6 +439,9 @@ static void deinit_state() {
     mpz_clear(xconf.total_allowed_ip);
     mpz_clear(xconf.total_disallowed_ip);
     mpz_clear(xconf.total_allowed_ip_port_actual);
+    mpz_clear(xconf.total_allowed_ip_port_index);
+    mpz_clear(xconf.total_disallowed_ip_port_index);
+    mpz_clear(xconf.total_allowed_ip_port_index_actual);
 
     // deinit for xsend state
     mpz_clear(xsend.first_scanned);
@@ -438,6 +454,7 @@ static void deinit_state() {
             (DST) = args.ARG##_arg;                                            \
         };                                                                     \
     }
+
 #define SET_BOOL(DST, ARG)                                                     \
     {                                                                          \
         if (args.ARG##_given) {                                                \
@@ -555,13 +572,17 @@ int main(int argc, char *argv[]) {
                       xconf.max_probe_len);
         }
 
-        xconf.max_probe_port_len = xconf.max_probe_len;
+        xconf.max_probe_port_len       = xconf.max_probe_len;
+        xconf.max_probe_port_index_len = xconf.max_probe_port_len;
+        xconf.max_port_index_len       = 0;
         log_debug("xmap", "ipv%d max probing len=%d, +port=%d",
                   xconf.ipv46_flag, xconf.max_probe_len,
                   xconf.max_probe_port_len);
     } else {
-        xconf.max_probe_len      = 32;
-        xconf.max_probe_port_len = 32;
+        xconf.max_probe_len            = 32;
+        xconf.max_probe_port_len       = 32;
+        xconf.max_probe_port_index_len = 32;
+        xconf.max_port_index_len       = 0;
         log_debug("xmap",
                   "no `-x|--max-len=' given, default select to scan all /%d "
                   "for ipv%d",
@@ -878,6 +899,12 @@ int main(int argc, char *argv[]) {
         init_target_port();
     }
 
+    // target-index
+    SET_IF_GIVEN(xconf.target_index_num, target_index);
+    if (args.target_index_given) {
+        init_target_index();
+    }
+
     // iface
     SET_IF_GIVEN(xconf.iface, interface);
 
@@ -1028,13 +1055,29 @@ int main(int argc, char *argv[]) {
         else
             xconf.list_of_ip_port_count = count;
 
-        log_debug("xmap", "target ipv%d number: %d, <ipv%d, port> number: %d",
+        xconf.list_of_ip_port_index_count = xconf.list_of_ip_port_count;
+        if (xconf.target_index_num)
+            xconf.list_of_ip_port_index_count =
+                xconf.list_of_ip_port_count * xconf.target_index_num;
+
+        xconf.list_of_ip_port_index_count =
+            xconf.list_of_ip_port_index_count * xconf.packet_streams;
+        xconf.list_of_ip_port_count = xconf.list_of_ip_port_index_count;
+
+        log_debug("xmap",
+                  "target ipv%d number: %d, <ipv%d, port> number: %d, <ipv%d, "
+                  "port, index> number: %d",
                   xconf.ipv46_flag, count, xconf.ipv46_flag,
-                  xconf.list_of_ip_port_count);
+                  xconf.list_of_ip_port_count, xconf.ipv46_flag,
+                  xconf.list_of_ip_port_index_count);
         log_debug("xmap", "init ip target file completed");
 
         xconf.max_probe_len      = xconf.ipv46_bits;
         xconf.max_probe_port_len = xconf.max_probe_len + xconf.target_port_bits;
+        xconf.max_port_index_len =
+            xconf.target_port_bits + xconf.target_index_bits;
+        xconf.max_probe_port_index_len =
+            xconf.max_probe_len + xconf.max_port_index_len;
         log_debug("xmap", "load ip target from file, max probe len reset to %d",
                   xconf.max_probe_len);
     }
@@ -1053,7 +1096,7 @@ int main(int argc, char *argv[]) {
                        xconf.destination_cidrs, xconf.destination_cidrs_len,
                        NULL, 0, xconf.ignore_blacklist_error,
                        xconf.max_probe_len, xconf.target_port_bits,
-                       xconf.ipv46_flag)) {
+                       xconf.ipv46_flag, xconf.target_index_bits)) {
         log_fatal("xmap", "unable to initialize blacklist/whitelist");
     }
     xconf.ignore_blacklist_error = args.ignore_blacklist_error_given;
@@ -1067,9 +1110,20 @@ int main(int argc, char *argv[]) {
                    xconf.target_port_num);
     else
         mpz_set(xconf.total_allowed_ip_port_actual, xconf.total_allowed_ip);
+    if (xconf.target_index_num)
+        mpz_mul_ui(xconf.total_allowed_ip_port_index_actual,
+                   xconf.total_allowed_ip_port_actual, xconf.target_index_num);
+    else
+        mpz_set(xconf.total_allowed_ip_port_index_actual,
+                xconf.total_allowed_ip_port_actual);
+    mpz_mul_ui(xconf.total_allowed_ip_port_index_actual,
+               xconf.total_allowed_ip_port_index_actual, xconf.packet_streams);
     blocklist_count_not_allowed_ip(xconf.total_disallowed_ip);
     blocklist_count_allowed_ip_port(xconf.total_allowed_ip_port);
     blocklist_count_not_allowed_ip_port(xconf.total_disallowed_ip_port);
+    blocklist_count_allowed_ip_port_index(xconf.total_allowed_ip_port_index);
+    blocklist_count_not_allowed_ip_port_index(
+        xconf.total_disallowed_ip_port_index);
 
     // sender thread number
 #ifndef PFRING
@@ -1084,7 +1138,7 @@ int main(int argc, char *argv[]) {
          (xsend.max_packets && 2 * xconf.senders >= xsend.max_packets) ||
          (xconf.list_of_ips_filename &&
           2 * xconf.senders >= xconf.list_of_ip_count) ||
-         mpz_le_ui(xconf.total_allowed_ip_port, 2 * xconf.senders)) &&
+         mpz_le_ui(xconf.total_allowed_ip_port_index, 2 * xconf.senders)) &&
         xconf.senders > 1) {
         log_warn("xmap",
                  "too few targets relative to senders, dropping to one sender");

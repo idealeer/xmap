@@ -89,6 +89,7 @@
 <dt> <code>-x</code>, <code>--max-len=len</code></dt><dd><p> Max IP bit length to scan (default = <code>32</code>).</p></dd>
 <dt> <code>ip</code>|<code>domain</code>|<code>range</code></dt><dd><p> IP addresses or DNS hostnames to scan. Accept IP ranges in CIDR block notation. Max length of domains is 256, e.g, 2001::/64, 192.168.0.1/16, and www.qq.com/32. Default to <code>::/0</code> and <code>0.0.0.0/0</code>.</p></dd>
 <dt> <code>-p</code>, <code>--target-port=port|range</code></dt><dd><p> TCP or UDP port(s) number to scan (for SYN scans and basic UDP scans). Accepts port ranges with <code>,</code> and <code>-</code>, e.g., <code>80,443,8080-8081</code>. With <code>--target-port</code>, one target is a <strong>&lt;ip/x, port></strong>.</p></dd>
+<dt> <code>-P</code>, <code>--target-index=num</code></dt><dd><p> Payload number to scan. With <code>--target-index</code>, one target is a <strong>&lt;ip/x, (port), index></strong>.</p></dd>
 <dt> <code>-o</code>, <code>--output-file=name</code></dt><dd><p> When using an output module that uses a file, write results to this file. Use <code>-</code> for stdout.</p></dd>
 <dt> <code>-b</code>, <code>--blacklist-file=path</code></dt><dd><p> File of subnets to exclude, accept DNS hostnames, in CIDR notation, one-per line. It is recommended you use this to exclude RFC 1918 addresses, multicast, IANA reserved space, and other IANA special-purpose addresses. An example blacklist file <strong>blacklist4.conf</strong> for this purpose.</p></dd>
 <dt> <code>-w</code>, <code>--whitelist-file=path</code></dt><dd><p> File of subnets to include, accept DNS hostnames, in CIDR notation, one-per line. Specifying a whitelist file is equivalent to specifying to ranges directly on the command line interface, but allows specifying a large number of subnets. <strong>Note</strong>: if you are specifying a large number of individual IP addresses (more than 1 million), you should instead use <code>--list-of-ips-file</code>. An example whitelist file <strong>whitelist6.conf</strong> for this purpose.</p></dd>
@@ -120,7 +121,7 @@
 
 <dl>
 <dt> <code>-s</code>, <code>--source-port=port|range</code></dt><dd><p> Source port(s) to send packets from. Accept port ranges with <code>-</code>, e.g., <code>12345-54321</code>. Default to <code>32768-61000</code>.</p></dd>
-<dt> <code>-S</code>, <code>--source-ip=ip|range</code></dt><dd><p> Source address(es) to send packets from. Either single IP or range. Accept ip ranges with <code>,</code> and <code>-</code>, e.g., 2001::1, 2001::2-2001::10.</p></dd>
+<dt> <code>-S</code>, <code>--source-ip=ip|range</code></dt><dd><p> Source address(es) to send packets from. Either single IP or range. Accept ip ranges with <code>,</code> and <code>-</code> (max=<code>1024</code>), e.g., 2001::1, 2001::2-2001::10.</p></dd>
 <dt> <code>-G</code>, <code>--gateway-mac=mac</code></dt><dd><p> Gateway MAC address to send packets to (in case auto-detection fails).</p></dd>
 <dt> <code>--source-mac=mac</code></dt><dd><p> Source MAC address to send packets from (in case auto-detection fails).</p></dd>
 <dt> <code>-i</code>, <code>--interface=name</code></dt><dd><p> Network interface to use.</p></dd>

@@ -26,9 +26,9 @@
 
 #define BUFFER_SIZE 1000
 
-static char **       buffer;
+static char        **buffer;
 static int           buffer_fill = 0;
-static char *        queue_name  = NULL;
+static char         *queue_name  = NULL;
 static redisContext *rctx        = NULL;
 
 int rediscsvmodule_init(struct state_conf *conf, UNUSED char **fields,
@@ -38,7 +38,7 @@ int rediscsvmodule_init(struct state_conf *conf, UNUSED char **fields,
     buffer_fill = 0;
     redisconf_t  c;
     redisconf_t *rconf          = &c;
-    char *       connect_string = NULL;
+    char        *connect_string = NULL;
     if (conf->output_args) {
         log_debug("redis-csv", "output args %s", conf->output_args);
         connect_string = conf->output_args;
@@ -137,9 +137,9 @@ static void hex_encode_str(char *f, unsigned char *readbuf, size_t len) {
 void make_csv_string(fieldset_t *fs, char *out, size_t len) {
     memset(out, 0, len);
     for (int i = 0; i < fs->len; i++) {
-        char *   temp    = out + (size_t) strlen(out);
+        char    *temp    = out + (size_t) strlen(out);
         field_t *f       = &(fs->fields[i]);
-        char *   dataloc = temp;
+        char    *dataloc = temp;
         if (i) { // only add comma if not first element
             sprintf(temp, ",");
             dataloc += (size_t) 1;
@@ -178,7 +178,7 @@ void make_csv_string(fieldset_t *fs, char *out, size_t len) {
 
 int rediscsvmodule_process(fieldset_t *fs) {
     size_t reqd_space = guess_csv_string_length(fs);
-    char * x          = xmalloc(reqd_space);
+    char  *x          = xmalloc(reqd_space);
     make_csv_string(fs, x, reqd_space);
     buffer[buffer_fill] = x;
     // if full, flush all to redis

@@ -26,8 +26,8 @@
 struct iterator {
     cycle_t         cycle;
     uint8_t         num_threads;
-    shard_t *       thread_shards;
-    uint8_t *       complete;
+    shard_t        *thread_shards;
+    uint8_t        *complete;
     pthread_mutex_t mutex;
     uint32_t        curr_threads;
 };
@@ -66,25 +66,25 @@ iterator_t *iterator_init(uint8_t num_threads, uint16_t shard,
                           uint16_t num_shards) {
     log_debug("iterator", "iterator_init start");
 
-    mpz_t num_addrs_ports;
-    mpz_init(num_addrs_ports);
-    blocklist_count_allowed_ip_port(num_addrs_ports);
+    mpz_t num_addrs_ports_index;
+    mpz_init(num_addrs_ports_index);
+    blocklist_count_allowed_ip_port_index(num_addrs_ports_index);
     mpz_t group_min_size;
-    mpz_init_set(group_min_size, num_addrs_ports);
+    mpz_init_set(group_min_size, num_addrs_ports_index);
 
     mpz_t two, temp;
     mpz_init_set_ui(two, 2);
     mpz_init(temp);
 
-    iterator_t *          it    = xmalloc(sizeof(struct iterator));
+    iterator_t           *it    = xmalloc(sizeof(struct iterator));
     const cyclic_group_t *group = get_group(group_min_size);
 
-    mpz_pow_ui(temp, two, xconf.max_probe_port_len);
-    if (mpz_gt(num_addrs_ports, temp)) {
+    mpz_pow_ui(temp, two, xconf.max_probe_port_index_len);
+    if (mpz_gt(num_addrs_ports_index, temp)) {
         mpz_sub_ui(temp, temp, 1);
         mpz_set(xsend.max_index, temp);
     } else {
-        mpz_set(xsend.max_index, num_addrs_ports);
+        mpz_set(xsend.max_index, num_addrs_ports_index);
     }
     log_debug("iterator", "max index %s", mpz_to_str10(xsend.max_index));
 

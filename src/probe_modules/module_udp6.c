@@ -37,12 +37,12 @@
 #define ICMP6_UNREACH_HEADER_SIZE 8
 #define UDP6_SEND_MSG_EXT_NUM 3
 
-static char *                   udp6_send_msg           = NULL;
+static char                    *udp6_send_msg           = NULL;
 static int                      udp6_send_msg_len       = 0;
 static int                      udp6_send_substitutions = 0;
 static udp6_payload_template_t *udp6_template           = NULL;
 
-static char *      udp6_send_msg_list[MAX_PORT_NUM];
+static char       *udp6_send_msg_list[MAX_PORT_NUM];
 static int         udp6_send_msg_len_list[MAX_PORT_NUM];
 static const char *udp6_send_msg_ext_list[UDP6_SEND_MSG_EXT_NUM] = {
     "pkt", "txt", "hex"};
@@ -150,7 +150,7 @@ static int udp6_load_payload(const char *dir) {
     strncpy(dir_new, dir, strlen(dir));
     if (dir[strlen(dir) - 1] != '/') dir_new[strlen(dir)] = '/';
 
-    FILE *       inp;
+    FILE        *inp;
     unsigned int n, f;
     int          port;
 
@@ -251,7 +251,7 @@ int udp6_global_init(struct state_conf *conf) {
     if (!(conf->probe_args && strlen(conf->probe_args) > 0))
         return EXIT_SUCCESS;
 
-    char *       args, *c;
+    char        *args, *c;
     int          i;
     unsigned int n;
 
@@ -414,10 +414,10 @@ int udp6_thread_init(void *buf, macaddr_t *src, macaddr_t *gw, void **arg_ptr) {
 
 int udp6_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
                      ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                     int probe_num, UNUSED void *arg) {
+                     int probe_num, UNUSED index_h_t index, void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
-    struct ip6_hdr *     ip6_header = (struct ip6_hdr *) (&eth_header[1]);
-    struct udphdr *      udp_header = (struct udphdr *) &ip6_header[1];
+    struct ip6_hdr      *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
+    struct udphdr       *udp_header = (struct udphdr *) &ip6_header[1];
 
     uint8_t validation[VALIDATE_BYTES];
     validate_gen(src_ip, dst_ip, dst_port, validation);
@@ -489,8 +489,8 @@ int udp6_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
 
 void udp6_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header = (struct ether_header *) packet;
-    struct ip6_hdr *     ip6_header = (struct ip6_hdr *) &eth_header[1];
-    struct udphdr *      udp_header = (struct udphdr *) (&ip6_header[1]);
+    struct ip6_hdr      *ip6_header = (struct ip6_hdr *) &eth_header[1];
+    struct udphdr       *udp_header = (struct udphdr *) (&ip6_header[1]);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip6_header(fp, ip6_header);
@@ -506,7 +506,8 @@ void udp6_print_packet(FILE *fp, void *packet) {
 }
 
 int udp6_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                         UNUSED int *is_repeat) {
+                         UNUSED int *is_repeat, UNUSED void *buf,
+                         UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
     uint16_t        dport;
 
@@ -645,7 +646,7 @@ void udp6_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
     } else if (ip6_header->ip6_nxt == IPPROTO_ICMPV6) {
         struct icmp6_hdr *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
         struct ip6_hdr *ip6_inner_header = (struct ip6_hdr *) &icmp6_header[1];
-        struct udphdr * udp_inner_header =
+        struct udphdr  *udp_inner_header =
             (struct udphdr *) (&ip6_inner_header[1]);
         // ICMPv6 unreach comes from another server (not the one we sent a
         // probe to); But we will fix up saddr to be who we sent the
@@ -699,13 +700,13 @@ int udp6_template_build(udp6_payload_template_t *t, char *out, unsigned int len,
                         struct ip6_hdr *ip6_hdr, struct udphdr *udp6_hdr,
                         aesrand_t *aes) {
     udp6_payload_field_t *c;
-    char *                p;
-    char *                max;
+    char                 *p;
+    char                 *max;
     char                  tmp[256];
     int                   full = 0;
     unsigned int          x, y;
-    uint8_t *             u8;
-    uint16_t *            u16;
+    uint8_t              *u8;
+    uint16_t             *u16;
 
     max = out + len;
     p   = out;
@@ -867,7 +868,7 @@ void udp6_template_free(udp6_payload_template_t *t) {
 }
 
 // Add a new field to the template
-void udp6_template_add_field(udp6_payload_template_t * t,
+void udp6_template_add_field(udp6_payload_template_t  *t,
                              udp6_payload_field_type_t ftype,
                              unsigned int length, char *data) {
     udp6_payload_field_t *c;
@@ -893,7 +894,7 @@ void udp6_template_add_field(udp6_payload_template_t * t,
 // Convert a string field name to a field type, parsing any specified length
 // value
 int udp6_template_lookup_field(char *vname, udp6_payload_field_t *c) {
-    char *       param;
+    char        *param;
     unsigned int f;
     unsigned int olen   = 0;
     unsigned int fcount = sizeof(udp6_payload_template_fields) /
@@ -943,7 +944,7 @@ udp6_payload_template_t *udp6_template_load(char *buf, unsigned int len) {
     // Track the index into the template
     char *p = buf;
 
-    char *       tmp;
+    char        *tmp;
     unsigned int tlen;
 
     udp6_payload_field_t c;

@@ -18,4 +18,4 @@ int redisstrmodule_process(fieldset_t *fs);
 int redisstrmodule_close(struct state_conf *c, struct state_send *s,
                          struct state_recv *r);
 
-#endif //XMAP_MODULE_REDIS_CSV_H
+#endif // XMAP_MODULE_REDIS_CSV_H

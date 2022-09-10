@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 // maximum number of records that can be stored in a fieldset
-#define MAX_FIELDS 128
+#define MAX_FIELDS 512
 #define MAX_LIST_LENGTH 255
 
 // types of data that can be stored in a field
@@ -42,7 +42,7 @@ typedef struct fielddef_set {
 } fielddefset_t;
 
 typedef union field_val {
-    void *   ptr;
+    void    *ptr;
     uint64_t num;
 } field_val_t;
 

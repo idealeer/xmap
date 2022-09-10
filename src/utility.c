@@ -11,6 +11,7 @@
 
 #include "utility.h"
 
+#include <ctype.h>
 #include <string.h>
 
 #include "../lib/gmp-ext.h"
@@ -142,13 +143,60 @@ void init_target_port() {
                       xconf.target_port_full);
             log_debug("parse", "max_probe_port_len: %d",
                       xconf.max_probe_port_len);
+            log_debug("parse", "max_port_index_len: %d",
+                      xconf.max_port_index_len);
+            log_debug("parse", "max_probe_port_index_len: %d",
+                      xconf.max_probe_port_index_len);
             return;
         }
         full *= 2;
         xconf.target_port_bits   = i;
         xconf.target_port_full   = full;
         xconf.max_probe_port_len = xconf.max_probe_len + xconf.target_port_bits;
+        xconf.max_port_index_len =
+            xconf.target_port_bits + xconf.target_index_bits;
+        xconf.max_probe_port_index_len =
+            xconf.max_probe_len + xconf.max_port_index_len;
     }
     log_fatal("parse", "too many target ports (%d), should be <= %d",
               xconf.target_port_num, full / 2);
+}
+
+char *strupr(char *str) {
+    char *orign = str;
+    for (; *str != '\0'; str++)
+        *str = toupper(*str);
+    return orign;
+}
+
+void init_target_index() {
+    log_debug("parse", "init target index");
+    int full = 1;
+    for (int i = 1; i <= 25; i++) {
+        if (xconf.target_index_num <= full) {
+            log_debug("parse", "target index number: %d",
+                      xconf.target_index_num);
+            log_debug("parse", "target index bits: %d",
+                      xconf.target_index_bits);
+            log_debug("parse", "target index full range number: %d",
+                      xconf.target_index_full);
+            log_debug("parse", "max_probe_port_len: %d",
+                      xconf.max_probe_port_len);
+            log_debug("parse", "max_port_index_len: %d",
+                      xconf.max_port_index_len);
+            log_debug("parse", "max_probe_port_index_len: %d",
+                      xconf.max_probe_port_index_len);
+            return;
+        }
+        full *= 2;
+        xconf.target_index_bits  = i;
+        xconf.target_index_full  = full;
+        xconf.max_probe_port_len = xconf.max_probe_len + xconf.target_port_bits;
+        xconf.max_port_index_len =
+            xconf.target_port_bits + xconf.target_index_bits;
+        xconf.max_probe_port_index_len =
+            xconf.max_probe_len + xconf.max_port_index_len;
+    }
+    log_fatal("parse", "too large target index (%d), should be <= %d",
+              xconf.target_index_num, full / 2);
 }

@@ -24,6 +24,14 @@
 
 extern probe_module_t module_icmp_echo;
 extern probe_module_t module_udp;
+extern probe_module_t module_dns;
+extern probe_module_t module_dnsr;
+extern probe_module_t module_dnsx;
+extern probe_module_t module_dnsf;
+extern probe_module_t module_dnsz;
+extern probe_module_t module_dnss;
+extern probe_module_t module_dnsv;
+extern probe_module_t module_tcp_scan;
 extern probe_module_t module_tcp_syn;
 extern probe_module_t module_icmp6_echo;
 extern probe_module_t module_udp6;
@@ -33,9 +41,13 @@ extern probe_module_t module_icmp6_echo_gw;
 // ADD YOUR MODULE HERE
 
 probe_module_t *probe_modules[] = {
-    &module_udp,           &module_tcp_syn,         &module_icmp_echo,
-
-    &module_udp6,          &module_tcp6_syn,        &module_icmp6_echo,
+    &module_udp,           &module_dns,
+    &module_dnsr,          &module_dnsx,
+    &module_dnsf,          &module_dnsz,
+    &module_dnss,          &module_dnsv,
+    &module_tcp_scan,      &module_tcp_syn,
+    &module_icmp_echo,     &module_udp6,
+    &module_tcp6_syn,      &module_icmp6_echo,
     &module_icmp6_echo_gw, &module_icmp6_echo_tmxd,
     // ADD YOUR MODULE HERE
 };
@@ -87,8 +99,8 @@ void fs_add_system_fields(fieldset_t *fs, int is_repeat, int in_cooldown) {
     fs_add_bool(fs, "repeat", is_repeat);
     fs_add_bool(fs, "cooldown", in_cooldown);
 
-    char *         timestr    = xmalloc(TIMESTR_LEN + 1);
-    char *         timestr_ms = xmalloc(TIMESTR_LEN + 1);
+    char          *timestr    = xmalloc(TIMESTR_LEN + 1);
+    char          *timestr_ms = xmalloc(TIMESTR_LEN + 1);
     struct timeval t;
     gettimeofday(&t, NULL);
     struct tm *ptm = localtime(&t.tv_sec);
@@ -103,42 +115,42 @@ void fs_add_system_fields(fieldset_t *fs, int is_repeat, int in_cooldown) {
 int        ip_fields_len = 4;
 fielddef_t ip_fields[]   = {
     {.name = "saddr",
-     .type = "string",
-     .desc = "source IP address of response"},
+       .type = "string",
+       .desc = "source IP address of response"},
     {.name = "daddr",
-     .type = "string",
-     .desc = "destination IP address of response"},
+       .type = "string",
+       .desc = "destination IP address of response"},
     {.name = "ipid",
-     .type = "int",
-     .desc = "IP identification number of response"},
+       .type = "int",
+       .desc = "IP identification number of response"},
     {.name = "ttl", .type = "int", .desc = "time-to-live of response packet"}};
 
 int        ip6_fields_len = 3;
 fielddef_t ip6_fields[]   = {
     {.name = "saddr",
-     .type = "string",
-     .desc = "source IPv6 address of response"},
+       .type = "string",
+       .desc = "source IPv6 address of response"},
     {.name = "daddr",
-     .type = "string",
-     .desc = "destination IPv6 address of response"},
+       .type = "string",
+       .desc = "destination IPv6 address of response"},
     {.name = "hlim", .type = "int", .desc = "hop-limit of response packet"},
 };
 
 int        sys_fields_len = 5;
 fielddef_t sys_fields[]   = {
     {.name = "repeat",
-     .type = "bool",
-     .desc = "is response <ip, port> a repeat response from host"},
+       .type = "bool",
+       .desc = "is response <ip, port> a repeat response from host"},
     {.name = "cooldown",
-     .type = "bool",
-     .desc = "was response received during the cooldown period"},
+       .type = "bool",
+       .desc = "was response received during the cooldown period"},
     {.name = "timestamp_str",
-     .type = "string",
-     .desc = "timestamp of when response arrived in ISO8601 format."},
+       .type = "string",
+       .desc = "timestamp of when response arrived in ISO8601 format."},
     {.name = "timestamp_ts",
-     .type = "int",
-     .desc = "timestamp of when response arrived in seconds since Epoch"},
+       .type = "int",
+       .desc = "timestamp of when response arrived in seconds since Epoch"},
     {.name = "timestamp_us",
-     .type = "int",
-     .desc = "microsecond part of timestamp (e.g. microseconds since "
-             "`timestamp-ts')"}};
+       .type = "int",
+       .desc = "microsecond part of timestamp (e.g. microseconds since "
+               "`timestamp-ts')"}};

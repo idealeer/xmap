@@ -21,18 +21,19 @@
 #include "state.h"
 
 static pfring_zc_pkt_buff *pf_buffer;
-static pfring_zc_queue *pf_recv;
+static pfring_zc_queue    *pf_recv;
 
 void recv_init() {
     // Get the socket and packet handle
-    pf_recv = xconf.pf.recv;
+    pf_recv   = xconf.pf.recv;
     pf_buffer = pfring_zc_get_packet_handle(xconf.pf.cluster);
 
     if (pf_buffer == NULL) {
-        log_fatal("recv", "could not get pfring packet handle: %s", strerror(errno));
+        log_fatal("recv", "could not get pfring packet handle: %s",
+                  strerror(errno));
     }
 
-    xconf.data_link_size = sizeof(struct ether_header);     // TODO case?
+    xconf.data_link_size = sizeof(struct ether_header); // TODO case?
 }
 
 void recv_cleanup() {
@@ -61,7 +62,7 @@ void recv_packets() {
 
     // Successfully got a packet, now handle it
     struct timespec ts;
-    ts.tv_sec = pf_buffer->ts.tv_sec;
+    ts.tv_sec  = pf_buffer->ts.tv_sec;
     ts.tv_nsec = pf_buffer->ts.tv_nsec;
 
     uint8_t *pkt_buf = pfring_zc_pkt_buff_data(pf_buffer, pf_recv);

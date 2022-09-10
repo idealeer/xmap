@@ -45,18 +45,18 @@ int send_run_init(sock_t s) {
     // destination address for the socket
     memset((void *) &sockaddr, 0, sizeof(struct sockaddr_ll));
     sockaddr.sll_ifindex = ifindex;
-    sockaddr.sll_halen = ETH_ALEN;
+    sockaddr.sll_halen   = ETH_ALEN;
     if (xconf.send_ip_pkts) {
         switch (xconf.ipv46_flag) {
-            case IPV6_FLAG:
-                sockaddr.sll_protocol = htons(ETHERTYPE_IPV6);
-                break;
-            case IPV4_FLAG:
-                sockaddr.sll_protocol = htons(ETHERTYPE_IP);
-                break;
-            default:
-                log_fatal("socket", "iplayer for linux not supported on IPv%d",
-                          xconf.ipv46_flag);
+        case IPV6_FLAG:
+            sockaddr.sll_protocol = htons(ETHERTYPE_IPV6);
+            break;
+        case IPV4_FLAG:
+            sockaddr.sll_protocol = htons(ETHERTYPE_IP);
+            break;
+        default:
+            log_fatal("socket", "iplayer for linux not supported on IPv%d",
+                      xconf.ipv46_flag);
         }
     }
     memcpy(sockaddr.sll_addr, xconf.gw_mac, ETH_ALEN);
@@ -68,4 +68,4 @@ int send_packet(sock_t sock, void *buf, int len, UNUSED uint32_t idx) {
                   sizeof(struct sockaddr_ll));
 }
 
-#endif //XMAP_SEND_LINUX_H
+#endif // XMAP_SEND_LINUX_H

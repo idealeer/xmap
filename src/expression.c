@@ -52,7 +52,7 @@ static int eval_lt_node(node_t *node, fieldset_t *fields) {
 static int eval_eq_node(node_t *node, fieldset_t *fields) {
     node_t *literal = node->right_child;
     int     index   = node->left_child->value.field.index;
-    char *  expected, *actual;
+    char   *expected, *actual;
     switch (literal->type) {
     case STRING:
         expected = literal->value.string_literal;

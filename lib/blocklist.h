@@ -25,11 +25,16 @@ int blocklist_init(char *allowlist_filename, char *blocklist_filename,
                    char **allowlist_entries, size_t allowlist_entries_len,
                    char **blocklist_entries, size_t blocklist_entries_len,
                    int ignore_invalid_hosts, size_t ipvx_max_len,
-                   size_t port_max_len, size_t ipv46_flag);
+                   size_t port_max_len, size_t ipv46_flag,
+                   size_t index_max_len);
 
 void blocklist_prefix(const mpz_t prefix, int prefix_len);
 
 void allowlist_prefix(const mpz_t prefix, int prefix_len);
+
+void blocklist_count_allowed_ip_port_index(mpz_t count);
+
+void blocklist_count_not_allowed_ip_port_index(mpz_t count);
 
 void blocklist_count_allowed_ip_port(mpz_t count);
 
@@ -39,7 +44,7 @@ void blocklist_count_allowed_ip(mpz_t count);
 
 void blocklist_count_not_allowed_ip(mpz_t count);
 
-void blocklist_lookup_index_for_ipvx_port(mpz_t ipvx, const mpz_t index);
+void blocklist_lookup_index_for_ipvx_port_index(mpz_t ipvx, const mpz_t index);
 
 int blocklist_is_allowed_ipvx(const mpz_t ipvx);
 

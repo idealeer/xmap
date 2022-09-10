@@ -46,16 +46,18 @@ typedef struct shard {
         uint64_t last;
         uint64_t current;
         uint64_t total;
-        FILE *   fp;
+        FILE    *fp;
         long     pos;
         uint32_t port_current;
         uint32_t port_total;
+        uint32_t index_current;
+        uint32_t index_total;
     } ip_target_file_params;
     mpz_t             current;
     uint64_t          iterations;
     uint8_t           thread_id;
     shard_complete_cb completeCb;
-    void *            args;
+    void             *args;
 } shard_t;
 
 void shard_init(shard_t *shard, uint16_t shard_idx, uint16_t num_shards,
@@ -64,9 +66,12 @@ void shard_init(shard_t *shard, uint16_t shard_idx, uint16_t num_shards,
                 uint64_t list_of_ips_count, const cycle_t *cycle,
                 shard_complete_cb cb, void *args);
 
-port_h_t shard_get_current_ip_prefix_port(void *prefix, shard_t *shard);
+void shard_get_current_ip_prefix_port_index(void *prefix, shard_t *shard,
+                                            port_h_t  *port_f,
+                                            index_h_t *index_f);
 
-port_h_t shard_get_next_ip_prefix_port(void *prefix, shard_t *shard);
+void shard_get_next_ip_prefix_port_index(void *prefix, shard_t *shard,
+                                         port_h_t *port_f, index_h_t *index_f);
 
 void shard_free(shard_t *shard);
 

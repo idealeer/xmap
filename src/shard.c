@@ -26,15 +26,15 @@ static inline void shard_get_next_elem(shard_t *shard) {
     mpz_mod(shard->current, shard->current, shard->params.modulus);
 }
 
-static void _shard_get_current_ipvx_port(mpz_t ipvx, shard_t *shard) {
+static void _shard_get_current_ipvx_port_index(mpz_t ipvx, shard_t *shard) {
     mpz_t index;
     mpz_init(index);
     mpz_sub_ui(index, shard->current, 1);
-    blocklist_lookup_index_for_ipvx_port(ipvx, index);
+    blocklist_lookup_index_for_ipvx_port_index(ipvx, index);
     mpz_clear(index);
 }
 
-static void _shard_get_next_ipvx_port(mpz_t ipvx, shard_t *shard) {
+static void _shard_get_next_ipvx_port_index(mpz_t ipvx, shard_t *shard) {
     if (mpz_eq_ui(shard->current, PMAP_SHARD_DONE)) {
         mpz_set_ui(ipvx, PMAP_SHARD_DONE);
         return;
@@ -54,7 +54,7 @@ static void _shard_get_next_ipvx_port(mpz_t ipvx, shard_t *shard) {
         if (mpz_lt(index, xsend.max_index)) {
             shard->state.hosts_allowlisted++;
             shard->iterations++;
-            blocklist_lookup_index_for_ipvx_port(ipvx, index);
+            blocklist_lookup_index_for_ipvx_port_index(ipvx, index);
             goto cleanup;
         }
         shard->state.hosts_blocklisted++;
@@ -69,7 +69,7 @@ static void _shard_roll_to_valid(mpz_t ipvx, shard_t *shard) {
         mpz_set(ipvx, shard->current);
         return;
     }
-    _shard_get_next_ipvx_port(ipvx, shard);
+    _shard_get_next_ipvx_port_index(ipvx, shard);
 }
 
 void shard_init(shard_t *shard, uint16_t shard_idx, uint16_t num_shards,
@@ -187,8 +187,10 @@ void shard_init(shard_t *shard, uint16_t shard_idx, uint16_t num_shards,
         if (shard->ip_target_file_params.fp == NULL) {
             log_fatal("shard", "open ip target file for shard failed");
         }
-        shard->ip_target_file_params.port_current = 0;
-        shard->ip_target_file_params.port_total   = xconf.target_port_num;
+        shard->ip_target_file_params.port_current  = 0;
+        shard->ip_target_file_params.port_total    = xconf.target_port_num;
+        shard->ip_target_file_params.index_current = 0;
+        shard->ip_target_file_params.index_total   = xconf.target_index_num;
     }
 
     // Set the callbacks
@@ -213,60 +215,85 @@ void shard_init(shard_t *shard, uint16_t shard_idx, uint16_t num_shards,
     log_debug("shard", "shard_init: shard-%d completed", thread_idx);
 }
 
-port_h_t shard_get_current_ip_prefix_port(void *prefix, shard_t *shard) {
-    mpz_t ipvx_port, ipvx, port_m;
-    mpz_init(ipvx_port);
+void shard_get_current_ip_prefix_port_index(void *prefix, shard_t *shard,
+                                            port_h_t  *port_f,
+                                            index_h_t *index_f) {
+    mpz_t ipvx_port_index, ipvx, port_m, index_m;
+    mpz_init(ipvx_port_index);
     mpz_init(ipvx);
     mpz_init(port_m);
+    mpz_init(index_m);
 
-    _shard_get_current_ipvx_port(ipvx_port, shard);
-    mpz_mod_2exp(port_m, ipvx_port, xconf.target_port_bits);
+    _shard_get_current_ipvx_port_index(ipvx_port_index, shard);
+    mpz_mod_2exp(port_m, ipvx_port_index, xconf.max_port_index_len);
+    mpz_fdiv_q_2exp(port_m, port_m, xconf.target_index_bits);
+    mpz_mod_2exp(index_m, ipvx_port_index, xconf.target_index_bits);
+    port_h_t  port  = (port_h_t) mpz_get_ui(port_m);
+    index_h_t index = (index_h_t) mpz_get_ui(index_m);
 
-    port_h_t port = (port_h_t) mpz_get_ui(port_m);
-    while (mpz_ne_ui(ipvx_port, PMAP_SHARD_DONE) && xconf.target_port_num &&
-           port >= xconf.target_port_num) {
-        _shard_get_next_ipvx_port(ipvx_port, shard);
-        mpz_mod_2exp(port_m, ipvx_port, xconf.target_port_bits);
-        port = (port_h_t) mpz_get_ui(port_m);
+    while (
+        mpz_ne_ui(ipvx_port_index, PMAP_SHARD_DONE) &&
+        ((xconf.target_port_num && port >= xconf.target_port_num) ||
+         (xconf.target_index_num && (int) index >= xconf.target_index_num))) {
+        _shard_get_next_ipvx_port_index(ipvx_port_index, shard);
+        mpz_mod_2exp(port_m, ipvx_port_index, xconf.max_port_index_len);
+        mpz_fdiv_q_2exp(port_m, port_m, xconf.target_index_bits);
+        mpz_mod_2exp(index_m, ipvx_port_index, xconf.target_index_bits);
+        port  = (port_h_t) mpz_get_ui(port_m);
+        index = (index_h_t) mpz_get_ui(index_m);
     }
 
-    mpz_fdiv_q_2exp(ipvx, ipvx_port, xconf.target_port_bits);
+    mpz_fdiv_q_2exp(ipvx, ipvx_port_index, xconf.max_port_index_len);
     memset(prefix, 0, xconf.ipv46_bytes);
     mpz_to_uint8s_bits(ipvx, prefix, xconf.max_probe_len);
 
-    mpz_clear(ipvx_port);
+    mpz_clear(ipvx_port_index);
     mpz_clear(ipvx);
     mpz_clear(port_m);
+    mpz_clear(index_m);
 
-    return xconf.target_port_list[port];
+    *port_f  = xconf.target_port_list[port];
+    *index_f = index;
 }
 
-port_h_t shard_get_next_ip_prefix_port(void *prefix, shard_t *shard) {
-    mpz_t ipvx_port, ipvx, port_m;
-    mpz_init(ipvx_port);
+void shard_get_next_ip_prefix_port_index(void *prefix, shard_t *shard,
+                                         port_h_t *port_f, index_h_t *index_f) {
+    mpz_t ipvx_port_index, ipvx, port_m, index_m;
+    mpz_init(ipvx_port_index);
     mpz_init(ipvx);
     mpz_init(port_m);
+    mpz_init(index_m);
 
-    _shard_get_next_ipvx_port(ipvx_port, shard);
-    mpz_mod_2exp(port_m, ipvx_port, xconf.target_port_bits);
+    _shard_get_next_ipvx_port_index(ipvx_port_index, shard);
+    mpz_mod_2exp(port_m, ipvx_port_index, xconf.max_port_index_len);
+    mpz_fdiv_q_2exp(port_m, port_m, xconf.target_index_bits);
+    mpz_mod_2exp(index_m, ipvx_port_index, xconf.target_index_bits);
+    port_h_t  port  = (port_h_t) mpz_get_ui(port_m);
+    index_h_t index = (index_h_t) mpz_get_ui(index_m);
 
-    port_h_t port = (port_h_t) mpz_get_ui(port_m);
-    while (mpz_ne_ui(ipvx_port, PMAP_SHARD_DONE) && xconf.target_port_num &&
-           port >= xconf.target_port_num) {
-        _shard_get_next_ipvx_port(ipvx_port, shard);
-        mpz_mod_2exp(port_m, ipvx_port, xconf.target_port_bits);
-        port = (port_h_t) mpz_get_ui(port_m);
+    while (
+        mpz_ne_ui(ipvx_port_index, PMAP_SHARD_DONE) &&
+        ((xconf.target_port_num && port >= xconf.target_port_num) ||
+         (xconf.target_index_num && (int) index >= xconf.target_index_num))) {
+        _shard_get_next_ipvx_port_index(ipvx_port_index, shard);
+        mpz_mod_2exp(port_m, ipvx_port_index, xconf.max_port_index_len);
+        mpz_fdiv_q_2exp(port_m, port_m, xconf.target_index_bits);
+        mpz_mod_2exp(index_m, ipvx_port_index, xconf.target_index_bits);
+        port  = (port_h_t) mpz_get_ui(port_m);
+        index = (index_h_t) mpz_get_ui(index_m);
     }
 
-    mpz_fdiv_q_2exp(ipvx, ipvx_port, xconf.target_port_bits);
+    mpz_fdiv_q_2exp(ipvx, ipvx_port_index, xconf.max_port_index_len);
     memset(prefix, 0, xconf.ipv46_bytes);
     mpz_to_uint8s_bits(ipvx, prefix, xconf.max_probe_len);
 
-    mpz_clear(ipvx_port);
+    mpz_clear(ipvx_port_index);
     mpz_clear(ipvx);
     mpz_clear(port_m);
+    mpz_clear(index_m);
 
-    return xconf.target_port_list[port];
+    *port_f  = xconf.target_port_list[port];
+    *index_f = index;
 }
 
 void shard_free(shard_t *shard) {

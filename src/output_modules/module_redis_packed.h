@@ -18,4 +18,4 @@ int redismodule_process(fieldset_t *fs);
 int redismodule_close(struct state_conf *c, struct state_send *s,
                       struct state_recv *r);
 
-#endif //XMAP_MODULE_REDIS_PACKED_H
+#endif // XMAP_MODULE_REDIS_PACKED_H

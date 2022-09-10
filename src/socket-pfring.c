@@ -19,7 +19,7 @@
 
 sock_t get_socket(uint32_t id) {
     sock_t sock;
-    sock.pf.queue = xconf.pf.queues[id];
+    sock.pf.queue   = xconf.pf.queues[id];
     sock.pf.buffers = xconf.pf.buffers + 256 * id;
     return sock;
 }

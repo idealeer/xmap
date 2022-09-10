@@ -40,15 +40,15 @@ typedef enum udp6_payload_field_type {
 } udp6_payload_field_type_t;
 
 typedef struct udp6_payload_field_type_def {
-    const char *              name;
-    const char *              desc;
+    const char               *name;
+    const char               *desc;
     udp6_payload_field_type_t ftype;
 } udp6_payload_field_type_def_t;
 
 typedef struct udp6_payload_field {
     enum udp6_payload_field_type ftype;
     unsigned int                 length;
-    char *                       data;
+    char                        *data;
 } udp6_payload_field_t;
 
 typedef struct udp6_payload_template {
@@ -71,18 +71,16 @@ int udp6_thread_init(void *buf, macaddr_t *src, macaddr_t *gw, void **arg_ptr);
 
 int udp6_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
                      ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                     int probe_num, UNUSED void *arg);
+                     int probe_num, UNUSED index_h_t index, void *arg);
 
 void udp6_print_packet(FILE *fp, void *packet);
 
 int udp6_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                         UNUSED int *is_repeat);
+                         UNUSED int *is_repeat, UNUSED void *packet_buf,
+                         UNUSED size_t *buf_len, UNUSED uint8_t ttl);
 
 void udp6_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
                          UNUSED struct timespec ts);
-
-// other
-extern const char *udp6_unreach_strings[];
 
 void udp6_set_num_sports(int x);
 
@@ -93,7 +91,7 @@ int udp6_template_build(udp6_payload_template_t *t, char *out, unsigned int len,
 
 void udp6_template_free(udp6_payload_template_t *t);
 
-void udp6_template_add_field(udp6_payload_template_t * t,
+void udp6_template_add_field(udp6_payload_template_t  *t,
                              udp6_payload_field_type_t ftype,
                              unsigned int length, char *data);
 

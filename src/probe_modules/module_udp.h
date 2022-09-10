@@ -40,15 +40,15 @@ typedef enum udp_payload_field_type {
 } udp_payload_field_type_t;
 
 typedef struct udp_payload_field_type_def {
-    const char *             name;
-    const char *             desc;
+    const char              *name;
+    const char              *desc;
     udp_payload_field_type_t ftype;
 } udp_payload_field_type_def_t;
 
 typedef struct udp_payload_field {
     enum udp_payload_field_type ftype;
     unsigned int                length;
-    char *                      data;
+    char                       *data;
 } udp_payload_field_t;
 
 typedef struct udp_payload_template {
@@ -71,18 +71,16 @@ int udp_thread_init(void *buf, macaddr_t *src, macaddr_t *gw, void **arg_ptr);
 
 int udp_make_packet(void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip,
                     ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                    int probe_num, UNUSED void *arg);
+                    int probe_num, UNUSED index_h_t index, void *arg);
 
 void udp_print_packet(FILE *fp, void *packet);
 
 int udp_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                        UNUSED int *is_repeat);
+                        UNUSED int *is_repeat, UNUSED void *packet_buf,
+                        UNUSED size_t *buf_len, UNUSED uint8_t ttl);
 
 void udp_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
                         UNUSED struct timespec ts);
-
-// other
-extern const char *udp_unreach_strings[];
 
 void udp_set_num_sports(int x);
 
@@ -93,7 +91,7 @@ int udp_template_build(udp_payload_template_t *t, char *out, unsigned int len,
 
 void udp_template_free(udp_payload_template_t *t);
 
-void udp_template_add_field(udp_payload_template_t * t,
+void udp_template_add_field(udp_payload_template_t  *t,
                             udp_payload_field_type_t ftype, unsigned int length,
                             char *data);
 

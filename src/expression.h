@@ -22,14 +22,14 @@ struct field_id {
 
 union node_value {
     struct field_id field;
-    char *          string_literal;
+    char           *string_literal;
     uint64_t        int_literal;
     enum operation  op;
 };
 
 typedef struct node_st {
-    struct node_st * left_child;
-    struct node_st * right_child;
+    struct node_st  *left_child;
+    struct node_st  *right_child;
     enum node_type   type;
     union node_value value;
 } node_t;

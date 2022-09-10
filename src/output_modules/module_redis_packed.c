@@ -27,9 +27,9 @@
 
 #define BUFFER_SIZE 500
 
-static uint32_t *    buffer;
+static uint32_t     *buffer;
 static int           buffer_fill = 0;
-static char *        queue_name  = NULL;
+static char         *queue_name  = NULL;
 static int           field_index = -1;
 static redisContext *rctx        = NULL;
 

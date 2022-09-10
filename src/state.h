@@ -56,7 +56,7 @@ struct state_conf {
     int ipv46_bits;
 
     // target cidrs
-    char **  destination_cidrs;
+    char   **destination_cidrs;
     int      destination_cidrs_len;
     port_h_t target_port_list[MAX_PORT_NUM];
     port_h_t target_port_flag[MAX_PORT_NUM];
@@ -65,10 +65,17 @@ struct state_conf {
     int      target_port_full;
     int      max_probe_port_len;
 
+    // target index
+    int target_index_num;
+    int target_index_bits;
+    int target_index_full;
+    int max_port_index_len;
+    int max_probe_port_index_len;
+
     port_h_t source_port_first;
     port_h_t source_port_last;
     // name of network interface that will be utilized for sending/receiving
-    char *     iface;
+    char      *iface;
     macaddr_t  gw_mac[MAC_ADDR_LEN_BYTES];
     macaddr_t  hw_mac[MAC_ADDR_LEN_BYTES];
     ipaddr_n_t gw_ip[IP_ADDR_LEN_BYTES];
@@ -120,43 +127,44 @@ struct state_conf {
 
     // probe module
     struct probe_module *probe_module;
-    char *               probe_args;
+    char                *probe_args;
     uint8_t              probe_ttl;
     // output module
     struct output_module *output_module;
-    char *                output_module_name;
-    char *                output_args;
+    char                 *output_module_name;
+    char                 *output_args;
     // IID value
     struct iid_module *iid_module;
-    char *             iid_args;
+    char              *iid_args;
     int                iid_num;
-    char *             iid_module_name;
+    char              *iid_module_name;
 
     // file
-    char *   output_filename;
-    char *   blocklist_filename;
-    char *   allowlist_filename;
-    char *   list_of_ips_filename;
+    char    *output_filename;
+    char    *blocklist_filename;
+    char    *allowlist_filename;
+    char    *list_of_ips_filename;
     uint64_t list_of_ip_count;
     uint64_t list_of_ip_port_count;
-    char *   metadata_filename;
-    FILE *   metadata_file;
-    char *   notes;
-    char *   custom_metadata_str;
+    uint64_t list_of_ip_port_index_count;
+    char    *metadata_filename;
+    FILE    *metadata_file;
+    char    *notes;
+    char    *custom_metadata_str;
 
     // output field
-    char *               raw_output_fields;
-    char **              output_fields;
+    char                *raw_output_fields;
+    char               **output_fields;
     struct output_filter filter;
-    char *               output_filter_str;
+    char                *output_filter_str;
     struct fieldset_conf fsconf;
     int                  output_fields_len;
 
     // log & other
     int      log_level;
-    char *   log_file;
-    char *   log_directory;
-    char *   status_updates_file;
+    char    *log_file;
+    char    *log_directory;
+    char    *status_updates_file;
     int      dryrun;
     int      quiet;
     int      ignore_blacklist_error;
@@ -168,21 +176,24 @@ struct state_conf {
     uint64_t max_sendto_failures;
     float    min_hitrate;
     int      data_link_size;
-    char *   config_filename;
+    char    *config_filename;
 
     mpz_t total_allowed_ip_port;
     mpz_t total_disallowed_ip_port;
     mpz_t total_allowed_ip;
     mpz_t total_disallowed_ip;
     mpz_t total_allowed_ip_port_actual;
+    mpz_t total_allowed_ip_port_index;
+    mpz_t total_disallowed_ip_port_index;
+    mpz_t total_allowed_ip_port_index_actual;
 
 #ifdef PFRING
     struct {
-        pfring_zc_cluster *    cluster;
-        pfring_zc_queue *      send;
-        pfring_zc_queue *      recv;
-        pfring_zc_queue **     queues;
-        pfring_zc_pkt_buff **  buffers;
+        pfring_zc_cluster     *cluster;
+        pfring_zc_queue       *send;
+        pfring_zc_queue       *recv;
+        pfring_zc_queue      **queues;
+        pfring_zc_pkt_buff   **buffers;
         pfring_zc_buffer_pool *prefetches;
     } pf;
 #endif
@@ -232,6 +243,7 @@ struct state_recv {
     // metrics about _only_ validate_packet
     uint64_t validation_passed;
     uint64_t validation_failed;
+    uint64_t validation_again;
 
     int    complete; // has the scanner finished sending?
     double start;    // timestamp of when recv started

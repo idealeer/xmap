@@ -28,8 +28,8 @@ int send_run_init(sock_t socket) {
 
 int send_packet(sock_t sock, void *buf, int len, uint32_t idx) {
     sock.pf.buffers[idx]->len = len;
-    memcpy(pfring_zc_pkt_buff_data(sock.pf.buffers[idx], sock.pf.queue),
-           buf, len);
+    memcpy(pfring_zc_pkt_buff_data(sock.pf.buffers[idx], sock.pf.queue), buf,
+           len);
 
     int ret;
     do {
@@ -43,4 +43,4 @@ int send_packet(sock_t sock, void *buf, int len, uint32_t idx) {
 
 void send_finish(sock_t sock) { pfring_zc_sync_queue(sock.pf.queue, tx_only); }
 
-#endif //XMAP_SEND_PFRING_H
+#endif // XMAP_SEND_PFRING_H

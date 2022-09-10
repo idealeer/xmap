@@ -22,7 +22,7 @@
 typedef union {
     int sock;
     struct {
-        pfring_zc_queue *    queue;
+        pfring_zc_queue     *queue;
         pfring_zc_pkt_buff **buffers;
         int                  idx;
     } pf;

@@ -20,7 +20,7 @@ static const char *icmp6_usage_error =
 
 static size_t       icmp6_payload_len         = 0;
 static const size_t icmp6_payload_default_len = 8;
-static char *       icmp6_payload             = NULL;
+static char        *icmp6_payload             = NULL;
 
 static int icmp6_echo_timexceed_global_init(struct state_conf *conf) {
     if (!(conf->probe_args && strlen(conf->probe_args) > 0)) {
@@ -134,7 +134,7 @@ static int
 }
 
 static int icmp6_echo_timexceed_thread_init(void *buf, macaddr_t *src,
-                                            macaddr_t *   gw,
+                                            macaddr_t    *gw,
                                             UNUSED void **arg_ptr) {
     memset(buf, 0, MAX_PACKET_SIZE);
 
@@ -156,16 +156,17 @@ static int icmp6_echo_timexceed_thread_init(void *buf, macaddr_t *src,
 
 static int icmp6_echo_timexceed_make_packet(
     void *buf, UNUSED size_t *buf_len, ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
-    UNUSED port_h_t dst_port, uint8_t ttl, int probe_num, UNUSED void *arg) {
+    UNUSED port_h_t dst_port, uint8_t ttl, int probe_num,
+    UNUSED index_h_t index, UNUSED void *arg) {
     struct ether_header *eth_header   = (struct ether_header *) buf;
-    struct ip6_hdr *     ip6_header   = (struct ip6_hdr *) (&eth_header[1]);
-    struct icmp6_hdr *   icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
+    struct ip6_hdr      *ip6_header   = (struct ip6_hdr *) (&eth_header[1]);
+    struct icmp6_hdr    *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
 
     uint8_t validation[VALIDATE_BYTES];
     validate_gen(src_ip, dst_ip, 0, validation);
 
-    uint16_t icmp6_idnum  = icmp_get_idnum(validation);
-    uint16_t icmp6_seqnum = icmp_get_seqnum(validation);
+    uint16_t icmp6_idnum  = get_icmp_idnum(validation);
+    uint16_t icmp6_seqnum = get_icmp_seqnum(validation);
 
     uint8_t *ip6_src = (uint8_t *) &(ip6_header->ip6_src);
     uint8_t *ip6_dst = (uint8_t *) &(ip6_header->ip6_dst);
@@ -189,8 +190,8 @@ static int icmp6_echo_timexceed_make_packet(
 
 static void icmp6_echo_timexceed_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header   = (struct ether_header *) packet;
-    struct ip6_hdr *     ip6_header   = (struct ip6_hdr *) &eth_header[1];
-    struct icmp6_hdr *   icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
+    struct ip6_hdr      *ip6_header   = (struct ip6_hdr *) &eth_header[1];
+    struct icmp6_hdr    *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip6_header(fp, ip6_header);
@@ -210,8 +211,9 @@ static void icmp6_echo_timexceed_print_packet(FILE *fp, void *packet) {
     fprintf(fp, "------------------------------------------------------\n");
 }
 
-static int icmp6_echo_timexceed_validate_packet(const struct ip *ip_hdr,
-                                                uint32_t len, int *is_repeat) {
+static int icmp6_echo_timexceed_validate_packet(
+    const struct ip *ip_hdr, uint32_t len, UNUSED int *is_repeat,
+    UNUSED void *buf, UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
 
     if (ip6_header->ip6_nxt != IPPROTO_ICMPV6) {
@@ -264,10 +266,10 @@ static int icmp6_echo_timexceed_validate_packet(const struct ip *ip_hdr,
     }
 
     // validate icmp id and seqnum
-    if (icmp6_idnum != icmp_get_idnum(validation)) {
+    if (icmp6_idnum != get_icmp_idnum(validation)) {
         return 0;
     }
-    if (icmp6_seqnum != icmp_get_seqnum(validation)) {
+    if (icmp6_seqnum != get_icmp_seqnum(validation)) {
         return 0;
     }
 
@@ -363,14 +365,14 @@ probe_module_t module_icmp6_echo_tmxd = {
     .name          = "icmp_echo_tmxd",
     .packet_length = 14 + 40 + 8 + 8,
     .pcap_filter   = "icmp6 && (ip6[40] == 129 || ip6[40] == 3 || ip6[40] == 1 "
-                   "|| ip6[40] == 2 || ip6[40] == 4)",
-    .pcap_snaplen    = 14 + 2 * (40 + 8) + 8,
-    .port_args       = 0,
-    .global_init     = &icmp6_echo_timexceed_global_init,
-    .close           = &icmp6_echo_timexceed_global_cleanup,
-    .thread_init     = &icmp6_echo_timexceed_thread_init,
-    .make_packet     = &icmp6_echo_timexceed_make_packet,
-    .print_packet    = &icmp6_echo_timexceed_print_packet,
+                     "|| ip6[40] == 2 || ip6[40] == 4)",
+    .pcap_snaplen  = 14 + 2 * (40 + 8) + 8,
+    .port_args     = 0,
+    .global_init   = &icmp6_echo_timexceed_global_init,
+    .close         = &icmp6_echo_timexceed_global_cleanup,
+    .thread_init   = &icmp6_echo_timexceed_thread_init,
+    .make_packet   = &icmp6_echo_timexceed_make_packet,
+    .print_packet  = &icmp6_echo_timexceed_print_packet,
     .process_packet  = &icmp6_echo_timexceed_process_packet,
     .validate_packet = &icmp6_echo_timexceed_validate_packet,
     .output_type     = OUTPUT_TYPE_STATIC,

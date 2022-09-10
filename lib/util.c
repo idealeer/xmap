@@ -37,7 +37,7 @@ void enforce_range(const char *name, int v, int min, int max) {
 void split_string(char *in, int *len, char ***results) {
     char **fields  = xcalloc(MAX_SPLITS, sizeof(char *));
     int    retvlen = 0;
-    char * currloc = in;
+    char  *currloc = in;
 
     // parse csv into a set of strings
     while (1) {
@@ -81,7 +81,7 @@ void fprintw(FILE *f, char *s, size_t w) {
         char *t = pch;
         while (strlen(t)) {
             size_t numchars = 0; // number of chars to print
-            char * tmp      = t;
+            char  *tmp      = t;
             while (1) {
                 size_t new = strcspn(tmp, " ") + 1;
                 if (new == strlen(tmp) || new > w) {
@@ -114,7 +114,7 @@ void fprintw(FILE *f, char *s, size_t w) {
 
 uint32_t parse_max_hosts(char *max_targets) {
     int    errno = 0;
-    char * end;
+    char  *end;
     double v = strtod(max_targets, &end);
     if (end == max_targets || errno != 0) {
         log_fatal("argparse", "can't convert max-targets to a number");

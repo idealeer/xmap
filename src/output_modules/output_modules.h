@@ -27,7 +27,7 @@ typedef int (*output_update_cb)(struct state_conf *, struct state_send *,
                                 struct state_recv *);
 
 typedef struct output_module {
-    const char *     name;
+    const char      *name;
     int              supports_dynamic_output;
     int              filter_duplicates;
     int              filter_unsuccessful;
@@ -37,7 +37,7 @@ typedef struct output_module {
     output_update_cb update;
     output_update_cb close;
     output_packet_cb process_ip;
-    const char *     helptext;
+    const char      *helptext;
 } output_module_t;
 
 output_module_t *get_output_module_by_name(const char *);

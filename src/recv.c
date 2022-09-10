@@ -12,6 +12,7 @@
 #include "recv.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -26,12 +27,33 @@
 #include "../lib/logger.h"
 #include "../lib/util.h"
 
-static u_char fake_eth_hdr[65535];
+// OS specific functions called by send_run
+static inline int send_packet(sock_t sock, void *buf, int len, uint32_t idx);
+
+static inline int send_run_init(sock_t sock);
+
+// Include the right implementations
+#if defined(PFRING)
+#include "send-pfring.h"
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) ||     \
+    defined(__DragonFly__)
+#include "send-bsd.h"
+#else // LINUX
+#include "send-linux.h"
+#endif // __APPLE__ || __FreeBSD__ || __NetBSD__ || __DragonFly__
+
+static u_char   fake_eth_hdr[65535];
+static sock_t   st;
+static char     buff[MAX_PACKET_SIZE];
+static void    *probe_data;
+static uint32_t idx = 0; // pfring buffer index
 
 void handle_packet(uint32_t buflen, const u_char *bytes,
                    const struct timespec ts) {
-    struct ip *     ip_header;
+    struct ip      *ip_header;
     struct ip6_hdr *ip6_header;
+    ipaddr_n_t      dst_ip[xconf.ipv46_bytes];
+    memset(dst_ip, 0, xconf.ipv46_bytes);
 
     if (xconf.ipv46_flag == IPV6_FLAG) {
         if ((sizeof(struct ip6_hdr) + xconf.data_link_size) > buflen) {
@@ -41,6 +63,8 @@ void handle_packet(uint32_t buflen, const u_char *bytes,
         }
         ip6_header = (struct ip6_hdr *) &bytes[xconf.data_link_size];
         ip_header  = (struct ip *) ip6_header;
+        for (int k = 0; k < xconf.ipv46_bytes; k++)
+            dst_ip[k] = ((uint8_t *) &(ip6_header->ip6_src))[k];
     } else {
         if ((sizeof(struct ip) + xconf.data_link_size) > buflen) {
             // buffer not large enough to contain ethernet
@@ -48,22 +72,49 @@ void handle_packet(uint32_t buflen, const u_char *bytes,
             return;
         }
         ip_header = (struct ip *) &bytes[xconf.data_link_size];
+        for (int k = 0; k < xconf.ipv46_bytes; k++)
+            dst_ip[k] = ((uint8_t *) &(ip_header->ip_src))[k];
     }
 
-    int is_repeat = 1;
-    if (!xconf.probe_module->validate_packet(
-            ip_header,
-            buflen - (xconf.send_ip_pkts ? 0 : sizeof(struct ether_header)),
-            &is_repeat)) {
+    int     is_repeat = 1;
+    uint8_t ttl       = xconf.probe_ttl;
+    size_t  length    = xconf.probe_module->packet_length;
+    int     ret       = xconf.probe_module->validate_packet(
+                  ip_header,
+                  buflen - (xconf.send_ip_pkts ? 0 : sizeof(struct ether_header)),
+                  &is_repeat, buff, &length, ttl);
+    switch (ret) {
+    case PACKET_VALID:
+        xrecv.validation_passed++;
+        break;
+    case PACKET_INVALID:
         xrecv.validation_failed++;
         return;
-    } else {
-        xrecv.validation_passed++;
+    case PACKET_AGAIN: {
+        if (is_repeat) return;
+        void *contents =
+            buff + xconf.send_ip_pkts *
+                       sizeof(struct ether_header); // only send IP packet
+        length -= (xconf.send_ip_pkts * sizeof(struct ether_header));
+        int rc = send_packet(st, contents, length,
+                             idx); // idx for pfring buffer index
+        if (rc < 0) {              // failed
+            char addr_str[64];
+            inet_in2str(dst_ip, addr_str, 64, xconf.ipv46_flag);
+            log_debug("recv", "send_packet failed for %s. %s", addr_str,
+                      strerror(errno));
+        }
+        xrecv.validation_again++;
+        break;
+    }
+    default:
+        xrecv.validation_failed++;
+        return;
     }
 
     // track whether this is the first packet in an IP fragment.
     if (xconf.ipv46_flag == IPV4_FLAG) {
-        if (ip_header->ip_off & (u_short)(IP_MF)) {
+        if (ip_header->ip_off & (u_short) (IP_MF)) {
             xrecv.ip_fragments++;
         }
     }
@@ -149,13 +200,23 @@ cleanup:
     }
 }
 
-int recv_run(pthread_mutex_t *recv_ready_mutex) {
+int recv_run(pthread_mutex_t *recv_ready_mutex, sock_t st_) {
     log_debug("recv", "recv thread started");
     log_debug("recv", "capturing responses on %s", xconf.iface);
 
-    if (!xconf.dryrun) {
-        recv_init();
+    // for send
+    st = st_;
+    memset(buff, 0, MAX_PACKET_SIZE);
+    if (xconf.probe_module->thread_init)
+        xconf.probe_module->thread_init(buff, xconf.hw_mac, xconf.gw_mac,
+                                        &probe_data);
+
+    // OS specific send thread init
+    if (send_run_init(st)) {
+        return -1;
     }
+
+    recv_init();
 
     if (xconf.send_ip_pkts) {
         struct ether_header *eth = (struct ether_header *) fake_eth_hdr;

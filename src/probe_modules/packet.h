@@ -99,7 +99,7 @@ __attribute__((unused)) static inline uint16_t
     unsigned short        icmp6_len = sizeof(struct icmp6_hdr) + data_len;
     unsigned long         sum       = 0;
     int                   nleft     = icmp6_len;
-    unsigned short *      w         = (unsigned short *) icmp6_pkt;
+    unsigned short       *w         = (unsigned short *) icmp6_pkt;
 
     // calculate the checksum for the icmpv6 header and icmpv6 data
     while (nleft > 1) {
@@ -146,7 +146,7 @@ __attribute__((unused)) static inline uint16_t
     alias_unsigned_short *dest_addr = (alias_unsigned_short *) daddr;
     unsigned long         sum       = 0;
     int                   nleft     = ntohs(udp_pkt->uh_ulen);
-    unsigned short *      w         = (unsigned short *) udp_pkt;
+    unsigned short       *w         = (unsigned short *) udp_pkt;
 
     // calculate the checksum for the udp6 header and udp6 data
     while (nleft > 1) {
@@ -193,7 +193,7 @@ __attribute__((unused)) static inline uint16_t
     alias_unsigned_short *dest_addr = (alias_unsigned_short *) &daddr;
     unsigned long         sum       = 0;
     int                   nleft     = ntohs(udp_pkt->uh_ulen);
-    unsigned short *      w         = (unsigned short *) udp_pkt;
+    unsigned short       *w         = (unsigned short *) udp_pkt;
 
     // calculate the checksum for the udp header and udp data
     while (nleft > 1) {
@@ -322,6 +322,22 @@ __attribute__((unused)) static inline int
     return (((max - min) % num_ports) >= ((to_validate - min) % num_ports));
 }
 
+__attribute__((unused)) static inline int
+    check_dns_src_port(uint16_t sport, int num_ports, uint8_t *validation) {
+    if (sport > xconf.source_port_last || sport < xconf.source_port_first) {
+        return 0;
+    }
+
+    int32_t to_validate = sport - xconf.source_port_first;
+    int32_t min =
+        ((((uint16_t) validation[0]) << 8u) + validation[1]) % num_ports;
+    int32_t max = ((((uint16_t) validation[0]) << 8u) + validation[1] +
+                   xconf.target_index_num - 1) %
+                  num_ports;
+
+    return (((max - min) % num_ports) >= ((to_validate - min) % num_ports));
+}
+
 __attribute__((unused)) static inline uint16_t
     get_src_port(int num_ports, int probe_num, uint8_t *validation) {
     return xconf.source_port_first +
@@ -330,20 +346,31 @@ __attribute__((unused)) static inline uint16_t
 }
 
 __attribute__((unused)) static inline uint16_t
-    icmp_get_idnum(uint8_t *validation) {
+    get_icmp_idnum(uint8_t *validation) {
     return (((uint16_t) validation[0]) << 8u) + validation[1];
 }
 
 __attribute__((unused)) static inline uint16_t
-    icmp_get_seqnum(uint8_t *validation) {
+    get_icmp_seqnum(uint8_t *validation) {
     return (((uint16_t) validation[2]) << 8u) + validation[3];
 }
 
 __attribute__((unused)) static inline uint32_t
-    tcp_get_seqnum(uint8_t *validation) {
+    get_tcp_seqnum(uint8_t *validation) {
     return (((uint32_t) validation[0]) << 24u) +
            (((uint32_t) validation[1]) << 16u) +
            (((uint32_t) validation[2]) << 8u) + (((uint32_t) validation[3]));
+}
+
+__attribute__((unused)) static inline uint16_t
+    get_dns_txid(uint8_t *validation) {
+    return (((uint16_t) validation[0]) << 8u) + validation[1];
+}
+
+// Returns 1 if match
+__attribute__((unused)) static inline int check_dns_txid(uint16_t txid,
+                                                         uint8_t *validation) {
+    return txid == get_dns_txid(validation);
 }
 
 // Note: caller must free return value

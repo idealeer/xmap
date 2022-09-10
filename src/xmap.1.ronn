@@ -27,7 +27,10 @@ xmap [ -4 | -6 ] [ -x &lt;len&gt; ] [ -p &lt;port&gt; ] [ -o &lt;outfile&gt; ] [
      
    * `-p`, `--target-port=port|range`:
      TCP or UDP port(s) number to scan (for SYN scans and basic UDP scans). Accepts port ranges with `,` and `-`, e.g., `80,443,8080-8081`. With `--target-port`, one target is a **<ip/x, port>**.
-     
+
+   * `-P`, `--target-index=num`:
+     Payload number to scan. With `--target-index`, one target is a **<ip/x, (port), index>**.
+
    * `-o`, `--output-file=name`:
      When using an output module that uses a file, write results to this file. Use `-` for stdout.
      
@@ -76,7 +79,7 @@ xmap [ -4 | -6 ] [ -x &lt;len&gt; ] [ -p &lt;port&gt; ] [ -o &lt;outfile&gt; ] [
      How long to continue receiving after sending has completed (default = `5`).
      
    * `-e`, `--seed=num`:
-     Seed used to select address permutation. Use this if you want to scan addresses in the same order for multiple XMap runs (default = `0`). 
+     Seed used to select address permutation and generate random probe validation msg. Use this if you want to scan addresses in the same order and generate the same probe validation msg for multiple XMap runs (default = `0`).
      
    * `--shards=num`:
      Split the scan up into N shards/partitions among different instances of xmap (default = `1`). When sharding, `--seed` is required.
@@ -91,7 +94,7 @@ xmap [ -4 | -6 ] [ -x &lt;len&gt; ] [ -p &lt;port&gt; ] [ -o &lt;outfile&gt; ] [
      Source port(s) to send packets from. Accept port ranges with `-`, e.g., `12345-54321`. Default to `32768-61000`.
 
    * `-S`, `--source-ip=ip|range`:
-     Source address(es) to send packets from. Either single IP or range. Accept ip ranges with `,` and `-`, e.g., 2001::1, 2001::2-2001::10.
+     Source address(es) to send packets from. Either single IP or range. Accept ip ranges with `,` and `-` (max=`1024`), e.g., 2001::1, 2001::2-2001::10.
      
    * `-G`, `--gateway-mac=mac`:
      Gateway MAC address to send packets to (in case auto-detection fails).

@@ -54,14 +54,14 @@ static int tcp6_syn_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 static int tcp6_syn_make_packet(void *buf, UNUSED size_t *buf_len,
                                 ipaddr_n_t *src_ip, ipaddr_n_t *dst_ip,
                                 port_h_t dst_port, uint8_t ttl, int probe_num,
-                                UNUSED void *arg) {
+                                UNUSED index_h_t index, UNUSED void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
-    struct ip6_hdr *     ip6_header = (struct ip6_hdr *) (&eth_header[1]);
-    struct tcphdr *      tcp_header = (struct tcphdr *) (&ip6_header[1]);
+    struct ip6_hdr      *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
+    struct tcphdr       *tcp_header = (struct tcphdr *) (&ip6_header[1]);
 
     uint8_t validation[VALIDATE_BYTES];
     validate_gen(src_ip, dst_ip, dst_port, validation);
-    uint32_t tcp_seq = tcp_get_seqnum(validation);
+    uint32_t tcp_seq = get_tcp_seqnum(validation);
 
     uint8_t *ip6_src = (uint8_t *) &(ip6_header->ip6_src);
     uint8_t *ip6_dst = (uint8_t *) &(ip6_header->ip6_dst);
@@ -87,8 +87,8 @@ static int tcp6_syn_make_packet(void *buf, UNUSED size_t *buf_len,
 // not static because used by synack scan
 void tcp6_syn_print_packet(FILE *fp, void *packet) {
     struct ether_header *eth_header = (struct ether_header *) packet;
-    struct ip6_hdr *     ip6_header = (struct ip6_hdr *) &eth_header[1];
-    struct tcphdr *      tcp_header = (struct tcphdr *) &ip6_header[1];
+    struct ip6_hdr      *ip6_header = (struct ip6_hdr *) &eth_header[1];
+    struct tcphdr       *tcp_header = (struct tcphdr *) &ip6_header[1];
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip6_header(fp, ip6_header);
@@ -111,7 +111,9 @@ void tcp6_syn_print_packet(FILE *fp, void *packet) {
 }
 
 static int tcp6_syn_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                                    UNUSED int *is_repeat) {
+                                    UNUSED int *is_repeat, UNUSED void *buf,
+                                    UNUSED size_t *buf_len,
+                                    UNUSED uint8_t ttl) {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
 
     if (ip6_header->ip6_nxt != IPPROTO_TCP) {
@@ -140,7 +142,7 @@ static int tcp6_syn_validate_packet(const struct ip *ip_hdr, uint32_t len,
     }
 
     // We treat RST packets different from non RST packets
-    uint32_t tcp_seq = tcp_get_seqnum(validation);
+    uint32_t tcp_seq = get_tcp_seqnum(validation);
     if (tcp_header->th_flags & TH_RST) {
         // For RST packets, recv(ack) == sent(seq) + 0 or + 1
         if (htonl(tcp_header->th_ack) != htonl(tcp_seq) &&
@@ -221,6 +223,6 @@ probe_module_t module_tcp6_syn = {
     .fields          = fields,
     .numfields       = sizeof(fields) / sizeof(fields[0]),
     .helptext        = "Probe module that sends a TCP SYN packet to a specific "
-                "port. Possible classifications are: synack and rst. A "
-                "SYN-ACK packet is considered a success and a reset packet "
-                "is considered a failed response."};
+                       "port. Possible classifications are: synack and rst. A "
+                       "SYN-ACK packet is considered a success and a reset packet "
+                       "is considered a failed response."};

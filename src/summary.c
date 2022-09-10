@@ -74,6 +74,10 @@ void json_metadata(FILE *file) {
                            json_object_new_int(xconf.max_probe_len));
     json_object_object_add(obj, "max_probe_port_len",
                            json_object_new_int(xconf.max_probe_port_len));
+    json_object_object_add(obj, "max_port_index_len",
+                           json_object_new_int(xconf.max_port_index_len));
+    json_object_object_add(obj, "max_probe_port_index_len",
+                           json_object_new_int(xconf.max_probe_port_index_len));
     json_object_object_add(obj, "target_port_num",
                            json_object_new_int(xconf.target_port_num));
     json_object_object_add(obj, "target_port_bits",
@@ -86,6 +90,10 @@ void json_metadata(FILE *file) {
         }
         json_object_object_add(obj, "target_ports", target_ports);
     }
+    json_object_object_add(obj, "target_index_num",
+                           json_object_new_int(xconf.target_index_num));
+    json_object_object_add(obj, "target_index_bits",
+                           json_object_new_int(xconf.target_index_bits));
     json_object_object_add(obj, "source_port_first",
                            json_object_new_int(xconf.source_port_first));
     json_object_object_add(obj, "source_port_last",
@@ -178,10 +186,21 @@ void json_metadata(FILE *file) {
     json_object_object_add(
         obj, "blocklist_total_not_allowed_ip_port",
         json_object_new_string(mpz_to_str10(xconf.total_disallowed_ip_port)));
+    json_object_object_add(obj, "blocklist_total_allowed_ip_port_index_actual",
+                           json_object_new_string(mpz_to_str10(
+                               xconf.total_allowed_ip_port_index_actual)));
+    json_object_object_add(obj, "blocklist_total_allowed_ip_port_index",
+                           json_object_new_string(mpz_to_str10(
+                               xconf.total_allowed_ip_port_index)));
+    json_object_object_add(obj, "blocklist_total_not_allowed_ip_port_index",
+                           json_object_new_string(mpz_to_str10(
+                               xconf.total_disallowed_ip_port_index)));
     json_object_object_add(obj, "validation_passed",
                            json_object_new_int64(xrecv.validation_passed));
     json_object_object_add(obj, "validation_failed",
                            json_object_new_int64(xrecv.validation_failed));
+    json_object_object_add(obj, "validation_again",
+                           json_object_new_int64(xrecv.validation_again));
 
     //	json_object_object_add(obj, "blocklisted",
     //            json_object_new_int64(xsend.blocklisted));
@@ -192,7 +211,7 @@ void json_metadata(FILE *file) {
     mpz_t ip_1;
     mpz_init(ip_1);
     mpz_sub_ui(xsend.first_scanned, xsend.first_scanned, 1);
-    blocklist_lookup_index_for_ipvx_port(ip_1, xsend.first_scanned);
+    blocklist_lookup_index_for_ipvx_port_index(ip_1, xsend.first_scanned);
     mpz_to_uint8s_bits(ip_1, ip, xconf.max_probe_len);
     json_object_object_add(
         obj, "first_scanned_prefix",
@@ -353,6 +372,9 @@ void json_metadata(FILE *file) {
         json_object_object_add(
             obj, "list_of_ip_port_count",
             json_object_new_int(xconf.list_of_ip_port_count));
+        json_object_object_add(
+            obj, "list_of_ip_port_count_index",
+            json_object_new_int(xconf.list_of_ip_port_index_count));
     }
     json_object_object_add(obj, "ignore_blacklist_error",
                            json_object_new_int(xconf.ignore_blacklist_error));

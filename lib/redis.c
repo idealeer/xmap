@@ -28,38 +28,38 @@ int redis_parse_connstr(char *connstr, redisconf_t *redis_conf) {
     memset(redis_conf->error, 0, PMAP_REDIS_ERRLEN);
     if (!strncmp("tcp://", connstr, 6)) {
         // Zero-out the error message
-        char *servername = xmalloc(strlen(connstr));
-        char *list_name = xmalloc(strlen(connstr));
+        char    *servername = xmalloc(strlen(connstr));
+        char    *list_name  = xmalloc(strlen(connstr));
         uint32_t port;
-        if (sscanf(connstr, "tcp://%[^:]:%u/%s", servername, &port, list_name) !=
-            3) {
-            char *back =
-                    stpncpy(&redis_conf->error[0],
-                            "unable to "
-                            "parse redis connection string. This should be of the form "
-                            "tcp://server:port/list-name for TCP connections. All fields"
-                            " are required.",
-                            PMAP_REDIS_ERRLEN);
+        if (sscanf(connstr, "tcp://%[^:]:%u/%s", servername, &port,
+                   list_name) != 3) {
+            char *back = stpncpy(
+                &redis_conf->error[0],
+                "unable to "
+                "parse redis connection string. This should be of the form "
+                "tcp://server:port/list-name for TCP connections. All fields"
+                " are required.",
+                PMAP_REDIS_ERRLEN);
             *back = '\0';
             return PMAP_REDIS_ERROR;
         }
-        redis_conf->type = T_TCP;
-        redis_conf->server = servername;
-        redis_conf->port = port;
+        redis_conf->type      = T_TCP;
+        redis_conf->server    = servername;
+        redis_conf->port      = port;
         redis_conf->list_name = list_name;
-        redis_conf->path = NULL;
+        redis_conf->path      = NULL;
     } else if (!strncmp("local://", connstr, 8)) {
         // looking for something along the lines of
         // local:///tmp/redis.sock/list-name
         // or local:///tmp/redis.sock/
-        char *path = xmalloc(strlen(connstr));
+        char *path      = xmalloc(strlen(connstr));
         char *list_name = xmalloc(strlen(connstr));
-        connstr = connstr + (size_t) 8;
-        char *listname = strrchr(connstr, '/');
+        connstr         = connstr + (size_t) 8;
+        char *listname  = strrchr(connstr, '/');
         if (listname == NULL) {
             char *back =
-                    stpncpy(&redis_conf->error[0], "bad local url (missing a slash)",
-                            PMAP_REDIS_ERRLEN);
+                stpncpy(&redis_conf->error[0],
+                        "bad local url (missing a slash)", PMAP_REDIS_ERRLEN);
             *back = '\0';
             return PMAP_REDIS_ERROR;
         }
@@ -76,16 +76,16 @@ int redis_parse_connstr(char *connstr, redisconf_t *redis_conf) {
         connstr[strrchr(connstr, '/') - connstr] = '\0';
         strcpy(path, connstr);
         strcpy(list_name, listname);
-        redis_conf->type = T_LOCAL;
-        redis_conf->path = path;
+        redis_conf->type   = T_LOCAL;
+        redis_conf->path   = path;
         redis_conf->server = NULL;
-        redis_conf->port = 0;
+        redis_conf->port   = 0;
     } else {
         char *back = stpncpy(&redis_conf->error[0],
                              "redis connection string does not being with "
                              "tcp:// or local://",
                              PMAP_REDIS_ERRLEN);
-        *back = '\0';
+        *back      = '\0';
         return PMAP_REDIS_ERROR;
     }
     return PMAP_REDIS_SUCCESS;
@@ -93,7 +93,7 @@ int redis_parse_connstr(char *connstr, redisconf_t *redis_conf) {
 
 redisContext *redis_connect(char *connstr) {
     assert(connstr);
-    redisconf_t rconf;
+    redisconf_t  rconf;
     redisconf_t *c = &rconf;
     // handle old behavior where we only connected to a specific
     // socket that we #defined.
@@ -113,12 +113,13 @@ redisContext *redis_connect(char *connstr) {
 redisContext *redis_connect_from_conf(redisconf_t *c) {
     assert(c);
     struct timeval timeout;
-    timeout.tv_sec = REDIS_TIMEOUT;
+    timeout.tv_sec  = REDIS_TIMEOUT;
     timeout.tv_usec = 0;
     if (c->type == T_LOCAL) {
         return (redisContext *) redisConnectUnixWithTimeout(c->path, timeout);
     } else {
-        return (redisContext *) redisConnectWithTimeout(c->server, c->port, timeout);
+        return (redisContext *) redisConnectWithTimeout(c->server, c->port,
+                                                        timeout);
     }
 }
 
@@ -131,7 +132,8 @@ int redis_close(redisContext *rctx) {
 static int chkerr(redisContext *rctx, redisReply *reply) {
     assert(rctx);
     if (reply == NULL || reply->type == REDIS_REPLY_ERROR) {
-        log_error("redis", "an error occurred when retrieving item from redis: %s",
+        log_error("redis",
+                  "an error occurred when retrieving item from redis: %s",
                   rctx->errstr);
         if (reply) {
             freeReplyObject(reply);
@@ -233,7 +235,7 @@ int redis_pull(redisContext *rctx, char *redisqueuename, void *buf, int maxload,
                size_t obj_size, int *numloaded, const char *cmd) {
     assert(rctx);
     long elems_in_redis = redis_get_sizeof_list(rctx, redisqueuename);
-    long num_to_add = MIN(elems_in_redis, maxload);
+    long num_to_add     = MIN(elems_in_redis, maxload);
     log_debug("redis",
               "redis load called on %s. Transferring %li of %li elements "
               "to in-memory queue.",
@@ -243,7 +245,7 @@ int redis_pull(redisContext *rctx, char *redisqueuename, void *buf, int maxload,
     }
     for (int i = 0; i < num_to_add; i++) {
         redisReply *reply = NULL;
-        int rc = redisGetReply(rctx, (void **) &reply);
+        int         rc    = redisGetReply(rctx, (void **) &reply);
         if (chkerr(rctx, reply)) {
             return PMAP_REDIS_ERROR;
         }
@@ -295,7 +297,7 @@ static int redis_pull_one(redisContext *rctx, char *queuename, void **buf,
         return PMAP_REDIS_EMPTY;
     }
     assert(reply->type == REDIS_REPLY_STRING);
-    *len = reply->len;
+    *len       = reply->len;
     void *temp = (char *) malloc(*len);
     assert(temp);
     *buf = temp;
@@ -319,8 +321,8 @@ static int redis_push(redisContext *rctx, char *redisqueuename, void *buf,
     assert(rctx);
     for (int i = 0; i < num; i++) {
         void *load = (void *) ((intptr_t) buf + i * len);
-        int rc =
-                redisAppendCommand(rctx, "%s %s %b", cmd, redisqueuename, load, len);
+        int rc = redisAppendCommand(rctx, "%s %s %b", cmd, redisqueuename, load,
+                                    len);
         if (rc != REDIS_OK || rctx->err) {
             log_error("redis", "%s", rctx->errstr);
             return PMAP_REDIS_ERROR;
@@ -366,7 +368,8 @@ int redis_spush(redisContext *rctx, char *redisqueuename, void *buf, int num,
 static int redis_push_one(redisContext *rctx, char *queuename, void *buf,
                           size_t len, const char *cmd) {
     assert(rctx);
-    redisReply *reply = redisCommand(rctx, "%s %s %b", cmd, queuename, buf, len);
+    redisReply *reply =
+        redisCommand(rctx, "%s %s %b", cmd, queuename, buf, len);
     if (chkerr(rctx, reply)) {
         return PMAP_REDIS_ERROR;
     }
@@ -388,7 +391,8 @@ static int redis_push_strings(redisContext *rctx, char *redisqueuename,
                               char **buf, int num, const char *cmd) {
     assert(rctx);
     for (int i = 0; i < num; i++) {
-        int rc = redisAppendCommand(rctx, "%s %s %s", cmd, redisqueuename, buf[i]);
+        int rc =
+            redisAppendCommand(rctx, "%s %s %s", cmd, redisqueuename, buf[i]);
         if (rc != REDIS_OK || rctx->err) {
             log_error("redis", "%s", rctx->errstr);
             return PMAP_REDIS_ERROR;

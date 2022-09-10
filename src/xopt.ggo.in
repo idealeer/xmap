@@ -16,6 +16,10 @@ option "max-len"                x "Max IP bit length to scan"
 option "target-port"            p "Port(s) number to scan (for TCP and UDP scans), use `,' and `-', with this option, one target is a <ip/x, port>"
     typestr="port|range"
     optional string
+option "target-index"           P "Payload number to scan, with this option, one target is a <ip/x, (port), index>"
+    typestr="num"
+    default="0"
+    optional int
 option "output-file"            o "Output file, use `-' for stdout"
     typestr="name"
     optional string
@@ -68,7 +72,7 @@ option "cooldown-secs"          c "How long to continue receiving after sending 
     typestr="secs"
     default="5"
     optional int
-option "seed"                   e "Seed used to select address permutation"
+option "seed"                   e "Seed used to select address permutation and generate random probe validation msg"
     typestr="num"
     optional longlong
 option "shards"                 - "Set the total number of shards"
@@ -84,7 +88,7 @@ section "Network options"
 option "source-port"            s "Source port(s) for scan packets, use `-'"
     typestr="port|range"
     optional string
-option "source-ip"              S "Source address(es) for scan packets, use `,' and `-'"
+option "source-ip"              S "Source address(es) for scan packets, use `,' and `-' (max=`1024')"
     typestr="ip|range"
     optional string
 option "gateway-mac"            G "Specify gateway MAC address, e.g., 12:34:56:78:90:ab"
@@ -125,7 +129,7 @@ option "output-args"            - "Arguments to pass to output module"
 option "output-fields"          f "Fields that should be output in result set, use `,' and `*'"
     typestr="fields"
     optional string
-option "output-filter"          - "Specify a filter over the response fields to limit what responses get sent to the output module"
+option "output-filter"          F "Specify a filter over the response fields to limit what responses get sent to the output module"
     typestr="filter"
     optional string
 option "list-output-modules"    - "List available output modules"

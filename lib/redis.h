@@ -19,12 +19,12 @@ extern "C" {
 #define PMAP_REDIS_ERRLEN 1024
 
 typedef struct redisconf {
-    int type;
-    char *path;
-    char *server;
+    int      type;
+    char    *path;
+    char    *server;
     uint16_t port;
-    char *list_name;
-    char error[PMAP_REDIS_ERRLEN];
+    char    *list_name;
+    char     error[PMAP_REDIS_ERRLEN];
 } redisconf_t;
 
 int redis_parse_connstr(char *connstr, redisconf_t *redis_conf);
@@ -88,4 +88,4 @@ int redis_setconf_uint32_t(redisContext *, const char *, uint32_t);
 }
 #endif
 
-#endif //XMAP_REDIS_H
+#endif // XMAP_REDIS_H

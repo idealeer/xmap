@@ -85,7 +85,7 @@ static int LogLogVA(enum LogLevel level, const char *loggerName,
             COLOR(color_for_level(level));
         }
 
-        const char *   levelName = log_level_name[level];
+        const char    *levelName = log_level_name[level];
         struct timeval now;
         char           timestamp[256];
         gettimeofday(&now, NULL);

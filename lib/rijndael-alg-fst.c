@@ -601,14 +601,14 @@ static const u32 rcon[] = {
     { *((u32 *) (ct)) = SWAP((st)); }
 #else
 #define GETU32(pt)                                                             \
-    (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] << 8) ^       \
-     ((u32)(pt)[3]))
+    (((u32) (pt)[0] << 24) ^ ((u32) (pt)[1] << 16) ^ ((u32) (pt)[2] << 8) ^    \
+     ((u32) (pt)[3]))
 #define PUTU32(ct, st)                                                         \
     {                                                                          \
-        (ct)[0] = (u8)((st) >> 24);                                            \
-        (ct)[1] = (u8)((st) >> 16);                                            \
-        (ct)[2] = (u8)((st) >> 8);                                             \
-        (ct)[3] = (u8)(st);                                                    \
+        (ct)[0] = (u8) ((st) >> 24);                                           \
+        (ct)[1] = (u8) ((st) >> 16);                                           \
+        (ct)[2] = (u8) ((st) >> 8);                                            \
+        (ct)[3] = (u8) (st);                                                   \
     }
 #endif
 
@@ -881,7 +881,7 @@ void rijndaelEncrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 pt[16],
         }
     }
     rk += Nr << 2;
-#else /* !FULL_UNROLL */
+#else  /* !FULL_UNROLL */
     /*
      * Nr - 1 full rounds:
      */
@@ -1075,7 +1075,7 @@ void rijndaelDecrypt(const u32 rk[/*4*(Nr + 1)*/], int Nr, const u8 ct[16],
         }
     }
     rk += Nr << 2;
-#else /* !FULL_UNROLL */
+#else  /* !FULL_UNROLL */
     /*
      * Nr - 1 full rounds:
      */
