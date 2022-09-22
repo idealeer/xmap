@@ -963,7 +963,7 @@ int dnsf_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *dst_ip,
                  domains_f[index]);
 
         // dns packet
-        if (!qnames_f[index]) free(qnames_f[index]);
+        free(qnames_f[index]);
 
         qname_lens_f[index] = domain_to_qname_f(&qnames_f[index], new_domain);
         dns_packet_lens_f[index] = sizeof(dns_header) + qname_lens_f[index] +
@@ -974,7 +974,7 @@ int dnsf_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *dst_ip,
             return EXIT_FAILURE;
         }
 
-        if (!dns_packets_f[index]) free(dns_packets_f[index]);
+        free(dns_packets_f[index]);
 
         dns_packets_f[index]            = xmalloc(dns_packet_lens_f[index]);
         dns_header        *dns_header_p = (dns_header *) dns_packets_f[index];

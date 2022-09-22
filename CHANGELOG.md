@@ -22,3 +22,8 @@
 * XMap 1.1.0 Major Release.
 * New Features:
   * DNS scan modules enabled (base module: `-M dnsx`, query for software version: `-M dnsv`, spoofing source address: `-M dnsf`, and so on)
+
+# 1.1.1 2022-09-22
+* XMap 1.1.1 Minor Release.
+* Fix Bugs:
+  * Fix the memory leakage issue
