@@ -119,9 +119,9 @@ static int       index_questions_x = 0;
  * (below, and setup_qtype_str_map_x())
  */
 const char *qtype_strs_x[]   = {"A",    "NS",    "CNAME", "SOA",     "PTR",
-                              "MX",   "TXT",   "AAAA",  "RRSIG",   "ANY",
-                              "SIG",  "SRV",   "DS",    "DNSKEY",  "TLSA",
-                              "SVCB", "HTTPS", "CAA",   "HTTPSSVC"};
+                                "MX",   "TXT",   "AAAA",  "RRSIG",   "ANY",
+                                "SIG",  "SRV",   "DS",    "DNSKEY",  "TLSA",
+                                "SVCB", "HTTPS", "CAA",   "HTTPSSVC"};
 const int   qtype_strs_len_x = 19;
 
 const dns_qtype qtype_strid_to_qtype_x[] = {
@@ -1081,9 +1081,11 @@ void dnsx_print_packet(FILE *fp, void *packet) {
     uint16_t bytes_consumed = 0;
     char    *question_name  = get_name_x(data, data_len, (char *) dns_header_p,
                                          udp_len, &bytes_consumed);
+    char    *qname          = ((char *) dns_header_p) + sizeof(dns_header);
+    int      qname_len      = strlen(qname) + 1;
     dns_question_tail *tail_p =
         (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
-                               strlen(question_name));
+                               qname_len);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip_header(fp, ip_header);

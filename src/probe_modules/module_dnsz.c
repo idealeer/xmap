@@ -118,7 +118,7 @@ static int       index_questions_z = 0;
  * (below, and setup_qtype_str_map_z())
  */
 const char *qtype_strs_z[]   = {"A",  "NS",  "CNAME", "SOA",   "PTR",
-                              "MX", "TXT", "AAAA",  "RRSIG", "ANY"};
+                                "MX", "TXT", "AAAA",  "RRSIG", "ANY"};
 const int   qtype_strs_len_z = 10;
 
 const dns_qtype qtype_strid_to_qtype_z[] = {
@@ -1038,9 +1038,11 @@ void dnsz_print_packet(FILE *fp, void *packet) {
     uint16_t bytes_consumed = 0;
     char    *question_name  = get_name_z(data, data_len, (char *) dns_header_p,
                                          udp_len, &bytes_consumed);
+    char    *qname          = ((char *) dns_header_p) + sizeof(dns_header);
+    int      qname_len      = strlen(qname) + 1;
     dns_question_tail *tail_p =
         (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
-                               strlen(question_name));
+                               qname_len);
 
     fprintf_eth_header(fp, eth_header);
     fprintf_ip_header(fp, ip_header);

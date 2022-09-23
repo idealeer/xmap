@@ -27,3 +27,8 @@
 * XMap 1.1.1 Minor Release.
 * Fix Bugs:
   * Fix the memory leakage issue
+
+# 1.1.2 2022-09-23
+* XMap 1.1.2 Minor Release.
+* Fix Bugs:
+  * Fix the print issue of DNS modules
