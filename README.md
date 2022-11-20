@@ -24,6 +24,8 @@ A guide to using XMap can be found in our [GitHub Wiki](https://github.com/ideal
 
 Simple commands and options to using XMap can be found in [USAGE](https://github.com/idealeer/xmap/blob/master/src/xmap.1.ronn).
 
+Check how to use DNS probing modules in [Issue #11](https://github.com/idealeer/xmap/issues/11).
+
 Watch the description video at [Pentester Academy TV](https://www.youtube.com/watch?v=wgdFham6P2Y).
 
 ## Paper
