@@ -40,7 +40,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[USENIX Security '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[The Maginot Line: Attacking the Boundary of DNS Caching Protection](https://lixiang521.com/publication/security23/).** In Proceedings of the 32nd USENIX Security Symposium (**[USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/)**). Anaheim, California, August 9–11, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, [Acceptance rate in summer](https://sec23summer.usenix.hotcrp.com/): 82/402=20.4%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): ??%)
+  (Acceptance rate: ??%, [Acceptance rate in summer](https://sec23summer.usenix.hotcrp.com/): 82/402=20.4%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 89/569=15.6%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): ??%)
 
 License and Copyright
 ---------------------
