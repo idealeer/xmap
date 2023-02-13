@@ -36,11 +36,11 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[NDSS '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), [Mingming Zhang](https://netsec.ccert.edu.cn/people/zmm18), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[Ghost Domain Reloaded: Vulnerable Links in Domain Name Delegation and Revocation](https://lixiang521.com/publication/ndss23/).** In Proceedings of the 30th Annual Network and Distributed System Security Symposium (**[NDSS '23](https://www.ndss-symposium.org/ndss2023/)**). San Diego, California, 27 February – 3 March, 2023. [\[PDF\]](https://lixiang521.com/publication/ndss23/ndss23-li-phoenix.pdf) [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: 101/581=17.4%, [Acceptance rate in summer](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 65/398=16.3%)
+  (Acceptance rate: 101/581=17.4%, [**Acceptance rate in summer**](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 65/398=16.3%)
 
 - **\[USENIX Security '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[The Maginot Line: Attacking the Boundary of DNS Caching Protection](https://lixiang521.com/publication/security23/).** In Proceedings of the 32nd USENIX Security Symposium (**[USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/)**). Anaheim, California, August 9–11, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, [Acceptance rate in summer](https://sec23summer.usenix.hotcrp.com/): 82/402=20.4%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 89/569=15.6%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): ??%)
+  (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec23summer.usenix.hotcrp.com/): 82/402=20.4%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 89/569=15.6%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): ??%)
 
 License and Copyright
 ---------------------
