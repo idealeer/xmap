@@ -36,7 +36,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[NDSS '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), [Mingming Zhang](https://netsec.ccert.edu.cn/people/zmm18), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[Ghost Domain Reloaded: Vulnerable Links in Domain Name Delegation and Revocation](https://lixiang521.com/publication/ndss23/).** In Proceedings of the 30th Annual Network and Distributed System Security Symposium (**[NDSS '23](https://www.ndss-symposium.org/ndss2023/)**). San Diego, California, 27 February – 3 March, 2023. [\[PDF\]](https://lixiang521.com/publication/ndss23/ndss23-li-phoenix.pdf) [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: 101/581=17.4%, [**Acceptance rate in summer**](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 65/398=16.3%)
+  (Acceptance rate: 94/581=16.2%, [*Acceptance rate in summer*](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 58/398=14.6%)
 
   * Presented in [OARC 39](https://indico.dns-oarc.net/event/44/contributions/953/)
   * Presented in [ICANN DNS Symposium 2022](https://www.icann.org/ids)
