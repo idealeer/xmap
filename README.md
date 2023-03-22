@@ -41,7 +41,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
   * Presented in [OARC 39](https://indico.dns-oarc.net/event/44/contributions/953/)
   * Presented in [ICANN DNS Symposium 2022](https://www.icann.org/ids)
   * Presented in [Black Hat Asia 2023](https://www.blackhat.com/asia-23/)
-  * Referenced in [RFC Draft: Delegation Revalidation by DNS Resolvers](https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-ns-revalidation-04)
+  * Referenced by [RFC Draft: Delegation Revalidation by DNS Resolvers](https://datatracker.ietf.org/doc/html/draft-ietf-dnsop-ns-revalidation-04)
 
 - **\[USENIX Security '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[The Maginot Line: Attacking the Boundary of DNS Caching Protection](https://lixiang521.com/publication/security23/).** In Proceedings of the 32nd USENIX Security Symposium (**[USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/)**). Anaheim, California, August 9–11, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
