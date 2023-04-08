@@ -332,7 +332,7 @@ __attribute__((unused)) static inline int
     int32_t min =
         ((((uint16_t) validation[0]) << 8u) + validation[1]) % num_ports;
     int32_t max = ((((uint16_t) validation[0]) << 8u) + validation[1] +
-                   xconf.target_index_num - 1) %
+                   xconf.packet_streams - 1) %
                   num_ports;
 
     return (((max - min) % num_ports) >= ((to_validate - min) % num_ports));

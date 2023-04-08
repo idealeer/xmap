@@ -32,3 +32,8 @@
 * XMap 1.1.2 Minor Release.
 * Fix Bugs:
   * Fix the print issue of DNS modules
+
+# 1.1.3 2023-04-08
+* XMap 1.1.3 Minor Release.
+* Fix Bugs:
+  * Fix the source port checking issue of DNS modules
