@@ -14,6 +14,12 @@ XMap operates on GNU/Linux, macOS, and BSD.
 | macOS (using [Homebrew](https://brew.sh)) | `-`  |
 | Arch Linux                                | `-`  |
 
+## Installing via Docker
+
+```sh
+docker pull liii/xmap:latest
+```
+
 ## Building from Source
 
 ### Installing XMap Dependencies

@@ -17,6 +17,8 @@ The latest stable release of XMap is version 1.1.3 and supports Linux, macOS, an
 
 **Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/INSTALL.md).
 
+**Installing from docker**: `docker pull liii/xmap:latest`
+
 Usage
 -----
 
