@@ -66,7 +66,8 @@ fieldset_t *fs_new_repeated_fieldset(void) {
 static inline void fs_add_word(fieldset_t *fs, const char *name, int type,
                                int free_, size_t len, field_val_t value) {
     if (fs->len + 1 >= MAX_FIELDS) {
-        log_fatal("fieldset", "out of room in fieldset");
+        log_warn("fieldset", "out of room in fieldset");
+        return;
     }
     if (fs->type == FS_REPEATED && fs->inner_type != type) {
         log_fatal("fieldset",

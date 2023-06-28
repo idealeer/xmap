@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 // maximum number of records that can be stored in a fieldset
-#define MAX_FIELDS 512
+#define MAX_FIELDS 1024
 #define MAX_LIST_LENGTH 255
 
 // types of data that can be stored in a field
