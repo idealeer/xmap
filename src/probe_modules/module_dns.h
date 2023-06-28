@@ -49,6 +49,17 @@ typedef struct __attribute__((packed)) {
     char     rdata[];
 } dns_answer_tail;
 
+typedef struct __attribute__((packed)) {
+    uint16_t type;         /* should be OPT (41) */
+    uint16_t udpsize;      /* UDP payload size */
+    uint8_t  ercode;       /* higher bits in extended rcode */
+    uint8_t  eversion;     /* EDNS0 version */
+    uint16_t dodnssec : 1; /* handle DNSSEC security or not */
+    uint16_t z : 15;       /* reserved set to 0 */
+    uint16_t dlength;      /* data length */
+    char     data[];       /* data */
+} dns_option_tail;
+
 typedef enum {
     DNS_QTYPE_A        = 1,
     DNS_QTYPE_NS       = 2,
@@ -69,6 +80,7 @@ typedef enum {
     DNS_QTYPE_HTTPS    = 65,
     DNS_QTYPE_CAA      = 257,
     DNS_QTYPE_HTTPSSVC = 65479,
+    DNS_QTYPE_OPT      = 41,
 } dns_qtype;
 
 typedef enum {

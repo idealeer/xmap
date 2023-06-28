@@ -60,6 +60,29 @@ set(SOURCES_PROBE_MODULES
         probe_modules/module_dnsz.c
         probe_modules/module_dnss.c
         probe_modules/module_dnsv.c
+        probe_modules/module_dnsa.c
+        probe_modules/module_dnsae.c
+        probe_modules/module_dnsan.c
+        probe_modules/module_dnsane.c
+        probe_modules/module_dnsane16.c
+        probe_modules/module_dnsai.c
+        probe_modules/module_dnsaie.c
+        probe_modules/module_dnsap.c
+        probe_modules/module_dnsape.c
+        probe_modules/module_dnsaf.c
+        probe_modules/module_dnsafe.c
+        probe_modules/module_dns6x.c
+        probe_modules/module_dns6a.c
+        probe_modules/module_dns6ae.c
+        probe_modules/module_dns6an.c
+        probe_modules/module_dns6ane.c
+        probe_modules/module_dns6ane16.c
+        probe_modules/module_dns6ai.c
+        probe_modules/module_dns6aie.c
+        probe_modules/module_dns6ap.c
+        probe_modules/module_dns6ape.c
+        probe_modules/module_dns6af.c
+        probe_modules/module_dns6afe.c
         )
 
 set(SOURCES_IID_MODULES

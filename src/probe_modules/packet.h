@@ -373,6 +373,26 @@ __attribute__((unused)) static inline int check_dns_txid(uint16_t txid,
     return txid == get_dns_txid(validation);
 }
 
+__attribute__((unused)) static inline uint16_t
+    get_dnsa_txid(uint8_t *validation, int probe_num) {
+    return (((uint16_t) validation[0]) << 8u) + validation[1] + probe_num;
+}
+
+// Returns 1 if match
+__attribute__((unused)) static inline int check_dnsa_txid(uint16_t txid,
+                                                          uint8_t *validation) {
+
+    uint16_t txid_min = get_dnsa_txid(validation, 0);
+    uint16_t txid_max = get_dnsa_txid(validation, xconf.packet_streams);
+    uint16_t txid_t   = txid_min;
+    if (txid_min > txid_max) {
+        txid_min = txid_max;
+        txid_max = txid_min;
+    }
+
+    return txid >= txid_min && txid <= txid_max;
+}
+
 // Note: caller must free return value
 char *make_ip_str(uint32_t ip);
 

@@ -31,24 +31,78 @@ extern probe_module_t module_dnsf;
 extern probe_module_t module_dnsz;
 extern probe_module_t module_dnss;
 extern probe_module_t module_dnsv;
+extern probe_module_t module_dnsa;
+extern probe_module_t module_dnsae;
+extern probe_module_t module_dnsan;
+extern probe_module_t module_dnsane;
+extern probe_module_t module_dnsane16;
+extern probe_module_t module_dnsai;
+extern probe_module_t module_dnsaie;
+extern probe_module_t module_dnsap;
+extern probe_module_t module_dnsape;
+extern probe_module_t module_dnsaf;
+extern probe_module_t module_dnsafe;
 extern probe_module_t module_tcp_scan;
 extern probe_module_t module_tcp_syn;
 extern probe_module_t module_icmp6_echo;
 extern probe_module_t module_udp6;
+extern probe_module_t module_dns6x;
+extern probe_module_t module_dns6a;
+extern probe_module_t module_dns6ae;
+extern probe_module_t module_dns6an;
+extern probe_module_t module_dns6ane;
+extern probe_module_t module_dns6ane16;
+extern probe_module_t module_dns6ai;
+extern probe_module_t module_dns6aie;
+extern probe_module_t module_dns6ap;
+extern probe_module_t module_dns6ape;
+extern probe_module_t module_dns6af;
+extern probe_module_t module_dns6afe;
 extern probe_module_t module_tcp6_syn;
 extern probe_module_t module_icmp6_echo_tmxd;
 extern probe_module_t module_icmp6_echo_gw;
 // ADD YOUR MODULE HERE
 
 probe_module_t *probe_modules[] = {
-    &module_udp,           &module_dns,
-    &module_dnsr,          &module_dnsx,
-    &module_dnsf,          &module_dnsz,
-    &module_dnss,          &module_dnsv,
-    &module_tcp_scan,      &module_tcp_syn,
-    &module_icmp_echo,     &module_udp6,
-    &module_tcp6_syn,      &module_icmp6_echo,
-    &module_icmp6_echo_gw, &module_icmp6_echo_tmxd,
+    &module_udp,
+    &module_dns,
+    &module_dnsr,
+    &module_dnsx,
+    &module_dnsf,
+    &module_dnsz,
+    &module_dnss,
+    &module_dnsv,
+    &module_dnsa,
+    &module_dnsae,
+    &module_dnsan,
+    &module_dnsane,
+    &module_dnsane16,
+    &module_dnsai,
+    &module_dnsaie,
+    &module_dnsap,
+    &module_dnsape,
+    &module_dnsaf,
+    &module_dnsafe,
+    &module_tcp_scan,
+    &module_tcp_syn,
+    &module_icmp_echo,
+    &module_udp6,
+    &module_dns6x,
+    &module_dns6a,
+    &module_dns6ae,
+    &module_dns6an,
+    &module_dns6ane,
+    &module_dns6ane16,
+    &module_dns6ai,
+    &module_dns6aie,
+    &module_dns6ap,
+    &module_dns6ape,
+    &module_dns6af,
+    &module_dns6afe,
+    &module_tcp6_syn,
+    &module_icmp6_echo,
+    &module_icmp6_echo_gw,
+    &module_icmp6_echo_tmxd,
     // ADD YOUR MODULE HERE
 };
 
@@ -153,4 +207,4 @@ fielddef_t sys_fields[]   = {
     {.name = "timestamp_us",
        .type = "int",
        .desc = "microsecond part of timestamp (e.g. microseconds since "
-               "`timestamp-ts')"}};
+                 "`timestamp-ts')"}};

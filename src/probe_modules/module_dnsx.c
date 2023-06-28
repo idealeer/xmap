@@ -16,7 +16,7 @@
  *      RECURSE: recurse, no-recurse
  *      INPUT_SRC: text, file
  *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
- *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and, HTTPSSVC
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
  *      file: TYPE,QUESTION;TYPE,QUESTION in each line
  *
  * Given no arguments it will default to asking for an A record for
@@ -661,7 +661,7 @@ static int load_question_from_str_x(const char *type_q_str) {
 
         qtypes_x[index_questions_x] = qtype_str_to_code_x(strupr(qtype_str));
         if (!qtypes_x[index_questions_x]) {
-            log_error("dnsx", "incorrect qtype supplied. %s", qtype_str);
+            log_error("dnsx", "incorrect qtype supplied: %s", qtype_str);
             free(qtype_str);
             return EXIT_FAILURE;
         }
@@ -1498,7 +1498,7 @@ probe_module_t module_dnsx = {
         "'raw:text:A,qq.com;NS,qq.com'. The module supports\n"
         "sending the the following types of queries: A, NS, CNAME, SOA, PTR,\n"
         "MX, TXT, AAAA, RRSIG, ANY, SIG, SRV, DS, DNSKEY, TLSA, SVCB, HTTPS,\n"
-        "CAA, and, HTTPSSVC. The module will accept and attempt\n"
+        "CAA, and HTTPSSVC. The module will accept and attempt\n"
         "to parse all DNS responses. There is currently support for parsing\n"
         "out full data from A, NS, CNAME, MX, TXT, and AAAA.\n"
         "Query format: label_type:recurse:input_src:type,query;type,query\n"

@@ -103,7 +103,7 @@ static int       num_questions = 0;
  * (below, and setup_qtype_str_map())
  */
 const char *qtype_strs[]   = {"A",  "NS",  "CNAME", "SOA",   "PTR",
-                            "MX", "TXT", "AAAA",  "RRSIG", "ANY"};
+                              "MX", "TXT", "AAAA",  "RRSIG", "ANY"};
 const int   qtype_strs_len = 10;
 
 const dns_qtype qtype_strid_to_qtype[] = {

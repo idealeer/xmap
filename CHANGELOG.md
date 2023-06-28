@@ -42,3 +42,19 @@
 * XMap 1.1.4 Minor Release.
 * New feature:
   * increase the field number to store results
+
+# 2.0.0 06/28/2023
+* XMap 2.0.0 New Version Release.
+* New feature:
+  * new module `dnsx`                : enable DNS over IPv6
+  * new module `dnsa`     (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsae`    (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
+  * new module `dnsan`    (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsane`   (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
+  * new module `dnsane16` (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=65535
+  * new module `dnsai`    (IPv4&IPv6): enable changing TXID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsaie`   (IPv4&IPv6): enable changing TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
+  * new module `dnsap`    (IPv4&IPv6): enable changing source port when sending multiple queries towards the same target <IP, port>
+  * new module `dnsape`   (IPv4&IPv6): enable changing source port when sending multiple queries towards the same target <IP, port> with EDNS0=4096
+  * new module `dnsaf`    (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with fake source IP
+  * new module `dnsafe`   (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096 & source IP
