@@ -13,7 +13,7 @@ With banner grab and TLS handshake tool, [ZGrab2](https://github.com/zmap/zgrab2
 Installation
 ------------
 
-The latest stable release of XMap is version 1.1.3 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
+The latest stable release of XMap is version 2.0.0 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
 
 **Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/INSTALL.md).
 
@@ -29,6 +29,10 @@ Simple commands and options to using XMap can be found in [USAGE](https://github
 Check how to use DNS probing modules in [Issue #11](https://github.com/idealeer/xmap/issues/11).
 
 Watch the description video at [Pentester Academy TV](https://www.youtube.com/watch?v=wgdFham6P2Y).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=idealeer/xmap&type=Date)](https://star-history.com/#idealeer/xmap&Date)
 
 ## Paper
 
