@@ -51,9 +51,13 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[USENIX Security '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[The Maginot Line: Attacking the Boundary of DNS Caching Protection](https://lixiang521.com/publication/security23/).** In Proceedings of the 32nd USENIX Security Symposium (**[USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/)**). Anaheim, California, August 9–11, 2023. [\[PDF\]](https://lixiang521.com/publication/security23/usenix23-li-maginot.pdf) [\[Slides\]](https://lixiang521.com/publication/security23/usenix23-li-slides.pdf) [\[Video\]]()
 
-  (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec23summer.usenix.hotcrp.com/): 91/402=22.6%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/569=27.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): ??%)
+  (Acceptance rate: 422/1,444=29.2%, [*Acceptance rate in summer*](https://sec23summer.usenix.hotcrp.com/): 91/388=23.5%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/531=29.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): 176/525=33.5%)
 
   * Presented in [Black Hat USA 2023](https://www.blackhat.com/us-23/briefings/schedule/index.html#maginotdns-attacking-the-boundary-of-dns-caching-protection-31901)
+
+  * 20+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
+
+  * An Austria government [CERT daily report](https://www.govcert.gv.at/cert-tagesmeldungen.html?detail=entry-0)
 
 - **\[CCS '23\]** [Wei Xu](https://netsec.ccert.edu.cn/people/xuw21)ⓘ, [**Xiang Li**](https://netsec.ccert.edu.cn/people/lx19)ⓘ, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), Tao Wan, and [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/). [**TsuKing: Coordinating DNS Resolvers and Queries into Potent DoS Amplifiers**](https://lixiang521.com/publication/ccs23/). In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security ([**CCS '23**](https://www.sigsac.org/ccs/CCS2023/)). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
