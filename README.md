@@ -67,6 +67,10 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: ??%, **Acceptance rate in First Round**: ??%, Acceptance rate in Second Round: ??%)
 
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+
+  (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
+
 License and Copyright
 ---------------------
 
