@@ -59,11 +59,13 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[CCS '23\]** [Wei Xu](https://netsec.ccert.edu.cn/people/xuw21)ⓘ, [**Xiang Li**](https://netsec.ccert.edu.cn/people/lx19)ⓘ, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), Tao Wan, and [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/). [**TsuKing: Coordinating DNS Resolvers and Queries into Potent DoS Amplifiers**](https://lixiang521.com/publication/ccs23/). In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security ([**CCS '23**](https://www.sigsac.org/ccs/CCS2023/)). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, **Acceptance rate in First Round**: ??%, Acceptance rate in Second Round: ??%. ⓘ: Both are first authors.)
+  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%. ⓘ: Both are first authors.)
+
+  * Presented in [OARC 41](https://indico.dns-oarc.net/event/47/contributions/1021/)
 
 - **\[CCS '23\]** [Zhenrui Zhang](https://netsec.ccert.edu.cn/people/zzr21), Geng Hong, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Zhuoqun Fu](https://netsec.ccert.edu.cn/people/fzq20), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Mingxuan Liu](https://netsec.ccert.edu.cn/people/liumx18), [Chuhan Wang](https://netsec.ccert.edu.cn/people/wch), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Chao Zhang](https://netsec.ccert.edu.cn/people/chaoz/), and Min Yang. **[Under the Dark: A Systematical Study of Stealthy Mining Pools (Ab)use in the Wild](https://lixiang521.com/publication/ccs23-2/)**. In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (**[CCS '23](https://www.sigsac.org/ccs/CCS2023/)**). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, **Acceptance rate in First Round**: ??%, Acceptance rate in Second Round: ??%)
+  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%)
 
 - **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
