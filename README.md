@@ -54,7 +54,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
   (Acceptance rate: 422/1,444=29.2%, [*Acceptance rate in summer*](https://sec23summer.usenix.hotcrp.com/): 91/388=23.5%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/531=29.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): 176/525=33.5%)
 
   * Presented in [Black Hat USA 2023](https://www.blackhat.com/us-23/briefings/schedule/index.html#maginotdns-attacking-the-boundary-of-dns-caching-protection-31901)
-  * 50+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
+  * 60+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
   * An Austria government [CERT daily report](https://www.govcert.gv.at/cert-tagesmeldungen.html?detail=entry-0)
   * A Sweden government [CERT weekly news](https://www.cert.se/2023/08/cert-se-s-veckobrev-v-33)
   * A Bournemouth University (BU) [CERT news](https://cert.bournemouth.ac.uk/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
@@ -68,6 +68,10 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 - **\[CCS '23\]** [Zhenrui Zhang](https://netsec.ccert.edu.cn/people/zzr21), Geng Hong, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Zhuoqun Fu](https://netsec.ccert.edu.cn/people/fzq20), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Mingxuan Liu](https://netsec.ccert.edu.cn/people/liumx18), [Chuhan Wang](https://netsec.ccert.edu.cn/people/wch), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Chao Zhang](https://netsec.ccert.edu.cn/people/chaoz/), and Min Yang. **[Under the Dark: A Systematical Study of Stealthy Mining Pools (Ab)use in the Wild](https://lixiang521.com/publication/ccs23-2/)**. In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (**[CCS '23](https://www.sigsac.org/ccs/CCS2023/)**). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%)
+
+- **\[NDSS '24\]** Chuhan Wang, YASUHIRO KURANAGA, Yihang Wang, Mingming Zhang, Linkai Zheng, **[Xiang Li](https://lixiang521.com/)**, Jianjun Chen, Haixin Duan, Yanzhong Lin, Qingfeng Pan. **[BreakSPF: How Shared Infrastructures Magnify SPF Vulnerabilities Across the Internet](https://lixiang521.com/publication/ndss24/)**. In Proceedings of the 31st Annual Network and Distributed System Security Symposium (**[NDSS '24](https://www.ndss-symposium.org/ndss2024/)**). San Diego, California, 26 February – 1 March, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+
+  (Acceptance rate: ??%, **Acceptance rate in summer**: 41/211=19.4%, Acceptance rate in fall: ??%)
 
 - **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
