@@ -42,7 +42,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[NDSS '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), [Mingming Zhang](https://netsec.ccert.edu.cn/people/zmm18), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[Ghost Domain Reloaded: Vulnerable Links in Domain Name Delegation and Revocation](https://lixiang521.com/publication/ndss23/).** In Proceedings of the 30th Annual Network and Distributed System Security Symposium (**[NDSS '23](https://www.ndss-symposium.org/ndss2023/)**). San Diego, California, 27 February – 3 March, 2023. [\[PDF\]](https://lixiang521.com/publication/ndss23/ndss23-li-phoenix.pdf) [\[Slides\]](https://lixiang521.com/publication/ndss23/ndss23-li-phoenix-slides.pdf) [\[Video\]]()
 
-  (Acceptance rate: 94/581=16.2%, [*Acceptance rate in summer*](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 58/398=14.6%)
+  (Acceptance rate: 94/581=16.2%, [**Acceptance rate in summer**](https://ndss23-summer.hotcrp.com/): 36/183=19.7%), [Acceptance rate in fall](https://ndss23-fall.hotcrp.com/): 58/398=14.6%)
 
   * Presented in [OARC 39](https://indico.dns-oarc.net/event/44/contributions/953/)
   * Presented in [ICANN DNS Symposium 2022](https://www.icann.org/ids)
@@ -51,7 +51,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[USENIX Security '23\]** **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20), [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Zhou Li](https://faculty.sites.uci.edu/zhouli/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), and [Qi Li](https://netsec.ccert.edu.cn/people/qli/). **[The Maginot Line: Attacking the Boundary of DNS Caching Protection](https://lixiang521.com/publication/security23/).** In Proceedings of the 32nd USENIX Security Symposium (**[USENIX Security '23](https://www.usenix.org/conference/usenixsecurity23/)**). Anaheim, California, August 9–11, 2023. [\[PDF\]](https://lixiang521.com/publication/security23/usenix23-li-maginot.pdf) [\[Slides\]](https://lixiang521.com/publication/security23/usenix23-li-slides.pdf) [\[Video\]]()
 
-  (Acceptance rate: 422/1,444=29.2%, [*Acceptance rate in summer*](https://sec23summer.usenix.hotcrp.com/): 91/388=23.5%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/531=29.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): 176/525=33.5%)
+  (Acceptance rate: 422/1,444=29.2%, [**Acceptance rate in summer**](https://sec23summer.usenix.hotcrp.com/): 91/388=23.5%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/531=29.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): 176/525=33.5%)
 
   * Presented in [Black Hat USA 2023](https://www.blackhat.com/us-23/briefings/schedule/index.html#maginotdns-attacking-the-boundary-of-dns-caching-protection-31901)
   * 60+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
@@ -76,6 +76,10 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 - **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
+
+- **\[USENIX Security '24\]** Qifan Zhang, Xuesong Bai, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, Haixin Duan, Qi Li, and Zhou Li. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+
+  (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec24summer.usenix.hotcrp.com/): ??%, [Acceptance rate in fall](https://sec24fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec24winter.usenix.hotcrp.com/): ??%)
 
 License and Copyright
 ---------------------
