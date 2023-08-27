@@ -77,9 +77,9 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
 
-- **\[USENIX Security '24\]** Qifan Zhang, Xuesong Bai, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, Haixin Duan, Qi Li, and Zhou Li. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+- **\[USENIX Security '24\]** Qifan Zhang, Xuesong Bai, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**✉, Haixin Duan, Qi Li, and Zhou Li✉. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec24summer.usenix.hotcrp.com/): ??%, [Acceptance rate in fall](https://sec24fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec24winter.usenix.hotcrp.com/): ??%)
+  (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec24summer.usenix.hotcrp.com/): ??%, [Acceptance rate in fall](https://sec24fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec24winter.usenix.hotcrp.com/): ??%. ✉: Both are corresponding authors.)
 
 License and Copyright
 ---------------------
