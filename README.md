@@ -92,7 +92,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[NDSS '24\]** Mingxuan Liu, Yiming Zhang, **[Xiang Li](https://lixiang521.com/)**, Chaoyi Lu, Baojun Liu, Haixin Duan, Xiaofeng Zheng (2024). **[Understanding the Implementation and Security Implications of Protective DNS Services](http://lixiang521.com/publication/ndss24-1/)**. In Proceedings of the 31st Annual Network and Distributed System Security Symposium (**[NDSS '24](https://www.ndss-symposium.org/ndss2024/)**). San Diego, California, 26 February – 1 March, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: 104/694=15.0%, **Acceptance rate in summer**: 41/211=19.4%, Acceptance rate in fall: 63/483=13.0%)
+  (Acceptance rate: 104/694=15.0%, Acceptance rate in summer: 41/211=19.4%, **Acceptance rate in fall**: 63/483=13.0%)
 
 License and Copyright
 ---------------------
