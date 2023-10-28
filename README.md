@@ -63,14 +63,14 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - **\[CCS '23\]** [Wei Xu](https://netsec.ccert.edu.cn/people/xuw21)ⓘ, [**Xiang Li**](https://netsec.ccert.edu.cn/people/lx19)ⓘ, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), Tao Wan, and [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/). [**TsuKing: Coordinating DNS Resolvers and Queries into Potent DoS Amplifiers**](https://lixiang521.com/publication/ccs23/). In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security ([**CCS '23**](https://www.sigsac.org/ccs/CCS2023/)). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%. ⓘ: Both are first authors.)
+  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%. ⓘ: Both authors contributed equally to the paper)
 
   * Presented in [OARC 41](https://indico.dns-oarc.net/event/47/contributions/1021/)
   * Presented in [Black Hat Europe 2023](https://www.blackhat.com/eu-23/briefings/schedule/index.html#tsuking-coordinating-dns-resolvers-and-queries-into-potent-dos-amplifiers-35441)
 
-- **\[CCS '23\]** [Zhenrui Zhang](https://netsec.ccert.edu.cn/people/zzr21), Geng Hong, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Zhuoqun Fu](https://netsec.ccert.edu.cn/people/fzq20), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Mingxuan Liu](https://netsec.ccert.edu.cn/people/liumx18), [Chuhan Wang](https://netsec.ccert.edu.cn/people/wch), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Chao Zhang](https://netsec.ccert.edu.cn/people/chaoz/), and Min Yang. **[Under the Dark: A Systematical Study of Stealthy Mining Pools (Ab)use in the Wild](https://lixiang521.com/publication/ccs23-2/)**. In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (**[CCS '23](https://www.sigsac.org/ccs/CCS2023/)**). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+- **\[CCS '23\]** [Zhenrui Zhang](https://netsec.ccert.edu.cn/people/zzr21)ⓘ, Geng Hongⓘ, **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**, [Zhuoqun Fu](https://netsec.ccert.edu.cn/people/fzq20), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Mingxuan Liu](https://netsec.ccert.edu.cn/people/liumx18), [Chuhan Wang](https://netsec.ccert.edu.cn/people/wch), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Chao Zhang](https://netsec.ccert.edu.cn/people/chaoz/), and Min Yang. **[Under the Dark: A Systematical Study of Stealthy Mining Pools (Ab)use in the Wild](https://lixiang521.com/publication/ccs23-2/)**. In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security (**[CCS '23](https://www.sigsac.org/ccs/CCS2023/)**). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%)
+  (Acceptance rate: ??%, **Acceptance rate in first round**: ??%, Acceptance rate in second round: ??%. ⓘ: Both authors contributed equally to the paper)
 
 - **\[IMC '23\]** Fenglu Zhang, Yunyi Zhang, Baojun Liu, Eihal Alowaisheq, Lingyun Ying, **[Xiang Li](https://lixiang521.com/)**, Zaifeng Zhang, Ying Liu, Haixin Duan, Min Zhang. **[Wolf in Sheep's Clothing: Evaluating the Security Risks of the Undelegated Record on DNS Hosting Services](https://lixiang521.com/publication/imc23/)**. In Proceedings of ACM Internet Measurement Conference 2023 (**[IMC '23](https://conferences.sigcomm.org/imc/2023/)**). Montréal, Canada on October 24 - 26, 2023. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
@@ -93,6 +93,10 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 - **\[NDSS '24\]** Mingxuan Liu, Yiming Zhang, **[Xiang Li](https://lixiang521.com/)**, Chaoyi Lu, Baojun Liu, Haixin Duan, Xiaofeng Zheng (2024). **[Understanding the Implementation and Security Implications of Protective DNS Services](http://lixiang521.com/publication/ndss24-1/)**. In Proceedings of the 31st Annual Network and Distributed System Security Symposium (**[NDSS '24](https://www.ndss-symposium.org/ndss2024/)**). San Diego, California, 26 February – 1 March, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: 104/694=15.0%, Acceptance rate in summer: 41/211=19.4%, **Acceptance rate in fall**: 63/483=13.0%)
+
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb](https://lixiang521.com/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+
+  (Acceptance rate: ??%, Acceptance rate in first circle: ??%, **Acceptance rate in second circle**: ??%, Acceptance rate in third circle: ??%)
 
 License and Copyright
 ---------------------
