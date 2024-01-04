@@ -60,6 +60,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
   * A Bournemouth University (BU) [CERT news](https://cert.bournemouth.ac.uk/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
   * Presented in [SHUZIHUANYU Talk](https://cepoca.cn/lectureHall/lectureRoomDetail/?liveUid=af4d1df145b9e4defcfcef8c7c624c85)
   * Presented in [KANXUE 2023 SDC](https://zhuanlan.kanxue.com/article-24621.htm)
+  * Presented in [Black Hat Webinar](https://www.blackhat.com/html/webcast/11022023.html)
 
 - **\[CCS '23\]** [Wei Xu](https://netsec.ccert.edu.cn/people/xuw21)ⓘ, [**Xiang Li**](https://netsec.ccert.edu.cn/people/lx19)ⓘ, [Chaoyi Lu](https://netsec.ccert.edu.cn/eng/people/lcy17), [Baojun Liu](https://netsec.ccert.edu.cn/people/baojun/), [Jia Zhang](https://netsec.ccert.edu.cn/people/jiazhang/), [Jianjun Chen](https://netsec.ccert.edu.cn/people/jianjun/), Tao Wan, and [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/). [**TsuKing: Coordinating DNS Resolvers and Queries into Potent DoS Amplifiers**](https://lixiang521.com/publication/ccs23/). In Proceedings of the 2023 ACM SIGSAC Conference on Computer and Communications Security ([**CCS '23**](https://www.sigsac.org/ccs/CCS2023/)). Copenhagen, Denmark, November 26–30, 2023. [\[PDF\]](https://lixiang521.com/publication/ccs23/ccs23-xu-tsuking.pdf) [\[Slides\]]() [\[Video\]]()
 
