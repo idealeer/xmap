@@ -96,14 +96,14 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - [Other papers](https://scholar.google.com/scholar?oi=bibs&hl=en&cites=3737757293110831577) cite this tool or paper
 
-<!-- - **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb](https://lixiang521.com/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb](https://lixiang521.com/publication/oakland24-2/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
-  (Acceptance rate: ??%, Acceptance rate in first circle: ??%, **Acceptance rate in second circle**: ??%, Acceptance rate in third circle: ??%) -->
+  (Acceptance rate: ??%, Acceptance rate in first circle: ??%, **Acceptance rate in second circle**: ??%, Acceptance rate in third circle: ??%)
 
 License and Copyright
 ---------------------
 
-XMap Copyright 2021-2023 Xiang Li from Network and Information Security Lab Tsinghua University
+XMap Copyright 2021-2024 Xiang Li from Network and Information Security Lab Tsinghua University
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this file except in compliance with the License. You may obtain a copy of the
