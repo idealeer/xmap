@@ -85,6 +85,10 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
 
+  * Presented in [OARC 42](https://indico.dns-oarc.net/event/48/contributions/1039/)
+  
+  * Referenced by [RFC 9520: Negative Caching of DNS Resolution Failures](https://datatracker.ietf.org/doc/rfc9520/)
+
 - **\[USENIX Security '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://netsec.ccert.edu.cn/people/lx19)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]](https://lixiang521.com/publication/security24/usenix24-zhang-resolverfuzz.pdf) [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec24summer.usenix.hotcrp.com/): ??%, [Acceptance rate in fall](https://sec24fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec24winter.usenix.hotcrp.com/): ??%. ✉: Both are corresponding authors.)
@@ -95,11 +99,11 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: 104/694=15.0%, Acceptance rate in summer: 41/211=19.4%, **Acceptance rate in fall**: 63/483=13.0%)
 
-- [Other papers](https://scholar.google.com/scholar?oi=bibs&hl=en&cites=3737757293110831577) cite this tool or paper
-
 - **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb](https://lixiang521.com/publication/oakland24-2/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]]() [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: ??%, Acceptance rate in first circle: ??%, **Acceptance rate in second circle**: ??%, Acceptance rate in third circle: ??%)
+
+- [Other papers](https://scholar.google.com/scholar?oi=bibs&hl=en&cites=3737757293110831577) cite this tool or paper
 
 License and Copyright
 ---------------------
