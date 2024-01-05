@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(XMAP C)
 set(XMAP_VERSION DEVELOPMENT)    # Change DEVELOPMENT to version number for release
 
@@ -108,6 +108,12 @@ if (APPLE)
     endif ()
     if (EXISTS /usr/local/lib)
         link_directories(/usr/local/lib)
+    endif ()
+    if (EXISTS /opt/homebrew/include)
+        include_directories(/opt/homebrew/include)
+    endif ()
+    if (EXISTS /opt/homebrew/lib)
+        link_directories(/opt/homebrew/lib)
     endif ()
 endif ()
 
