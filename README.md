@@ -54,7 +54,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
   (Acceptance rate: 422/1,444=29.2%, [**Acceptance rate in summer**](https://sec23summer.usenix.hotcrp.com/): 91/388=23.5%, [Acceptance rate in fall](https://sec23fall.usenix.hotcrp.com/): 155/531=29.2%), [Acceptance rate in winter](https://sec23winter.usenix.hotcrp.com/): 176/525=33.5%)
 
   * Presented in [Black Hat USA 2023](https://www.blackhat.com/us-23/briefings/schedule/index.html#maginotdns-attacking-the-boundary-of-dns-caching-protection-31901)
-  * 60+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
+  * 60+ news coverage by media such as [BleepingComputer](https://www.bleepingcomputer.com/news/security/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/) and [APNIC](https://blog.apnic.net/2023/09/26/maginotdns-attacking-the-boundary-of-dns-caching-protection/)
   * An Austria government [CERT daily report](https://www.govcert.gv.at/cert-tagesmeldungen.html?detail=entry-0)
   * A Sweden government [CERT weekly news](https://www.cert.se/2023/08/cert-se-s-veckobrev-v-33)
   * A Bournemouth University (BU) [CERT news](https://cert.bournemouth.ac.uk/maginotdns-attacks-exploit-weak-checks-for-dns-cache-poisoning/)
