@@ -13,7 +13,7 @@ With banner grab and TLS handshake tool, [ZGrab2](https://github.com/zmap/zgrab2
 Installation
 ------------
 
-The latest stable release of XMap is version 2.0.0 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
+The latest stable release of XMap is version 2.0.1 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
 
 **Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/INSTALL.md).
 
