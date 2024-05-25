@@ -81,9 +81,9 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: 104/694=15.0%, **Acceptance rate in summer**: 41/211=19.4%, Acceptance rate in fall: 63/483=13.0%)
 
-- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24/sp24spring-tudoor-li.pdf) [\[Slides\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-slides.pdf) [\[Poster\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-poster.pdf) [\[Video\]]()
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li✉, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan✉, and Qi Li✉. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24/sp24spring-tudoor-li.pdf) [\[Slides\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-slides.pdf) [\[Poster\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-poster.pdf) [\[Video\]]()
 
-  (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
+  (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%. ✉: Corresponding authors.)
 
   * Presented in [OARC 42](https://indico.dns-oarc.net/event/48/contributions/1039/)
   
