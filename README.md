@@ -81,13 +81,15 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: 104/694=15.0%, **Acceptance rate in summer**: 41/211=19.4%, Acceptance rate in fall: 63/483=13.0%)
 
-- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24/sp24spring-tudoor-li.pdf) [\[Slides\]]() [\[Video\]]()
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Wei Xu, Baojun Liu, Mingming Zhang, Zhou Li, Jia Zhang, Deliang Chang, Xiaofeng Zheng, Chuhan Wang, Jianjun Chen, Haixin Duan, and Qi Li. **[TuDoor Attack: Systematically Exploring and Exploiting Logic Vulnerabilities in DNS Response Pre-processing with Malformed Packets](https://lixiang521.com/publication/oakland24/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24/sp24spring-tudoor-li.pdf) [\[Slides\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-slides.pdf) [\[Poster\]](https://lixiang521.com/publication/oakland24/sp2024-tudoor-poster.pdf) [\[Video\]]()
 
   (Acceptance rate: ??%, **Acceptance rate in first circle**: ??%, Acceptance rate in second circle: ??%, Acceptance rate in third circle: ??%)
 
   * Presented in [OARC 42](https://indico.dns-oarc.net/event/48/contributions/1039/)
   
   * Referenced by [RFC 9520: Negative Caching of DNS Resolution Failures](https://datatracker.ietf.org/doc/rfc9520/)
+
+  * Presented in [GeekCon 2024 International](https://geekcon.top/)
 
 - **\[USENIX Security '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://lixiang521.com/)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]](https://lixiang521.com/publication/security24/usenix24-zhang-resolverfuzz.pdf) [\[Slides\]]() [\[Video\]]()
 
@@ -99,9 +101,11 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   (Acceptance rate: 104/694=15.0%, Acceptance rate in summer: 41/211=19.4%, **Acceptance rate in fall**: 63/483=13.0%)
 
-- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb: A New Practical-and-Powerful Pulsing DoS Attack Exploiting DNS Queries-and-Responses](https://lixiang521.com/publication/oakland24-2/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24-2/sp24summer-dnsbomb-li.pdf) [\[Slides\]]() [\[Video\]]()
+- **\[Oakland S&P '24\]** **[Xiang Li](https://lixiang521.com/)**, Dashuai Wu, Haixin Duan, and Qi Li. **[DNSBomb: A New Practical-and-Powerful Pulsing DoS Attack Exploiting DNS Queries-and-Responses](https://lixiang521.com/publication/oakland24-2/)**. In Proceedings of 2024 IEEE Symposium on Security and Privacy (**[Oakland S&P '24](https://sp2024.ieee-security.org/cfpapers.html)**). San Francisco, California, May 20–23, 2024. [\[PDF\]](https://lixiang521.com/publication/oakland24-2/sp24summer-dnsbomb-li.pdf) [\[Slides\]](https://lixiang521.com/publication/oakland24-2/sp2024-dnsbomb-slides.pdf) [\[Poster\]](https://lixiang521.com/publication/oakland24-2/sp2024-dnsbomb-poster.pdf) [\[Video\]]()
 
   (Acceptance rate: ??%, Acceptance rate in first circle: ??%, **Acceptance rate in second circle**: ??%, Acceptance rate in third circle: ??%)
+
+  * Presented in [GeekCon 2023](https://www.geekcon.top/2023/en/) (Second Prize)
 
 - **\[NDSS '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://lixiang521.com/)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[Poster: ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/ndss24-3/).** In Proceedings of the 31st Annual Network and Distributed System Security Symposium (**[NDSS '24](https://www.ndss-symposium.org/ndss2024/)**). San Diego, California, 26 February – 1 March, 2024. [\[PDF\]](https://lixiang521.com/publication/ndss24-3/ndss24-posters-30.pdf) [\[Slides\]]() [\[Video\]]()
 
