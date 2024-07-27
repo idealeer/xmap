@@ -91,6 +91,8 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   * Presented in [GeekCon 2024 International](https://geekcon.top/)
 
+  * Presented in [Black Hat USA 2024](https://www.blackhat.com/us-24/briefings/schedule/index.html#tudoor-attack-systematically-exploring-and-exploiting-logic-vulnerabilities-in-dns-response-pre-processing-with-malformed-packets-38986)
+
 - **\[USENIX Security '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://lixiang521.com/)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]](https://lixiang521.com/publication/security24/usenix24-zhang-resolverfuzz.pdf) [\[Slides\]]() [\[Video\]]()
 
   (Acceptance rate: ??%, [**Acceptance rate in summer**](https://sec24summer.usenix.hotcrp.com/): ??%, [Acceptance rate in fall](https://sec24fall.usenix.hotcrp.com/): ??%), [Acceptance rate in winter](https://sec24winter.usenix.hotcrp.com/): ??%. ✉: Both are corresponding authors.)
