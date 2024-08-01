@@ -109,6 +109,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   * Presented in [GeekCon 2023](https://www.geekcon.top/2023/en/) (Second Prize)
   * 40+ news coverage by media, such as [The Hacker News](https://thehackernews.com/2024/05/researchers-warn-of-catddos-botnet-and.html), [Cyber Security News](https://cybersecuritynews.com/new-dos-attack-dnsbomb-exploiting/), and [dns-operation](https://www.mail-archive.com/dns-operations@lists.dns-oarc.net/msg08662.html)
+  * Presented in [DNS OARC 43](https://indico.dns-oarc.net/event/51/)
 
 - **\[NDSS '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://lixiang521.com/)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[Poster: ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/ndss24-3/).** In Proceedings of the 31st Annual Network and Distributed System Security Symposium (**[NDSS '24](https://www.ndss-symposium.org/ndss2024/)**). San Diego, California, 26 February – 1 March, 2024. [\[PDF\]](https://lixiang521.com/publication/ndss24-3/ndss24-posters-30.pdf) [\[Slides\]]() [\[Video\]]()
 
