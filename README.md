@@ -124,7 +124,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 License and Copyright
 ---------------------
 
-XMap Copyright 2021-2024 Xiang Li from Network and Information Security Lab Tsinghua University
+XMap Copyright 2021-2024 Xiang Li from All-in-One Security and Privacy Lab (AOSP Lab) Nankai University
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this file except in compliance with the License. You may obtain a copy of the
