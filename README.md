@@ -19,6 +19,8 @@ The latest stable release of XMap is version 2.0.1 and supports Linux, macOS, an
 
 **Installing from [docker](https://hub.docker.com/r/liii/xmap)**: `docker pull liii/xmap:latest`
 
+**Installing from [ArchLinux Package](https://aur.archlinux.org/packages/xmap-git)**
+
 Usage
 -----
 
