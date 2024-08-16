@@ -20,6 +20,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #ifndef __APPLE__
 #include <netinet/ip6.h>
