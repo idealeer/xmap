@@ -91,6 +91,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
   * Referenced by [RFC 9520: Negative Caching of DNS Resolution Failures](https://datatracker.ietf.org/doc/rfc9520/)
   * Presented in [GeekCon 2024 International](https://geekcon.top/)
   * Presented in [Black Hat USA 2024](https://www.blackhat.com/us-24/briefings/schedule/index.html#tudoor-attack-systematically-exploring-and-exploiting-logic-vulnerabilities-in-dns-response-pre-processing-with-malformed-packets-38986)
+  * Got the [2024 Pwnie Award Nomination for Most Innovative Research](https://docs.google.com/document/d/13Jdwlw-jvdBI3N6JSZZqHTmj9rvld7WvhGykvDcE5x0/edit#heading=h.ify6344c1olp)
 
 - **\[USENIX Security '24\]** [Qifan Zhang](https://faculty.sites.uci.edu/zhouli/research/), [Xuesong Bai](https://faculty.sites.uci.edu/zhouli/research/), **[Xiang Li](https://lixiang521.com/)**✉, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), and [Zhou Li](https://faculty.sites.uci.edu/zhouli/)✉. **[ResolverFuzz: Automated Discovery of DNS Resolver Vulnerabilities with Query-Response Fuzzing](https://lixiang521.com/publication/security24/).** In Proceedings of the 33rd USENIX Security Symposium (**[USENIX Security '24](https://www.usenix.org/conference/usenixsecurity24/)**). Philadelphia, Pennsylvania, August 14–16, 2024. [\[PDF\]](https://lixiang521.com/publication/security24/usenix24-zhang-resolverfuzz.pdf) [\[Slides\]]() [\[Video\]]()
 
