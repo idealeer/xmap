@@ -217,3 +217,55 @@ static int build_global_dns_packets_acookiev(char **domains, int num_domains) {
         if (domains[i] != (char *) default_domain_acookiev) {
             free(domains[i]);
         }
+        dns_packet_lens_acookiev[i] =
+            sizeof(dns_header) + qname_lens_acookiev[i] +
+            sizeof(dns_question_tail) + default_option_qname_len_acookiev +
+            sizeof(dns_option_tail) + default_option_rdata_len_acookiev;
+        if (dns_packet_lens_acookiev[i] > DNS_SEND_LEN) {
+            log_fatal("dnsacookiev",
+                      "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_acookiev[i], DNS_SEND_LEN);
+            return EXIT_FAILURE;
+        }
+
+        dns_packets_acookiev[i]  = xmalloc(dns_packet_lens_acookiev[i]);
+        dns_header *dns_header_p = (dns_header *) dns_packets_acookiev[i];
+        char       *qname_p      = dns_packets_acookiev[i] + sizeof(dns_header);
+        dns_question_tail *tail_p =
+            (dns_question_tail *) (dns_packets_acookiev[i] +
+                                   sizeof(dns_header) + qname_lens_acookiev[i]);
+        char *option_qname_p =
+            (char *) (dns_packets_acookiev[i] + sizeof(dns_header) +
+                      qname_lens_acookiev[i] + sizeof(dns_question_tail));
+        dns_option_tail *option_tail_p =
+            (dns_option_tail *) (dns_packets_acookiev[i] + sizeof(dns_header) +
+                                 qname_lens_acookiev[i] +
+                                 sizeof(dns_question_tail) +
+                                 default_option_qname_len_acookiev);
+        dns_option_cookie *option_cookie_p =
+            (dns_option_cookie *) (dns_packets_acookiev[i] +
+                                   sizeof(dns_header) + qname_lens_acookiev[i] +
+                                   sizeof(dns_question_tail) +
+                                   default_option_qname_len_acookiev +
+                                   sizeof(dns_option_tail));
+
+        // All other header fields should be 0. Except id, which we set
+        // per thread. Please recurse as needed.
+        dns_header_p->rd = recursive_acookiev; // Is one bit. Don't need htons
+        // We have 1 question
+        dns_header_p->qdcount = htons(1);
+        memcpy(qname_p, qnames_acookiev[i], qname_lens_acookiev[i]);
+        // Set the qtype to what we passed from args
+        tail_p->qtype = htons(qtypes_acookiev[i]);
+        // Set the qclass to The Internet (TM) (R) (I hope you're happy
+        // now Zakir)
+        tail_p->qclass = htons(0x01);
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+        // option, others set to 0
+        dns_header_p->arcount = htons(1);
+        memcpy(option_qname_p, default_option_qname_acookiev,
+               default_option_qname_len_acookiev);
+        option_tail_p->type    = htons(DNS_QTYPE_OPT);
+        option_tail_p->udpsize = htons(default_option_udpsize_acookiev);
+        option_tail_p->dlength = htons(default_option_rdata_len_acookiev);
