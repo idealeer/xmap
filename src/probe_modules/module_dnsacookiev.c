@@ -1,47 +1,47 @@
 /*
-* XMap Copyright 2021 Xiang Li from Network and Information Security Lab
-* Tsinghua University
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at http://www.apache.org/licenses/LICENSE-2.0
-*/
+ * XMap Copyright 2021 Xiang Li from Network and Information Security Lab
+ * Tsinghua University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
 
 /* Module for scanning for open UDP DNS resolvers.
-*
-* This module optionally takes in an argument of the form:
-* LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
-* str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
-*      LABEL_TYPE: raw, str, time, random, dst-ip
-*      RECURSE: recurse, no-recurse
-*      INPUT_SRC: text, file
-*      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
-*            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
-*      file: TYPE,QUESTION;TYPE,QUESTION in each line
-*
-* Given no arguments it will default to asking for an A record for
-* www.qq.com.
-*
-* This module does minimal answer verification. It only verifies that the
-* response roughly looks like a DNS response. It will not, for example,
-* require the QR bit be set to 1. All such analysis should happen offline.
-* Specifically, to be included in the output it requires:
-* And it is marked as success.
-* - That the ports match and the packet is complete.
-* - That the ID field matches.
-* To be marked as app_success it also requires:
-* - That the QR bit be 1 and rcode == 0.
-*
-* Usage: xmap -p 53 --probe-module=dnsacookiev --probe-args="raw:text:A,qq.com"
-*			-O json --output-fields=* 8.8.8.8
-*
-* We also support multiple questions, of the form:
-* "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
-* matches the number of questions in --probe-args, and --output-filter="" to
-* remove the implicit "filter_duplicates" configuration flag.
-*
-* Based on a deprecated udp_dns module.
-*/
+ *
+ * This module optionally takes in an argument of the form:
+ * LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
+ * str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
+ *      LABEL_TYPE: raw, str, time, random, dst-ip
+ *      RECURSE: recurse, no-recurse
+ *      INPUT_SRC: text, file
+ *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
+ *      file: TYPE,QUESTION;TYPE,QUESTION in each line
+ *
+ * Given no arguments it will default to asking for an A record for
+ * www.qq.com.
+ *
+ * This module does minimal answer verification. It only verifies that the
+ * response roughly looks like a DNS response. It will not, for example,
+ * require the QR bit be set to 1. All such analysis should happen offline.
+ * Specifically, to be included in the output it requires:
+ * And it is marked as success.
+ * - That the ports match and the packet is complete.
+ * - That the ID field matches.
+ * To be marked as app_success it also requires:
+ * - That the QR bit be 1 and rcode == 0.
+ *
+ * Usage: xmap -p 53 --probe-module=dnsacookiev --probe-args="raw:text:A,qq.com"
+ *			-O json --output-fields=* 8.8.8.8
+ *
+ * We also support multiple questions, of the form:
+ * "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
+ * matches the number of questions in --probe-args, and --output-filter="" to
+ * remove the implicit "filter_duplicates" configuration flag.
+ *
+ * Based on a deprecated udp_dns module.
+ */
 
 #include <assert.h>
 #include <dirent.h>
@@ -95,11 +95,11 @@ static int     dns_num_ports_acookiev;
 const char     default_domain_acookiev[] = "www.qq.com";
 const uint16_t default_qtype_acookiev    = DNS_QTYPE_A;
 const char    *dnsacookiev_usage_error =
-   "unknown DNS probe specification (expected "
-   "raw/time/random:recurse/no-recurse:text:TYPE,QUESTION or "
-   "raw/time/random:recurse/no-recurse:file:file_name or "
-   "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
-   "str:some_text:recurse/no-recurse:file:file_name)";
+    "unknown DNS probe specification (expected "
+    "raw/time/random:recurse/no-recurse:text:TYPE,QUESTION or "
+    "raw/time/random:recurse/no-recurse:file:file_name or "
+    "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
+    "str:some_text:recurse/no-recurse:file:file_name)";
 
 const unsigned char *charset_alpha_lower_acookiev =
     (unsigned char *) "abcdefghijklmnopqrstuvwxyz";
@@ -270,196 +270,238 @@ static int build_global_dns_packets_acookiev(char **domains, int num_domains) {
         option_tail_p->udpsize = htons(default_option_udpsize_acookiev);
         option_tail_p->dlength = htons(default_option_rdata_len_acookiev);
 
-                // cookie
-                option_cookie_p->optcode   = htons(DNS_OPTCODE_COOKIE); // 8
-                option_cookie_p->optlength = htons(16);                 // fixed
-                uint8_t cookie[8]          = {
-                    0, 1, 2, 3, 4, 5, 6, 7,
-                };
-                memcpy(option_cookie_p->clientcookie, cookie, 8); // client cookie
-                memcpy(option_cookie_p->servercookie, cookie, 8); // server cookie
-            }
+        // cookie
+        option_cookie_p->optcode   = htons(DNS_OPTCODE_COOKIE); // 8
+        option_cookie_p->optlength = htons(16);                 // fixed
+        uint8_t cookie[8]          = {
+            0, 1, 2, 3, 4, 5, 6, 7,
+        };
+        memcpy(option_cookie_p->clientcookie, cookie, 8); // client cookie
+        memcpy(option_cookie_p->servercookie, cookie, 8); // server cookie
+    }
 
-            return EXIT_SUCCESS;
-        }
+    return EXIT_SUCCESS;
+}
 
-        static uint16_t get_name_helper_acookiev(const char *data, uint16_t data_len,
-                                                 const char *payload,
-                                                 uint16_t payload_len, char *name,
-                                                 uint16_t name_len,
-                                                 uint16_t recursion_level) {
-            log_trace("dnsacookiev",
-                      "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
-                      data_len, name_len, recursion_level);
-            if (data_len == 0 || name_len == 0 || payload_len == 0) {
+static uint16_t get_name_helper_acookiev(const char *data, uint16_t data_len,
+                                         const char *payload,
+                                         uint16_t payload_len, char *name,
+                                         uint16_t name_len,
+                                         uint16_t recursion_level) {
+    log_trace("dnsacookiev",
+              "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
+              data_len, name_len, recursion_level);
+    if (data_len == 0 || name_len == 0 || payload_len == 0) {
+        log_trace("dnsacookiev",
+                  "_get_name_helper OUT, err. 0 length field. datalen %d "
+                  "namelen %d payloadlen %d",
+                  data_len, name_len, payload_len);
+        return 0;
+    }
+    if (recursion_level > MAX_LABEL_RECURSION) {
+        log_trace("dnsacookiev", "_get_name_helper OUT. ERR, MAX RECUSION");
+        return 0;
+    }
+
+    uint16_t bytes_consumed = 0;
+    // The start of data is either a sequence of labels or a ptr.
+    while (data_len > 0) {
+        uint8_t byte = data[0];
+        // Is this a pointer?
+        if (byte >= 0xc0) {
+            log_trace("dnsacookiev", "_get_name_helper, ptr encountered");
+            // Do we have enough bytes to check ahead?
+            if (data_len < 2) {
                 log_trace("dnsacookiev",
-                          "_get_name_helper OUT, err. 0 length field. datalen %d "
-                          "namelen %d payloadlen %d",
-                          data_len, name_len, payload_len);
+                          "_get_name_helper OUT. ptr byte encountered. "
+                          "No offset. ERR.");
                 return 0;
             }
-            if (recursion_level > MAX_LABEL_RECURSION) {
-                log_trace("dnsacookiev", "_get_name_helper OUT. ERR, MAX RECUSION");
+            // No. ntohs isn't needed here. It's because of
+            // the upper 2 bits indicating a pointer.
+            uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+            log_trace("dnsacookiev", "_get_name_helper. ptr offset 0x%x",
+                      offset);
+            if (offset >= payload_len) {
+                log_trace(
+                    "dnsacookiev",
+                    "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                    payload_len);
                 return 0;
             }
 
-            uint16_t bytes_consumed = 0;
-            // The start of data is either a sequence of labels or a ptr.
-            while (data_len > 0) {
-                uint8_t byte = data[0];
-                // Is this a pointer?
-                if (byte >= 0xc0) {
-                    log_trace("dnsacookiev", "_get_name_helper, ptr encountered");
-                    // Do we have enough bytes to check ahead?
-                    if (data_len < 2) {
-                        log_trace("dnsacookiev",
-                                  "_get_name_helper OUT. ptr byte encountered. "
-                                  "No offset. ERR.");
-                        return 0;
-                    }
-                    // No. ntohs isn't needed here. It's because of
-                    // the upper 2 bits indicating a pointer.
-                    uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
-                    log_trace("dnsacookiev", "_get_name_helper. ptr offset 0x%x",
-                              offset);
-                    if (offset >= payload_len) {
-                        log_trace(
-                            "dnsacookiev",
-                            "_get_name_helper OUT. offset exceeded payload len %d ERR",
-                            payload_len);
-                        return 0;
-                    }
+            // We need to add a dot if we are:
+            // -- Not first level recursion.
+            // -- have consumed bytes
+            if (recursion_level > 0 || bytes_consumed > 0) {
 
-                    // We need to add a dot if we are:
-                    // -- Not first level recursion.
-                    // -- have consumed bytes
-                    if (recursion_level > 0 || bytes_consumed > 0) {
+                if (name_len < 1) {
+                    log_warn("dnsacookiev",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
 
-                        if (name_len < 1) {
-                            log_warn("dnsacookiev",
-                                     "Exceeded static name field allocation.");
-                            return 0;
-                        }
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
 
-                        name[0] = '.';
-                        name++;
-                        name_len--;
-                    }
+            uint16_t rec_bytes_consumed = get_name_helper_acookiev(
+                payload + offset, payload_len - offset, payload, payload_len,
+                name, name_len, recursion_level + 1);
+            // We are done so don't bother to increment the
+            // pointers.
+            if (rec_bytes_consumed == 0) {
+                log_trace("dnsacookiev",
+                          "_get_name_helper OUT. rec level %d failed",
+                          recursion_level);
+                return 0;
+            } else {
+                bytes_consumed += 2;
+                log_trace("dnsacookiev",
+                          "_get_name_helper OUT. rec level %d success. %d rec "
+                          "bytes consumed. %d bytes consumed.",
+                          recursion_level, rec_bytes_consumed, bytes_consumed);
+                return bytes_consumed;
+            }
+        } else if (byte == '\0') {
+            // don't bother with pointer incrementation. We're done.
+            bytes_consumed += 1;
+            log_trace("dnsacookiev",
+                      "_get_name_helper OUT. rec level %d success. %d bytes "
+                      "consumed.",
+                      recursion_level, bytes_consumed);
+            return bytes_consumed;
+        } else {
+            log_trace("dnsacookiev",
+                      "_get_name_helper, segment 0x%hx encountered", byte);
+            // We've now consumed a byte.
+            ++data;
+            --data_len;
+            // Mark byte consumed after we check for first
+            // iteration. Do we have enough data left (must have
+            // null byte too)?
+            if ((byte + 1) > data_len) {
+                log_trace("dnsacookiev",
+                          "_get_name_helper OUT. ERR. Not enough data "
+                          "for segment %hd");
+                return 0;
+            }
+            // If we've consumed any bytes and are in a label, we're
+            // in a label chain. We need to add a dot.
+            if (bytes_consumed > 0) {
 
-                                        uint16_t rec_bytes_consumed = get_name_helper_acookiev(
-                                            payload + offset, payload_len - offset, payload, payload_len,
-                                            name, name_len, recursion_level + 1);
-                                        // We are done so don't bother to increment the
-                                        // pointers.
-                                        if (rec_bytes_consumed == 0) {
-                                            log_trace("dnsacookiev",
-                                                      "_get_name_helper OUT. rec level %d failed",
-                                                      recursion_level);
-                                            return 0;
-                                        } else {
-                                            bytes_consumed += 2;
-                                            log_trace("dnsacookiev",
-                                                      "_get_name_helper OUT. rec level %d success. %d rec "
-                                                      "bytes consumed. %d bytes consumed.",
-                                                      recursion_level, rec_bytes_consumed, bytes_consumed);
-                                            return bytes_consumed;
-                                        }
-                                    } else if (byte == '\0') {
-                                        // don't bother with pointer incrementation. We're done.
-                                        bytes_consumed += 1;
-                                        log_trace("dnsacookiev",
-                                                  "_get_name_helper OUT. rec level %d success. %d bytes "
-                                                  "consumed.",
-                                                  recursion_level, bytes_consumed);
-                                        return bytes_consumed;
-                                    } else {
-                                        log_trace("dnsacookiev",
-                                                  "_get_name_helper, segment 0x%hx encountered", byte);
-                                        // We've now consumed a byte.
-                                        ++data;
-                                        --data_len;
-                                        // Mark byte consumed after we check for first
-                                        // iteration. Do we have enough data left (must have
-                                        // null byte too)?
-                                        if ((byte + 1) > data_len) {
-                                            log_trace("dnsacookiev",
-                                                      "_get_name_helper OUT. ERR. Not enough data "
-                                                      "for segment %hd");
-                                            return 0;
-                                        }
-                                        // If we've consumed any bytes and are in a label, we're
-                                        // in a label chain. We need to add a dot.
-                                        if (bytes_consumed > 0) {
+                if (name_len < 1) {
+                    log_warn("dnsacookiev",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
 
-                                            if (name_len < 1) {
-                                                log_warn("dnsacookiev",
-                                                         "Exceeded static name field allocation.");
-                                                return 0;
-                                            }
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
+            // Now we've consumed a byte.
+            ++bytes_consumed;
+            // Did we run out of our arbitrary buffer?
+            if (byte > name_len) {
+                log_warn("dnsacookiev",
+                         "Exceeded static name field allocation.");
+                return 0;
+            }
 
-                                            name[0] = '.';
-                                            name++;
-                                            name_len--;
-                                        }
-                                        // Now we've consumed a byte.
-                                        ++bytes_consumed;
-                                        // Did we run out of our arbitrary buffer?
-                                        if (byte > name_len) {
-                                            log_warn("dnsacookiev",
-                                                     "Exceeded static name field allocation.");
-                                            return 0;
-                                        }
+            assert(data_len > 0);
+            memcpy(name, data, byte);
+            name += byte;
+            name_len -= byte;
+            data_len -= byte;
+            data += byte;
+            bytes_consumed += byte;
+            // Handled in the byte+1 check above.
+            assert(data_len > 0);
+        }
+    }
+    // We should never get here.
+    // For each byte we either have:
+    // -- a ptr, which terminates
+    // -- a null byte, which terminates
+    // -- a segment length which either terminates or ensures we keep
+    // looping
+    assert(0);
+    return 0;
+}
 
-                                                                                assert(data_len > 0);
-                                                                                memcpy(name, data, byte);
-                                                                                name += byte;
-                                                                                name_len -= byte;
-                                                                                data_len -= byte;
-                                                                                data += byte;
-                                                                                bytes_consumed += byte;
-                                                                                // Handled in the byte+1 check above.
-                                                                                assert(data_len > 0);
-                                                                            }
-                                                    }
-                                                    // We should never get here.
-                                                    // For each byte we either have:
-                                                    // -- a ptr, which terminates
-                                                    // -- a null byte, which terminates
-                                                    // -- a segment length which either terminates or ensures we keep
-                                                    // looping
-                                                    assert(0);
-                                                    return 0;
-                                                }
+// data: Where we are in the dns payload
+// payload: the entire udp payload
+static char *get_name_acookiev(const char *data, uint16_t data_len,
+                               const char *payload, uint16_t payload_len,
+                               uint16_t *bytes_consumed) {
+    log_trace("dnsacookiev", "call to get_name_acookiev, data_len: %d",
+              data_len);
+    char *name      = xmalloc(MAX_NAME_LENGTH);
+    *bytes_consumed = get_name_helper_acookiev(
+        data, data_len, payload, payload_len, name, MAX_NAME_LENGTH - 1, 0);
+    if (*bytes_consumed == 0) {
+        free(name);
+        return NULL;
+    }
+    // Our memset ensured null byte.
+    assert(name[MAX_NAME_LENGTH - 1] == '\0');
+    log_trace(
+        "dnsacookiev",
+        "return success from get_name_acookiev, bytes_consumed: %d, string: %s",
+        *bytes_consumed, name);
 
-                                                // data: Where we are in the dns payload
-                                                // payload: the entire udp payload
-                                                static char *get_name_acookiev(const char *data, uint16_t data_len,
-                                                                               const char *payload, uint16_t payload_len,
-                                                                               uint16_t *bytes_consumed) {
-                                                    log_trace("dnsacookiev", "call to get_name_acookiev, data_len: %d",
-                                                              data_len);
-                                                    char *name      = xmalloc(MAX_NAME_LENGTH);
-                                                    *bytes_consumed = get_name_helper_acookiev(
-                                                        data, data_len, payload, payload_len, name, MAX_NAME_LENGTH - 1, 0);
-                                                    if (*bytes_consumed == 0) {
-                                                        free(name);
-                                                        return NULL;
-                                                    }
-                                                    // Our memset ensured null byte.
-                                                    assert(name[MAX_NAME_LENGTH - 1] == '\0');
-                                                    log_trace(
-                                                        "dnsacookiev",
-                                                        "return success from get_name_acookiev, bytes_consumed: %d, string: %s",
-                                                        *bytes_consumed, name);
+    return name;
+}
 
-                                                    return name;
-                                                }
+static bool process_response_question_acookiev(char **data, uint16_t *data_len,
+                                               const char *payload,
+                                               uint16_t    payload_len,
+                                               fieldset_t *list) {
+    // Payload is the start of the DNS packet, including header
+    // data is handle to the start of this RR
+    // data_len is a pointer to the how much total data we have to work
+    // with. This is awful. I'm bad and should feel bad.
+    uint16_t bytes_consumed = 0;
+    char    *question_name  = get_name_acookiev(*data, *data_len, payload,
+                                                payload_len, &bytes_consumed);
+    // Error.
+    if (question_name == NULL) {
+        return 1;
+    }
+    assert(bytes_consumed > 0);
+    if ((bytes_consumed + sizeof(dns_question_tail)) > *data_len) {
+        free(question_name);
+        return 1;
+    }
 
-                                                static bool process_response_question_acookiev(char **data, uint16_t *data_len,
-                                                                                               const char *payload,
-                                                                                               uint16_t    payload_len,
-                                                                                               fieldset_t *list) {
-                                                    // Payload is the start of the DNS packet, including header
-                                                    // data is handle to the start of this RR
-                                                    // data_len is a pointer to the how much total data we have to work
-                                                    // with. This is awful. I'm bad and should feel bad.
+    dns_question_tail *tail   = (dns_question_tail *) (*data + bytes_consumed);
+    uint16_t           qtype  = ntohs(tail->qtype);
+    uint16_t           qclass = ntohs(tail->qclass);
+    // Build our new question fieldset
+    fieldset_t *qfs = fs_new_fieldset();
+    fs_add_unsafe_string(qfs, "name", question_name, 1);
+    fs_add_uint64(qfs, "qtype", qtype);
+
+    if (qtype > MAX_QTYPE ||
+        qtype_qtype_to_strid_acookiev[qtype] == BAD_QTYPE_VAL) {
+        fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(
+            qfs, "qtype_str",
+            (char *) qtype_strs_acookiev[qtype_qtype_to_strid_acookiev[qtype]],
+            0);
+    }
+
+    fs_add_uint64(qfs, "qclass", qclass);
+    // Now we're adding the new fs to the list.
+    fs_add_fieldset(list, NULL, qfs);
+    // Now update the pointers.
+    *data     = *data + bytes_consumed + sizeof(dns_question_tail);
+    *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
+
+    return 0;
+}
