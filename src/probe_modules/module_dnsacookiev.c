@@ -641,3 +641,78 @@ static bool process_response_answer_acookiev(char **data, uint16_t *data_len,
 
                 fs_add_unsafe_string(afs, "rdata", ipv6_str, 1);
             }
+        } else if (type == DNS_QTYPE_SIG || type == DNS_QTYPE_SRV ||
+                   type == DNS_QTYPE_DS || type == DNS_QTYPE_DNSKEY ||
+                   type == DNS_QTYPE_TLSA || type == DNS_QTYPE_SVCB ||
+                   type == DNS_QTYPE_HTTPS || type == DNS_QTYPE_CAA ||
+                   type == DNS_QTYPE_HTTPSSVC) {
+            if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+                log_warn(
+                    "dnsacookiev",
+                    "SRV-like record with wrong SRV-like len. Not processing.");
+                fs_add_uint64(afs, "rdata_is_parsed", 0);
+                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+            } else if (rdlength < 1) {
+                fs_add_uint64(afs, "rdata_is_parsed", 0);
+                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+            } else {
+                fs_add_uint64(afs, "rdata_is_parsed", 1);
+                char *txt = xmalloc(rdlength);
+                memcpy(txt, rdata + 1, rdlength - 1);
+                fs_add_unsafe_string(afs, "rdata", txt, 1);
+            }
+        } else if (type == DNS_QTYPE_OPT) {
+            dns_option_tail *option_tail =
+                (dns_option_tail *) (*data + bytes_consumed);
+            uint16_t udpsize  = ntohs(option_tail->udpsize);
+            uint8_t  ercode   = option_tail->ercode;
+            uint8_t  eversion = option_tail->eversion;
+            uint16_t dodnssec = option_tail->dodnssec;
+            uint16_t option_z =
+                (((option_tail->dodnssec << 7) + option_tail->z1) << 8) +
+                option_tail->z2;
+            uint16_t option_dlength = ntohs(option_tail->dlength);
+            char    *option_data    = option_tail->data;
+
+            fs_add_uint64(afs, "udpsize", udpsize);
+            fs_add_uint64(afs, "ercode", ercode);
+            fs_add_uint64(afs, "eversion", eversion);
+            fs_add_uint64(afs, "dodnssec", dodnssec);
+            fs_add_uint64(afs, "z", option_z);
+            fs_add_uint64(afs, "dlength", option_dlength);
+            fs_add_binary(afs, "data", option_dlength, option_data, 0);
+
+            if (option_dlength >= 4) {
+                dns_option_cookie *cookie_tail = (dns_option_cookie *) option_data;
+                uint16_t           optcode     = ntohs(cookie_tail->optcode);
+
+                fs_add_uint64(afs, "optcode", optcode);
+
+                if (optcode == DNS_OPTCODE_COOKIE) {
+                    fs_add_string(afs, "optcode_str", "COOKIE", 0);
+
+                    uint16_t optlength = ntohs(cookie_tail->optlength);
+                    fs_add_uint64(afs, "optlength", optlength);
+
+                    fs_add_binary(afs, "clientcookie", 8, cookie_tail->clientcookie,
+                                  0);
+                    fs_add_binary(afs, "servercookie", optlength - 8,
+                                  cookie_tail->servercookie, 0);
+                }
+            }
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        }
+        // Now we're adding the new fs to the list.
+        fs_add_fieldset(list, NULL, afs);
+        // Now update the pointers.
+        *data     = *data + bytes_consumed + sizeof(dns_answer_tail) + rdlength;
+        *data_len = *data_len - bytes_consumed - sizeof(dns_answer_tail) - rdlength;
+        log_trace(
+            "dnsacookiev",
+            "return success from process_response_answer_acookiev, data_len: %d",
+            *data_len);
+
+        return 0;
+}
