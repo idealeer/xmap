@@ -409,3 +409,57 @@ static int build_global_dns_packets_acookiev(char **domains, int num_domains) {
                                                      "Exceeded static name field allocation.");
                                             return 0;
                                         }
+
+                                                                                assert(data_len > 0);
+                                                                                memcpy(name, data, byte);
+                                                                                name += byte;
+                                                                                name_len -= byte;
+                                                                                data_len -= byte;
+                                                                                data += byte;
+                                                                                bytes_consumed += byte;
+                                                                                // Handled in the byte+1 check above.
+                                                                                assert(data_len > 0);
+                                                                            }
+                                                    }
+                                                    // We should never get here.
+                                                    // For each byte we either have:
+                                                    // -- a ptr, which terminates
+                                                    // -- a null byte, which terminates
+                                                    // -- a segment length which either terminates or ensures we keep
+                                                    // looping
+                                                    assert(0);
+                                                    return 0;
+                                                }
+
+                                                // data: Where we are in the dns payload
+                                                // payload: the entire udp payload
+                                                static char *get_name_acookiev(const char *data, uint16_t data_len,
+                                                                               const char *payload, uint16_t payload_len,
+                                                                               uint16_t *bytes_consumed) {
+                                                    log_trace("dnsacookiev", "call to get_name_acookiev, data_len: %d",
+                                                              data_len);
+                                                    char *name      = xmalloc(MAX_NAME_LENGTH);
+                                                    *bytes_consumed = get_name_helper_acookiev(
+                                                        data, data_len, payload, payload_len, name, MAX_NAME_LENGTH - 1, 0);
+                                                    if (*bytes_consumed == 0) {
+                                                        free(name);
+                                                        return NULL;
+                                                    }
+                                                    // Our memset ensured null byte.
+                                                    assert(name[MAX_NAME_LENGTH - 1] == '\0');
+                                                    log_trace(
+                                                        "dnsacookiev",
+                                                        "return success from get_name_acookiev, bytes_consumed: %d, string: %s",
+                                                        *bytes_consumed, name);
+
+                                                    return name;
+                                                }
+
+                                                static bool process_response_question_acookiev(char **data, uint16_t *data_len,
+                                                                                               const char *payload,
+                                                                                               uint16_t    payload_len,
+                                                                                               fieldset_t *list) {
+                                                    // Payload is the start of the DNS packet, including header
+                                                    // data is handle to the start of this RR
+                                                    // data_len is a pointer to the how much total data we have to work
+                                                    // with. This is awful. I'm bad and should feel bad.
