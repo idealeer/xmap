@@ -1241,3 +1241,68 @@ int dnsacookiev_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
     return EXIT_SUCCESS;
 }
+
+void dnsacookiev_print_packet(FILE *fp, void *packet) {
+    struct ether_header *eth_header   = (struct ether_header *) packet;
+    struct ip           *ip_header    = (struct ip *) (&eth_header[1]);
+    struct udphdr       *udp_header   = (struct udphdr *) (&ip_header[1]);
+    dns_header          *dns_header_p = (dns_header *) (&udp_header[1]);
+
+    uint16_t udp_len        = ntohs(udp_header->uh_ulen);
+    char    *data           = ((char *) dns_header_p) + sizeof(dns_header);
+    uint16_t data_len       = udp_len - sizeof(udp_header) - sizeof(dns_header);
+    uint16_t bytes_consumed = 0;
+    char    *question_name  = get_name_acookiev(
+        data, data_len, (char *) dns_header_p, udp_len, &bytes_consumed);
+    char              *qname     = ((char *) dns_header_p) + sizeof(dns_header);
+    int                qname_len = strlen(qname) + 1;
+    dns_question_tail *tail_p =
+        (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
+                               qname_len);
+    char *option_qname_p = (char *) (tail_p + sizeof(dns_question_tail));
+    dns_option_tail *option_tail_p =
+        (dns_option_tail *) (option_qname_p +
+                             default_option_qname_len_acookiev);
+
+    fprintf_eth_header(fp, eth_header);
+    fprintf_ip_header(fp, ip_header);
+    fprintf(fp,
+            "UDP\n"
+            "\tSource Port(2B)\t\t: %u\n"
+            "\tDestination Port(2B)\t: %u\n"
+            "\tLength(2B)\t\t: %u\n"
+            "\tChecksum(2B)\t\t: 0x%04x\n",
+            ntohs(udp_header->uh_sport), ntohs(udp_header->uh_dport),
+            ntohs(udp_header->uh_ulen), ntohs(udp_header->uh_sum));
+    fprintf(fp,
+            "DNS\n"
+            "\tTransaction ID(2B)\t: 0x%04x\n"
+            "\tFlags(2B)\t\t: 0x%04x\n"
+            "\tQuestions(2B)\t\t: %u\n"
+            "\tAnswer RRs(2B)\t\t: %u\n"
+            "\tAuthority RRs(2B)\t: %u\n"
+            "\tAdditional RRs(2B)\t: %u\n"
+            "\tQueries\t\t\t: \n"
+            "\t\t\t\t: %s: type %s, class IN\n"
+            "\tAdditional records\t: \n"
+            "\t\t\t\t: Name\t\t\t: ROOT\n"
+            "\t\t\t\t: Type\t\t\t: OPT\n"
+            "\t\t\t\t: UDP payload size\t: %u\n"
+            "\t\t\t\t: Extended rcode\t: 0x00\n"
+            "\t\t\t\t: EDNS0 version\t\t: 0\n"
+            "\t\t\t\t: DO bit\t\t: 0\n"
+            "\t\t\t\t: Reserved\t\t: 0x0000\n"
+            "\t\t\t\t: Data length\t\t: 0\n",
+            ntohs(dns_header_p->id), ntohs(dns_header_p->rd),
+            ntohs(dns_header_p->qdcount), ntohs(dns_header_p->ancount),
+            ntohs(dns_header_p->nscount), ntohs(dns_header_p->arcount),
+            question_name,
+            qtype_strs_acookiev
+                [qtype_qtype_to_strid_acookiev[(uint16_t) tail_p->qtype]],
+            ntohs(option_tail_p->udpsize));
+    fprintf(
+        fp,
+        "------------------------------------------------------------------\n");
+
+    free(question_name);
+}
