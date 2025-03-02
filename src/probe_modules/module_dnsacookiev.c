@@ -100,3 +100,64 @@ const char    *dnsacookiev_usage_error =
    "raw/time/random:recurse/no-recurse:file:file_name or "
    "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
    "str:some_text:recurse/no-recurse:file:file_name)";
+
+const unsigned char *charset_alpha_lower_acookiev =
+    (unsigned char *) "abcdefghijklmnopqrstuvwxyz";
+
+static char    **dns_packets_acookiev;
+static uint16_t *dns_packet_lens_acookiev; // Not including udp header
+static uint16_t *qname_lens_acookiev;      // domain_len list
+static char    **qnames_acookiev;          // domain list for query
+static uint16_t *qtypes_acookiev;          // query_type list
+static char    **domains_acookiev;         // domain strs
+static int       num_questions_acookiev   = 0;
+static int       index_questions_acookiev = 0;
+
+const char      default_option_qname_acookiev[]   = {0x00};
+static int      default_option_qname_len_acookiev = 1;
+static uint16_t default_option_udpsize_acookiev   = 4096;
+const char      default_option_rdata_acookiev[];
+static int      default_option_rdata_len_acookiev = 20; // for cookie
+
+/* Array of qtypes_acookiev we support. Jumping through some hops (1 level of
+ * indirection) so the per-packet processing time is fast. Keep this in sync
+ * with: dns_qtype (.h) qtype_strid_to_qtype_acookiev (below)
+ * qtype_qtype_to_strid_acookiev (below, and setup_qtype_str_map_acookiev())
+ */
+const char *qtype_strs_acookiev[] = {
+    "A",    "NS",    "CNAME", "SOA", "PTR",      "MX", "TXT",
+    "AAAA", "RRSIG", "ANY",   "SIG", "SRV",      "DS", "DNSKEY",
+    "TLSA", "SVCB",  "HTTPS", "CAA", "HTTPSSVC", "OPT"};
+const int qtype_strs_len_acookiev = 20;
+
+const dns_qtype qtype_strid_to_qtype_acookiev[] = {
+    DNS_QTYPE_A,     DNS_QTYPE_NS,     DNS_QTYPE_CNAME,    DNS_QTYPE_SOA,
+    DNS_QTYPE_PTR,   DNS_QTYPE_MX,     DNS_QTYPE_TXT,      DNS_QTYPE_AAAA,
+    DNS_QTYPE_RRSIG, DNS_QTYPE_ALL,    DNS_QTYPE_SIG,      DNS_QTYPE_SRV,
+    DNS_QTYPE_DS,    DNS_QTYPE_DNSKEY, DNS_QTYPE_TLSA,     DNS_QTYPE_SVCB,
+    DNS_QTYPE_HTTPS, DNS_QTYPE_CAA,    DNS_QTYPE_HTTPSSVC, DNS_QTYPE_OPT};
+
+int8_t qtype_qtype_to_strid_acookiev[65536] = {BAD_QTYPE_VAL};
+
+void setup_qtype_str_map_acookiev() {
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_A]        = 0;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_NS]       = 1;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_CNAME]    = 2;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_SOA]      = 3;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_PTR]      = 4;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_MX]       = 5;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_TXT]      = 6;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_AAAA]     = 7;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_RRSIG]    = 8;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_ALL]      = 9;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_SIG]      = 10;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_SRV]      = 11;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_DS]       = 12;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_DNSKEY]   = 13;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_TLSA]     = 14;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_SVCB]     = 15;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_HTTPS]    = 16;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_CAA]      = 17;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_HTTPSSVC] = 18;
+    qtype_qtype_to_strid_acookiev[DNS_QTYPE_OPT]      = 19;
+}
