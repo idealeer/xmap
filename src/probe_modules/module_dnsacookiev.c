@@ -841,114 +841,114 @@ static int dnsacookiev_global_init(struct state_conf *conf) {
                   num_questions_acookiev);
     }
 
-        // Setup the global structures
-        dns_packets_acookiev = xmalloc(sizeof(char *) * num_questions_acookiev);
-        dns_packet_lens_acookiev =
-            xmalloc(sizeof(uint16_t) * num_questions_acookiev);
-        qname_lens_acookiev = xmalloc(sizeof(uint16_t) * num_questions_acookiev);
-        qnames_acookiev     = xmalloc(sizeof(char *) * num_questions_acookiev);
-        qtypes_acookiev     = xmalloc(sizeof(uint16_t) * num_questions_acookiev);
-        domains_acookiev    = xmalloc(sizeof(char *) * num_questions_acookiev);
+    // Setup the global structures
+    dns_packets_acookiev = xmalloc(sizeof(char *) * num_questions_acookiev);
+    dns_packet_lens_acookiev =
+        xmalloc(sizeof(uint16_t) * num_questions_acookiev);
+    qname_lens_acookiev = xmalloc(sizeof(uint16_t) * num_questions_acookiev);
+    qnames_acookiev     = xmalloc(sizeof(char *) * num_questions_acookiev);
+    qtypes_acookiev     = xmalloc(sizeof(uint16_t) * num_questions_acookiev);
+    domains_acookiev    = xmalloc(sizeof(char *) * num_questions_acookiev);
 
-        for (int i = 0; i < num_questions_acookiev; i++) {
-            domains_acookiev[i] = (char *) default_domain_acookiev;
-            qtypes_acookiev[i]  = default_qtype_acookiev;
+    for (int i = 0; i < num_questions_acookiev; i++) {
+        domains_acookiev[i] = (char *) default_domain_acookiev;
+        qtypes_acookiev[i]  = default_qtype_acookiev;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_acookiev =
+        conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_acookiev();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
         }
+        ++c;
 
-        // This is xmap boilerplate. Why do I have to write this?
-        dns_num_ports_acookiev =
-            conf->source_port_last - conf->source_port_first + 1;
-        setup_qtype_str_map_acookiev();
-
-        if (conf->probe_args &&
-            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
-            char *c = strchr(conf->probe_args, ':');
+        // label type
+        if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+            label_type_acookiev = DNS_LTYPE_RAW;
+            log_debug("dnsacookiev", "raw label prefix");
+        } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+            label_type_acookiev = DNS_LTYPE_TIME;
+            log_debug("dnsacookiev", "time label prefix");
+        } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+            label_type_acookiev = DNS_LTYPE_RANDOM;
+            log_debug("dnsacookiev", "random label prefix");
+        } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+            label_type_acookiev = DNS_LTYPE_STR;
+            conf->probe_args    = c;
+            c                   = strchr(conf->probe_args, ':');
             if (!c) {
                 log_error("dnsacookiev", dnsacookiev_usage_error);
                 return EXIT_FAILURE;
             }
+            label_len_acookiev = c - conf->probe_args;
+            label_acookiev     = xmalloc(label_len_acookiev);
+            strncpy(label_acookiev, conf->probe_args, label_len_acookiev);
             ++c;
+            log_debug("dnsacookiev", "label prefix: %s, len: %d",
+                      label_acookiev, label_len_acookiev);
+        } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+            label_type_acookiev = DNS_LTYPE_SRCIP;
+            log_debug("dnsacookiev", "dst-ip label prefix");
+        } else {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
+        }
 
-            // label type
-            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
-                label_type_acookiev = DNS_LTYPE_RAW;
-                log_debug("dnsacookiev", "raw label prefix");
-            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
-                label_type_acookiev = DNS_LTYPE_TIME;
-                log_debug("dnsacookiev", "time label prefix");
-            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
-                label_type_acookiev = DNS_LTYPE_RANDOM;
-                log_debug("dnsacookiev", "random label prefix");
-            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-                label_type_acookiev = DNS_LTYPE_STR;
-                conf->probe_args    = c;
-                c                   = strchr(conf->probe_args, ':');
-                if (!c) {
-                    log_error("dnsacookiev", dnsacookiev_usage_error);
-                    return EXIT_FAILURE;
-                }
-                label_len_acookiev = c - conf->probe_args;
-                label_acookiev     = xmalloc(label_len_acookiev);
-                strncpy(label_acookiev, conf->probe_args, label_len_acookiev);
-                ++c;
-                log_debug("dnsacookiev", "label prefix: %s, len: %d",
-                          label_acookiev, label_len_acookiev);
-            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
-                label_type_acookiev = DNS_LTYPE_SRCIP;
-                log_debug("dnsacookiev", "dst-ip label prefix");
-            } else {
-                log_error("dnsacookiev", dnsacookiev_usage_error);
-                return EXIT_FAILURE;
-            }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dnsacookiev", dnsacookiev_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
+        // recursive query
+        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+            recursive_acookiev = 1;
+        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+            recursive_acookiev = 0;
+        } else {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // recursive query
-                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
-                            recursive_acookiev = 1;
-                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
-                            recursive_acookiev = 0;
-                        } else {
-                            log_error("dnsacookiev", dnsacookiev_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dnsacookiev", dnsacookiev_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
+        // input query
+        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+            if (load_question_from_str_acookiev(c)) return EXIT_FAILURE;
+        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+            if (load_question_from_file_acookiev(c)) return EXIT_FAILURE;
+        } else {
+            log_error("dnsacookiev", dnsacookiev_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // input query
-                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
-                            if (load_question_from_str_acookiev(c)) return EXIT_FAILURE;
-                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
-                            if (load_question_from_file_acookiev(c)) return EXIT_FAILURE;
-                        } else {
-                            log_error("dnsacookiev", dnsacookiev_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        if (index_questions_acookiev < num_questions_acookiev) {
+            log_error("dnsacookiev",
+                      "more probes than questions configured. Add "
+                      "additional probes.");
+            return EXIT_FAILURE;
+        }
+    }
 
-                        if (index_questions_acookiev < num_questions_acookiev) {
-                            log_error("dnsacookiev",
-                                      "more probes than questions configured. Add "
-                                      "additional probes.");
-                            return EXIT_FAILURE;
-                        }
-                    }
-
-                    if (label_type_acookiev == DNS_LTYPE_RAW ||
-                        label_type_acookiev == DNS_LTYPE_STR)
-                        return build_global_dns_packets_acookiev(domains_acookiev,
-                                                                 num_questions_acookiev);
-                    else
-                        return EXIT_SUCCESS;
-            }
+    if (label_type_acookiev == DNS_LTYPE_RAW ||
+        label_type_acookiev == DNS_LTYPE_STR)
+        return build_global_dns_packets_acookiev(domains_acookiev,
+                                                 num_questions_acookiev);
+    else
+        return EXIT_SUCCESS;
+}
