@@ -1435,3 +1435,105 @@ int dnsacookiev_validate_packet(const struct ip *ip_hdr, uint32_t len,
     // Looks good.
     return PACKET_VALID;
 }
+
+void dnsacookiev_process_packet(const u_char *packet, uint32_t len,
+                                fieldset_t *fs, UNUSED struct timespec ts) {
+    struct ip *ip_header = (struct ip *) &packet[sizeof(struct ether_header)];
+    if (ip_header->ip_p == IPPROTO_UDP) {
+        struct udphdr *udp_header =
+            (struct udphdr *) ((char *) ip_header + ip_header->ip_hl * 4);
+        uint16_t udp_len = ntohs(udp_header->uh_ulen);
+
+        dns_header *dns_header_p = (dns_header *) &udp_header[1];
+        uint16_t    qr           = dns_header_p->qr;
+        uint16_t    rcode        = dns_header_p->rcode;
+        // Success: Has the right validation bits and the right Q
+        // App success: has qr and rcode bits right
+        // Any app level parsing issues: dns_parse_err
+
+        // High level info
+        fs_add_string(fs, "clas", (char *) "dns", 0);
+        fs_add_bool(fs, "success", 1);
+        fs_add_bool(fs, "app_success",
+                    (qr == DNS_QR_ANSWER) && (rcode == DNS_RCODE_NOERR));
+
+        // UDP info
+        fs_add_uint64(fs, "sport", ntohs(udp_header->uh_sport));
+        fs_add_uint64(fs, "dport", ntohs(udp_header->uh_dport));
+        fs_add_uint64(fs, "udp_pkt_size", udp_len);
+
+        // ICMP info
+        fs_add_null(fs, "icmp_responder");
+        fs_add_null(fs, "icmp_type");
+        fs_add_null(fs, "icmp_code");
+        fs_add_null(fs, "icmp_str");
+
+        // DNS header
+        fs_add_uint64(fs, "dns_id", ntohs(dns_header_p->id));
+        fs_add_uint64(fs, "dns_rd", dns_header_p->rd);
+        fs_add_uint64(fs, "dns_tc", dns_header_p->tc);
+        fs_add_uint64(fs, "dns_aa", dns_header_p->aa);
+        fs_add_uint64(fs, "dns_opcode", dns_header_p->opcode);
+        fs_add_uint64(fs, "dns_qr", qr);
+        fs_add_uint64(fs, "dns_rcode", rcode);
+        fs_add_uint64(fs, "dns_cd", dns_header_p->cd);
+        fs_add_uint64(fs, "dns_ad", dns_header_p->ad);
+        fs_add_uint64(fs, "dns_z", dns_header_p->z);
+        fs_add_uint64(fs, "dns_ra", dns_header_p->ra);
+        fs_add_uint64(fs, "dns_qdcount", ntohs(dns_header_p->qdcount));
+        fs_add_uint64(fs, "dns_ancount", ntohs(dns_header_p->ancount));
+        fs_add_uint64(fs, "dns_nscount", ntohs(dns_header_p->nscount));
+        fs_add_uint64(fs, "dns_arcount", ntohs(dns_header_p->arcount));
+
+        // And now for the complicated part. Hierarchical data.
+        char    *data     = ((char *) dns_header_p) + sizeof(dns_header);
+        uint16_t data_len = udp_len - sizeof(udp_header) - sizeof(dns_header);
+        bool     err      = 0;
+
+        // Questions
+        fieldset_t *list = fs_new_repeated_fieldset();
+        for (int i = 0; i < ntohs(dns_header_p->qdcount) && !err; i++) {
+            err = process_response_question_acookiev(
+                &data, &data_len, (char *) dns_header_p, udp_len, list);
+        }
+        fs_add_repeated(fs, "dns_questions", list);
+
+        // Answers
+        list = fs_new_repeated_fieldset();
+        for (int i = 0; i < ntohs(dns_header_p->ancount) && !err; i++) {
+            err = process_response_answer_acookiev(
+                &data, &data_len, (char *) dns_header_p, udp_len, list);
+        }
+        fs_add_repeated(fs, "dns_answers", list);
+
+        // Authorities
+        list = fs_new_repeated_fieldset();
+        for (int i = 0; i < ntohs(dns_header_p->nscount) && !err; i++) {
+            err = process_response_answer_acookiev(
+                &data, &data_len, (char *) dns_header_p, udp_len, list);
+        }
+        fs_add_repeated(fs, "dns_authorities", list);
+
+        // Additionals
+        list = fs_new_repeated_fieldset();
+        for (int i = 0; i < ntohs(dns_header_p->arcount) && !err; i++) {
+            err = process_response_answer_acookiev(
+                &data, &data_len, (char *) dns_header_p, udp_len, list);
+        }
+        fs_add_repeated(fs, "dns_additionals", list);
+
+        // Do we have unconsumed data?
+        fs_add_uint64(fs, "dns_unconsumed_bytes", data_len);
+        if (data_len != 0) {
+            err = 1;
+        }
+
+        // Did we parse OK?
+        fs_add_uint64(fs, "dns_parse_err", err);
+
+        // Now the raw stuff.
+        fs_add_binary(fs, "raw_data", (udp_len - sizeof(struct udphdr)),
+                      (void *) &udp_header[1], 0);
+
+        return;
+    }
