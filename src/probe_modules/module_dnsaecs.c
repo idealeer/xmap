@@ -301,3 +301,65 @@ static uint16_t get_name_helper_aecs(const char *data, uint16_t data_len,
         log_trace("dnsaecs", "_get_name_helper OUT. ERR, MAX RECUSION");
         return 0;
     }
+
+        uint16_t bytes_consumed = 0;
+        // The start of data is either a sequence of labels or a ptr.
+        while (data_len > 0) {
+            uint8_t byte = data[0];
+            // Is this a pointer?
+            if (byte >= 0xc0) {
+                log_trace("dnsaecs", "_get_name_helper, ptr encountered");
+                // Do we have enough bytes to check ahead?
+                if (data_len < 2) {
+                    log_trace("dnsaecs",
+                              "_get_name_helper OUT. ptr byte encountered. "
+                              "No offset. ERR.");
+                    return 0;
+                }
+                // No. ntohs isn't needed here. It's because of
+                // the upper 2 bits indicating a pointer.
+                uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+                log_trace("dnsaecs", "_get_name_helper. ptr offset 0x%x", offset);
+                if (offset >= payload_len) {
+                    log_trace(
+                        "dnsaecs",
+                        "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                        payload_len);
+                    return 0;
+                }
+
+                // We need to add a dot if we are:
+                // -- Not first level recursion.
+                // -- have consumed bytes
+                if (recursion_level > 0 || bytes_consumed > 0) {
+
+                    if (name_len < 1) {
+                        log_warn("dnsaecs",
+                                 "Exceeded static name field allocation.");
+                        return 0;
+                    }
+
+                    name[0] = '.';
+                    name++;
+                    name_len--;
+                }
+
+                uint16_t rec_bytes_consumed = get_name_helper_aecs(
+                    payload + offset, payload_len - offset, payload, payload_len,
+                    name, name_len, recursion_level + 1);
+                // We are done so don't bother to increment the
+                // pointers.
+                if (rec_bytes_consumed == 0) {
+                    log_trace("dnsaecs",
+                              "_get_name_helper OUT. rec level %d failed",
+                              recursion_level);
+                    return 0;
+                } else {
+                    bytes_consumed += 2;
+                    log_trace("dnsaecs",
+                              "_get_name_helper OUT. rec level %d success. %d rec "
+                              "bytes consumed. %d bytes consumed.",
+                              recursion_level, rec_bytes_consumed, bytes_consumed);
+                    return bytes_consumed;
+                }
+            }
