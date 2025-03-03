@@ -727,3 +727,71 @@ static bool process_response_answer_aecs(char **data, uint16_t *data_len,
 
     return 0;
 }
+
+static int load_question_from_str_aecs(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_aecs >= num_questions_aecs) {
+            log_error("dnsaecs", "less probes than questions configured. Add "
+                                 "additional questions.");
+            return EXIT_FAILURE;
+        }
+
+        int domain_len = 0;
+
+        if (probe_arg_delimiter_p) {
+            domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+        } else {
+            domain_len = strlen(probe_q_delimiter_p) - 1;
+        }
+        assert(domain_len > 0);
+
+        if (label_type_aecs == DNS_LTYPE_STR) {
+            domains_aecs[index_questions_aecs] =
+                xmalloc(label_len_aecs + 1 + domain_len + 1);
+            strncpy(domains_aecs[index_questions_aecs], label_aecs,
+                    label_len_aecs);
+            domains_aecs[index_questions_aecs][label_len_aecs] = '.';
+            strncpy(domains_aecs[index_questions_aecs] + label_len_aecs + 1,
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_aecs[index_questions_aecs]
+                        [label_len_aecs + 1 + domain_len] = '\0';
+        } else {
+            domains_aecs[index_questions_aecs] = xmalloc(domain_len + 1);
+            strncpy(domains_aecs[index_questions_aecs], probe_q_delimiter_p + 1,
+                    domain_len);
+            domains_aecs[index_questions_aecs][domain_len] = '\0';
+        }
+
+        char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+        strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+        qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+
+        qtypes_aecs[index_questions_aecs] =
+            qtype_str_to_code_aecs(strupr(qtype_str));
+        if (!qtypes_aecs[index_questions_aecs]) {
+            log_error("dnsaecs", "incorrect qtype supplied: %s", qtype_str);
+            free(qtype_str);
+            return EXIT_FAILURE;
+        }
+        free(qtype_str);
+
+        index_questions_aecs++;
+        if (probe_arg_delimiter_p)
+            type_q_str = probe_q_delimiter_p + domain_len + 2;
+        else
+            type_q_str = probe_q_delimiter_p + domain_len + 1;
+    }
+}
