@@ -854,3 +854,61 @@ static int dnsaecs_global_init(struct state_conf *conf) {
     qnames_aecs          = xmalloc(sizeof(char *) * num_questions_aecs);
     qtypes_aecs          = xmalloc(sizeof(uint16_t) * num_questions_aecs);
     domains_aecs         = xmalloc(sizeof(char *) * num_questions_aecs);
+
+        for (int i = 0; i < num_questions_aecs; i++) {
+            domains_aecs[i] = (char *) default_domain_aecs;
+            qtypes_aecs[i]  = default_qtype_aecs;
+        }
+
+        // This is xmap boilerplate. Why do I have to write this?
+        dns_num_ports_aecs = conf->source_port_last - conf->source_port_first + 1;
+        setup_qtype_str_map_aecs();
+
+        if (conf->probe_args &&
+            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+            char *c = strchr(conf->probe_args, ':');
+            if (!c) {
+                log_error("dnsaecs", dnsaecs_usage_error);
+                return EXIT_FAILURE;
+            }
+            ++c;
+
+            // label type
+            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+                label_type_aecs = DNS_LTYPE_RAW;
+                log_debug("dnsaecs", "raw label prefix");
+            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+                label_type_aecs = DNS_LTYPE_TIME;
+                log_debug("dnsaecs", "time label prefix");
+            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+                label_type_aecs = DNS_LTYPE_RANDOM;
+                log_debug("dnsaecs", "random label prefix");
+            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+                label_type_aecs  = DNS_LTYPE_STR;
+                conf->probe_args = c;
+                c                = strchr(conf->probe_args, ':');
+                if (!c) {
+                    log_error("dnsaecs", dnsaecs_usage_error);
+                    return EXIT_FAILURE;
+                }
+                label_len_aecs = c - conf->probe_args;
+                label_aecs     = xmalloc(label_len_aecs);
+                strncpy(label_aecs, conf->probe_args, label_len_aecs);
+                ++c;
+                log_debug("dnsaecs", "label prefix: %s, len: %d", label_aecs,
+                          label_len_aecs);
+            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+                label_type_aecs = DNS_LTYPE_SRCIP;
+                log_debug("dnsaecs", "dst-ip label prefix");
+            } else {
+                log_error("dnsaecs", dnsaecs_usage_error);
+                return EXIT_FAILURE;
+            }
+
+            conf->probe_args = c;
+            c                = strchr(conf->probe_args, ':');
+            if (!c) {
+                log_error("dnsaecs", dnsaecs_usage_error);
+                return EXIT_FAILURE;
+            }
+            ++c;
