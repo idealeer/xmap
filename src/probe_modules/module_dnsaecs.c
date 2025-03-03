@@ -1115,3 +1115,65 @@ int dnsaecs_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
                     log_fatal("dnsaecs", dnsaecs_usage_error);
                     return EXIT_FAILURE;
                 }
+
+                                snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
+                                         domains_aecs[index]);
+
+                                // dns packet
+                                free(qnames_aecs[index]);
+
+                                qname_lens_aecs[index] =
+                                    domain_to_qname_aecs(&qnames_aecs[index], new_domain);
+                                dns_packet_lens_aecs[index] =
+                                    sizeof(dns_header) + qname_lens_aecs[index] +
+                                    sizeof(dns_question_tail) + default_option_qname_len_aecs +
+                                    sizeof(dns_option_tail) + default_option_rdata_len_aecs;
+                                if (dns_packet_lens_aecs[index] > DNS_SEND_LEN) {
+                                    log_fatal("dnsaecs", "DNS packet bigger (%d) than our limit (%d)",
+                                              dns_packet_lens_aecs[index], DNS_SEND_LEN);
+                                    return EXIT_FAILURE;
+                                }
+
+                                free(dns_packets_aecs[index]);
+
+                                dns_packets_aecs[index]  = xmalloc(dns_packet_lens_aecs[index]);
+                                dns_header *dns_header_p = (dns_header *) dns_packets_aecs[index];
+                                char       *qname_p      = dns_packets_aecs[index] + sizeof(dns_header);
+                                dns_question_tail *tail_p =
+                                    (dns_question_tail *) (dns_packets_aecs[index] +
+                                                           sizeof(dns_header) + qname_lens_aecs[index]);
+                                char *option_qname_p =
+                                    (char *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                                              qname_lens_aecs[index] + sizeof(dns_question_tail));
+                                dns_option_tail *option_tail_p =
+                                    (dns_option_tail *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                                                         qname_lens_aecs[index] +
+                                                         sizeof(dns_question_tail) +
+                                                         default_option_qname_len_aecs);
+                                dns_option_ecs *option_ecs_p =
+                                    (dns_option_ecs *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                                                        qname_lens_aecs[index] +
+                                                        sizeof(dns_question_tail) +
+                                                        default_option_qname_len_aecs +
+                                                        sizeof(dns_option_tail));
+
+                                // All other header fields should be 0. Except id, which we set
+                                // per thread. Please recurse as needed.
+                                dns_header_p->rd = recursive_aecs; // Is one bit. Don't need htons
+                                // We have 1 question
+                                dns_header_p->qdcount = htons(1);
+                                memcpy(qname_p, qnames_aecs[index], qname_lens_aecs[index]);
+                                // Set the qtype to what we passed from args
+                                tail_p->qtype = htons(qtypes_aecs[index]);
+                                // Set the qclass to The Internet (TM) (R) (I hope you're happy
+                                // now Zakir)
+                                tail_p->qclass = htons(0x01);
+                                // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+                                // option, others set to 0
+                                dns_header_p->arcount = htons(1);
+                                memcpy(option_qname_p, default_option_qname_aecs,
+                                       default_option_qname_len_aecs);
+                                option_tail_p->type    = htons(DNS_QTYPE_OPT);
+                                option_tail_p->udpsize = htons(1232);
+                                option_tail_p->dlength = htons(default_option_rdata_len_aecs);
