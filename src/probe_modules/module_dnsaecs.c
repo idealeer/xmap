@@ -1177,3 +1177,57 @@ int dnsaecs_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
                                 option_tail_p->type    = htons(DNS_QTYPE_OPT);
                                 option_tail_p->udpsize = htons(1232);
                                 option_tail_p->dlength = htons(default_option_rdata_len_aecs);
+
+                                                                // ecs
+                                                                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
+                                                                option_ecs_p->optlength  = htons(7);                 // fixed for /24
+                                                                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
+                                                                option_ecs_p->srcnmask   = 24;                       // source netmask
+                                                                option_ecs_p->scpnmask   = 0;                        // scope netmask
+                                                                uint8_t client_subnet[3] = {
+                                                                    src_ip[0], // First byte
+                                                                    src_ip[1], // Second byte
+                                                                    src_ip[2]  // Third byte
+                                                                };
+                                                                memcpy(option_ecs_p->cs, client_subnet, 3);
+
+                                                                // packet
+                                                                uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
+                                                                                  dns_packet_lens_aecs[index];
+                                                                make_ip_header(ip_header, IPPROTO_UDP, ip_len);
+
+                                                                uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_aecs[index];
+                                                                make_udp_header(udp_header, udp_len);
+
+                                                                char *payload = (char *) (&udp_header[1]);
+                                                                *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
+                                                                           sizeof(struct udphdr) + dns_packet_lens_aecs[index];
+
+                                                                assert(*buf_len <= MAX_PACKET_SIZE);
+
+                                                                memcpy(payload, dns_packets_aecs[index], dns_packet_lens_aecs[index]);
+
+                                                                ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
+                                                                ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+                                                                ip_header->ip_ttl        = ttl;
+
+                                                                udp_header->uh_sport = htons(src_port);
+                                                                udp_header->uh_dport = htons(dst_port);
+
+                                                                dns_header_p = (dns_header *) (&udp_header[1]);
+
+                                                                dns_header_p->id = dns_txid;
+
+                                                                udp_header->uh_sum = 0;
+                                                                udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                                                                                  ip_header->ip_dst.s_addr, udp_header);
+
+                                                                ip_header->ip_sum = 0;
+                                                                ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+
+                                                                free(new_domain);
+                                                                free(new_label);
+                                            }
+
+                                            return EXIT_SUCCESS;
+                                }
