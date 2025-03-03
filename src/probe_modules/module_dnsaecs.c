@@ -912,3 +912,84 @@ static int dnsaecs_global_init(struct state_conf *conf) {
                 return EXIT_FAILURE;
             }
             ++c;
+
+                        // recursive query
+                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+                            recursive_aecs = 1;
+                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+                            recursive_aecs = 0;
+                        } else {
+                            log_error("dnsaecs", dnsaecs_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        conf->probe_args = c;
+                        c                = strchr(conf->probe_args, ':');
+                        if (!c) {
+                            log_error("dnsaecs", dnsaecs_usage_error);
+                            return EXIT_FAILURE;
+                        }
+                        ++c;
+
+                        // input query
+                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+                            if (load_question_from_str_aecs(c)) return EXIT_FAILURE;
+                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+                            if (load_question_from_file_aecs(c)) return EXIT_FAILURE;
+                        } else {
+                            log_error("dnsaecs", dnsaecs_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        if (index_questions_aecs < num_questions_aecs) {
+                            log_error("dnsaecs", "more probes than questions configured. Add "
+                                                 "additional probes.");
+                            return EXIT_FAILURE;
+                        }
+                    }
+
+                    if (label_type_aecs == DNS_LTYPE_RAW || label_type_aecs == DNS_LTYPE_STR)
+                        return build_global_dns_packets_aecs(domains_aecs, num_questions_aecs);
+                    else
+                        return EXIT_SUCCESS;
+            }
+
+            static int dnsaecs_global_cleanup(UNUSED struct state_conf *xconf,
+                                              UNUSED struct state_send *xsend,
+                                              UNUSED struct state_recv *xrecv) {
+                if (dns_packets_aecs) {
+                    for (int i = 0; i < num_questions_aecs; i++) {
+                        if (dns_packets_aecs[i]) {
+                            free(dns_packets_aecs[i]);
+                        }
+                    }
+                    free(dns_packets_aecs);
+                }
+                dns_packets_aecs = NULL;
+
+                if (qnames_aecs) {
+                    for (int i = 0; i < num_questions_aecs; i++) {
+                        if (qnames_aecs[i]) {
+                            free(qnames_aecs[i]);
+                        }
+                    }
+                    free(qnames_aecs);
+                }
+                qnames_aecs = NULL;
+
+                if (dns_packet_lens_aecs) {
+                    free(dns_packet_lens_aecs);
+                }
+
+                if (qname_lens_aecs) {
+                    free(qname_lens_aecs);
+                }
+
+                if (qtypes_aecs) {
+                    free(qtypes_aecs);
+                }
+
+                free(label_aecs);
+
+                return EXIT_SUCCESS;
+            }
