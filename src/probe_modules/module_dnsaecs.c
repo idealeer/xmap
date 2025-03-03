@@ -855,141 +855,141 @@ static int dnsaecs_global_init(struct state_conf *conf) {
     qtypes_aecs          = xmalloc(sizeof(uint16_t) * num_questions_aecs);
     domains_aecs         = xmalloc(sizeof(char *) * num_questions_aecs);
 
-        for (int i = 0; i < num_questions_aecs; i++) {
-            domains_aecs[i] = (char *) default_domain_aecs;
-            qtypes_aecs[i]  = default_qtype_aecs;
+    for (int i = 0; i < num_questions_aecs; i++) {
+        domains_aecs[i] = (char *) default_domain_aecs;
+        qtypes_aecs[i]  = default_qtype_aecs;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_aecs = conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_aecs();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
         }
+        ++c;
 
-        // This is xmap boilerplate. Why do I have to write this?
-        dns_num_ports_aecs = conf->source_port_last - conf->source_port_first + 1;
-        setup_qtype_str_map_aecs();
-
-        if (conf->probe_args &&
-            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
-            char *c = strchr(conf->probe_args, ':');
-            if (!c) {
-                log_error("dnsaecs", dnsaecs_usage_error);
-                return EXIT_FAILURE;
-            }
-            ++c;
-
-            // label type
-            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
-                label_type_aecs = DNS_LTYPE_RAW;
-                log_debug("dnsaecs", "raw label prefix");
-            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
-                label_type_aecs = DNS_LTYPE_TIME;
-                log_debug("dnsaecs", "time label prefix");
-            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
-                label_type_aecs = DNS_LTYPE_RANDOM;
-                log_debug("dnsaecs", "random label prefix");
-            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-                label_type_aecs  = DNS_LTYPE_STR;
-                conf->probe_args = c;
-                c                = strchr(conf->probe_args, ':');
-                if (!c) {
-                    log_error("dnsaecs", dnsaecs_usage_error);
-                    return EXIT_FAILURE;
-                }
-                label_len_aecs = c - conf->probe_args;
-                label_aecs     = xmalloc(label_len_aecs);
-                strncpy(label_aecs, conf->probe_args, label_len_aecs);
-                ++c;
-                log_debug("dnsaecs", "label prefix: %s, len: %d", label_aecs,
-                          label_len_aecs);
-            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
-                label_type_aecs = DNS_LTYPE_SRCIP;
-                log_debug("dnsaecs", "dst-ip label prefix");
-            } else {
-                log_error("dnsaecs", dnsaecs_usage_error);
-                return EXIT_FAILURE;
-            }
-
+        // label type
+        if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+            label_type_aecs = DNS_LTYPE_RAW;
+            log_debug("dnsaecs", "raw label prefix");
+        } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+            label_type_aecs = DNS_LTYPE_TIME;
+            log_debug("dnsaecs", "time label prefix");
+        } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+            label_type_aecs = DNS_LTYPE_RANDOM;
+            log_debug("dnsaecs", "random label prefix");
+        } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+            label_type_aecs  = DNS_LTYPE_STR;
             conf->probe_args = c;
             c                = strchr(conf->probe_args, ':');
             if (!c) {
                 log_error("dnsaecs", dnsaecs_usage_error);
                 return EXIT_FAILURE;
             }
+            label_len_aecs = c - conf->probe_args;
+            label_aecs     = xmalloc(label_len_aecs);
+            strncpy(label_aecs, conf->probe_args, label_len_aecs);
             ++c;
+            log_debug("dnsaecs", "label prefix: %s, len: %d", label_aecs,
+                      label_len_aecs);
+        } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+            label_type_aecs = DNS_LTYPE_SRCIP;
+            log_debug("dnsaecs", "dst-ip label prefix");
+        } else {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // recursive query
-                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
-                            recursive_aecs = 1;
-                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
-                            recursive_aecs = 0;
-                        } else {
-                            log_error("dnsaecs", dnsaecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dnsaecs", dnsaecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
+        // recursive query
+        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+            recursive_aecs = 1;
+        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+            recursive_aecs = 0;
+        } else {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // input query
-                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
-                            if (load_question_from_str_aecs(c)) return EXIT_FAILURE;
-                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
-                            if (load_question_from_file_aecs(c)) return EXIT_FAILURE;
-                        } else {
-                            log_error("dnsaecs", dnsaecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        if (index_questions_aecs < num_questions_aecs) {
-                            log_error("dnsaecs", "more probes than questions configured. Add "
-                                                 "additional probes.");
-                            return EXIT_FAILURE;
-                        }
-                    }
+        // input query
+        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+            if (load_question_from_str_aecs(c)) return EXIT_FAILURE;
+        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+            if (load_question_from_file_aecs(c)) return EXIT_FAILURE;
+        } else {
+            log_error("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                    if (label_type_aecs == DNS_LTYPE_RAW || label_type_aecs == DNS_LTYPE_STR)
-                        return build_global_dns_packets_aecs(domains_aecs, num_questions_aecs);
-                    else
-                        return EXIT_SUCCESS;
+        if (index_questions_aecs < num_questions_aecs) {
+            log_error("dnsaecs", "more probes than questions configured. Add "
+                                 "additional probes.");
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (label_type_aecs == DNS_LTYPE_RAW || label_type_aecs == DNS_LTYPE_STR)
+        return build_global_dns_packets_aecs(domains_aecs, num_questions_aecs);
+    else
+        return EXIT_SUCCESS;
+}
+
+static int dnsaecs_global_cleanup(UNUSED struct state_conf *xconf,
+                                  UNUSED struct state_send *xsend,
+                                  UNUSED struct state_recv *xrecv) {
+    if (dns_packets_aecs) {
+        for (int i = 0; i < num_questions_aecs; i++) {
+            if (dns_packets_aecs[i]) {
+                free(dns_packets_aecs[i]);
             }
+        }
+        free(dns_packets_aecs);
+    }
+    dns_packets_aecs = NULL;
 
-            static int dnsaecs_global_cleanup(UNUSED struct state_conf *xconf,
-                                              UNUSED struct state_send *xsend,
-                                              UNUSED struct state_recv *xrecv) {
-                if (dns_packets_aecs) {
-                    for (int i = 0; i < num_questions_aecs; i++) {
-                        if (dns_packets_aecs[i]) {
-                            free(dns_packets_aecs[i]);
-                        }
-                    }
-                    free(dns_packets_aecs);
-                }
-                dns_packets_aecs = NULL;
-
-                if (qnames_aecs) {
-                    for (int i = 0; i < num_questions_aecs; i++) {
-                        if (qnames_aecs[i]) {
-                            free(qnames_aecs[i]);
-                        }
-                    }
-                    free(qnames_aecs);
-                }
-                qnames_aecs = NULL;
-
-                if (dns_packet_lens_aecs) {
-                    free(dns_packet_lens_aecs);
-                }
-
-                if (qname_lens_aecs) {
-                    free(qname_lens_aecs);
-                }
-
-                if (qtypes_aecs) {
-                    free(qtypes_aecs);
-                }
-
-                free(label_aecs);
-
-                return EXIT_SUCCESS;
+    if (qnames_aecs) {
+        for (int i = 0; i < num_questions_aecs; i++) {
+            if (qnames_aecs[i]) {
+                free(qnames_aecs[i]);
             }
+        }
+        free(qnames_aecs);
+    }
+    qnames_aecs = NULL;
+
+    if (dns_packet_lens_aecs) {
+        free(dns_packet_lens_aecs);
+    }
+
+    if (qname_lens_aecs) {
+        free(qname_lens_aecs);
+    }
+
+    if (qtypes_aecs) {
+        free(qtypes_aecs);
+    }
+
+    free(label_aecs);
+
+    return EXIT_SUCCESS;
+}
