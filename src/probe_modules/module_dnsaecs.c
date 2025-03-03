@@ -1,47 +1,47 @@
 /*
-* XMap Copyright 2021 Xiang Li from Network and Information Security Lab
-* Tsinghua University
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at http://www.apache.org/licenses/LICENSE-2.0
-*/
+ * XMap Copyright 2021 Xiang Li from Network and Information Security Lab
+ * Tsinghua University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
 
 /* Module for scanning for open UDP DNS resolvers.
-*
-* This module optionally takes in an argument of the form:
-* LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
-* str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
-*      LABEL_TYPE: raw, str, time, random, dst-ip
-*      RECURSE: recurse, no-recurse
-*      INPUT_SRC: text, file
-*      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
-*            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
-*      file: TYPE,QUESTION;TYPE,QUESTION in each line
-*
-* Given no arguments it will default to asking for an A record for
-* www.qq.com.
-*
-* This module does minimal answer verification. It only verifies that the
-* response roughly looks like a DNS response. It will not, for example,
-* require the QR bit be set to 1. All such analysis should happen offline.
-* Specifically, to be included in the output it requires:
-* And it is marked as success.
-* - That the ports match and the packet is complete.
-* - That the ID field matches.
-* To be marked as app_success it also requires:
-* - That the QR bit be 1 and rcode == 0.
-*
-* Usage: xmap -p 53 --probe-module=dnsaecs --probe-args="raw:text:A,qq.com"
-*			-O json --output-fields=* 8.8.8.8
-*
-* We also support multiple questions, of the form:
-* "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
-* matches the number of questions in --probe-args, and --output-filter="" to
-* remove the implicit "filter_duplicates" configuration flag.
-*
-* Based on a deprecated udp_dns module.
-*/
+ *
+ * This module optionally takes in an argument of the form:
+ * LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
+ * str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
+ *      LABEL_TYPE: raw, str, time, random, dst-ip
+ *      RECURSE: recurse, no-recurse
+ *      INPUT_SRC: text, file
+ *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
+ *      file: TYPE,QUESTION;TYPE,QUESTION in each line
+ *
+ * Given no arguments it will default to asking for an A record for
+ * www.qq.com.
+ *
+ * This module does minimal answer verification. It only verifies that the
+ * response roughly looks like a DNS response. It will not, for example,
+ * require the QR bit be set to 1. All such analysis should happen offline.
+ * Specifically, to be included in the output it requires:
+ * And it is marked as success.
+ * - That the ports match and the packet is complete.
+ * - That the ID field matches.
+ * To be marked as app_success it also requires:
+ * - That the QR bit be 1 and rcode == 0.
+ *
+ * Usage: xmap -p 53 --probe-module=dnsaecs --probe-args="raw:text:A,qq.com"
+ *			-O json --output-fields=* 8.8.8.8
+ *
+ * We also support multiple questions, of the form:
+ * "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
+ * matches the number of questions in --probe-args, and --output-filter="" to
+ * remove the implicit "filter_duplicates" configuration flag.
+ *
+ * Based on a deprecated udp_dns module.
+ */
 
 #include <assert.h>
 #include <dirent.h>
@@ -267,11 +267,11 @@ static int build_global_dns_packets_aecs(char **domains, int num_domains) {
         option_tail_p->dlength = htons(default_option_rdata_len_aecs);
 
         // ecs
-        option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);    // 8
-        option_ecs_p->optlength  = htons(7);                  // fixed for /24
+        option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
+        option_ecs_p->optlength  = htons(7);                 // fixed for /24
         option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
-        option_ecs_p->srcnmask   = 24;                        // source netmask
-        option_ecs_p->scpnmask   = 0;                         // scope netmask
+        option_ecs_p->srcnmask   = 24;                       // source netmask
+        option_ecs_p->scpnmask   = 0;                        // scope netmask
         uint8_t client_subnet[3] = {
             202, // first byte
             0,   // second byte
@@ -302,64 +302,64 @@ static uint16_t get_name_helper_aecs(const char *data, uint16_t data_len,
         return 0;
     }
 
-        uint16_t bytes_consumed = 0;
-        // The start of data is either a sequence of labels or a ptr.
-        while (data_len > 0) {
-            uint8_t byte = data[0];
-            // Is this a pointer?
-            if (byte >= 0xc0) {
-                log_trace("dnsaecs", "_get_name_helper, ptr encountered");
-                // Do we have enough bytes to check ahead?
-                if (data_len < 2) {
-                    log_trace("dnsaecs",
-                              "_get_name_helper OUT. ptr byte encountered. "
-                              "No offset. ERR.");
-                    return 0;
-                }
-                // No. ntohs isn't needed here. It's because of
-                // the upper 2 bits indicating a pointer.
-                uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
-                log_trace("dnsaecs", "_get_name_helper. ptr offset 0x%x", offset);
-                if (offset >= payload_len) {
-                    log_trace(
-                        "dnsaecs",
-                        "_get_name_helper OUT. offset exceeded payload len %d ERR",
-                        payload_len);
-                    return 0;
-                }
-
-                // We need to add a dot if we are:
-                // -- Not first level recursion.
-                // -- have consumed bytes
-                if (recursion_level > 0 || bytes_consumed > 0) {
-
-                    if (name_len < 1) {
-                        log_warn("dnsaecs",
-                                 "Exceeded static name field allocation.");
-                        return 0;
-                    }
-
-                    name[0] = '.';
-                    name++;
-                    name_len--;
-                }
-
-                uint16_t rec_bytes_consumed = get_name_helper_aecs(
-                    payload + offset, payload_len - offset, payload, payload_len,
-                    name, name_len, recursion_level + 1);
-                // We are done so don't bother to increment the
-                // pointers.
-                if (rec_bytes_consumed == 0) {
-                    log_trace("dnsaecs",
-                              "_get_name_helper OUT. rec level %d failed",
-                              recursion_level);
-                    return 0;
-                } else {
-                    bytes_consumed += 2;
-                    log_trace("dnsaecs",
-                              "_get_name_helper OUT. rec level %d success. %d rec "
-                              "bytes consumed. %d bytes consumed.",
-                              recursion_level, rec_bytes_consumed, bytes_consumed);
-                    return bytes_consumed;
-                }
+    uint16_t bytes_consumed = 0;
+    // The start of data is either a sequence of labels or a ptr.
+    while (data_len > 0) {
+        uint8_t byte = data[0];
+        // Is this a pointer?
+        if (byte >= 0xc0) {
+            log_trace("dnsaecs", "_get_name_helper, ptr encountered");
+            // Do we have enough bytes to check ahead?
+            if (data_len < 2) {
+                log_trace("dnsaecs",
+                          "_get_name_helper OUT. ptr byte encountered. "
+                          "No offset. ERR.");
+                return 0;
             }
+            // No. ntohs isn't needed here. It's because of
+            // the upper 2 bits indicating a pointer.
+            uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+            log_trace("dnsaecs", "_get_name_helper. ptr offset 0x%x", offset);
+            if (offset >= payload_len) {
+                log_trace(
+                    "dnsaecs",
+                    "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                    payload_len);
+                return 0;
+            }
+
+            // We need to add a dot if we are:
+            // -- Not first level recursion.
+            // -- have consumed bytes
+            if (recursion_level > 0 || bytes_consumed > 0) {
+
+                if (name_len < 1) {
+                    log_warn("dnsaecs",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
+
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
+
+            uint16_t rec_bytes_consumed = get_name_helper_aecs(
+                payload + offset, payload_len - offset, payload, payload_len,
+                name, name_len, recursion_level + 1);
+            // We are done so don't bother to increment the
+            // pointers.
+            if (rec_bytes_consumed == 0) {
+                log_trace("dnsaecs",
+                          "_get_name_helper OUT. rec level %d failed",
+                          recursion_level);
+                return 0;
+            } else {
+                bytes_consumed += 2;
+                log_trace("dnsaecs",
+                          "_get_name_helper OUT. rec level %d success. %d rec "
+                          "bytes consumed. %d bytes consumed.",
+                          recursion_level, rec_bytes_consumed, bytes_consumed);
+                return bytes_consumed;
+            }
+        }
