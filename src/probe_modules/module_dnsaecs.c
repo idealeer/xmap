@@ -673,3 +673,57 @@ static bool process_response_answer_aecs(char **data, uint16_t *data_len,
             fs_add_uint64(afs, "z", option_z);
             fs_add_uint64(afs, "dlength", option_dlength);
             fs_add_binary(afs, "data", option_dlength, option_data, 0);
+
+                        if (option_dlength >= 4) {
+                            dns_option_ecs *ecs_tail = (dns_option_ecs *) option_data;
+                            uint16_t        optcode  = ntohs(ecs_tail->optcode);
+
+                            fs_add_uint64(afs, "optcode", optcode);
+
+                            if (optcode == DNS_OPTCODE_ECS) {
+                                fs_add_string(afs, "optcode_str", "ECS", 0);
+
+                                uint16_t optlength = ntohs(ecs_tail->optlength);
+                                uint16_t family    = ntohs(ecs_tail->family);
+                                uint8_t  srcnmask  = ecs_tail->srcnmask;
+                                uint8_t  scpnmask  = ecs_tail->scpnmask;
+
+                                fs_add_uint64(afs, "optlength", optlength);
+                                fs_add_uint64(afs, "family", family);
+                                fs_add_uint64(afs, "srcnmask", srcnmask);
+                                fs_add_uint64(afs, "scpnmask", scpnmask);
+
+                                if (family == DNS_ADDRFAMILY_IP) {
+                                    uint8_t ip_raw[4] = {00};
+                                    memcpy(ip_raw, ecs_tail->cs, optlength - 4);
+
+                                    fs_add_string(afs, "cs",
+                                                  make_ip_str((uint32_t) ip_raw[3] << 24 |
+                                                              (uint32_t) ip_raw[2] << 16 |
+                                                              (uint32_t) ip_raw[1] << 8 |
+                                                              (uint32_t) ip_raw[0]),
+                                                  1);
+                                } else if (family == DNS_ADDRFAMILY_IP6) {
+                                    uint8_t ip_raw[16] = {0x00};
+                                    memcpy(ip_raw, ecs_tail->cs, optlength - 4);
+
+                                    fs_add_string(afs, "cs",
+                                                  make_ipv6_str((struct in6_addr *) ip_raw), 1);
+                                }
+                            }
+                        }
+                    } else {
+                        fs_add_uint64(afs, "rdata_is_parsed", 0);
+                        fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+                    }
+                    // Now we're adding the new fs to the list.
+                    fs_add_fieldset(list, NULL, afs);
+                    // Now update the pointers.
+                    *data     = *data + bytes_consumed + sizeof(dns_answer_tail) + rdlength;
+                    *data_len = *data_len - bytes_consumed - sizeof(dns_answer_tail) - rdlength;
+                    log_trace("dnsaecs",
+                              "return success from process_response_answer_aecs, data_len: %d",
+                              *data_len);
+
+                    return 0;
+            }
