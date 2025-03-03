@@ -1062,172 +1062,172 @@ int dnsaecs_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
                    dns_packet_lens_aecs[index]);
         }
 
-                ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
-                ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
-                ip_header->ip_ttl        = ttl;
+        ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
+        ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+        ip_header->ip_ttl        = ttl;
 
-                udp_header->uh_sport = htons(src_port);
-                udp_header->uh_dport = htons(dst_port);
+        udp_header->uh_sport = htons(src_port);
+        udp_header->uh_dport = htons(dst_port);
 
-                dns_header *dns_header_p = (dns_header *) (&udp_header[1]);
+        dns_header *dns_header_p = (dns_header *) (&udp_header[1]);
 
-                dns_header_p->id = dns_txid;
+        dns_header_p->id = dns_txid;
 
-                udp_header->uh_sum = 0;
-                udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
-                                                  ip_header->ip_dst.s_addr, udp_header);
+        udp_header->uh_sum = 0;
+        udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                          ip_header->ip_dst.s_addr, udp_header);
 
-                ip_header->ip_sum = 0;
-                ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
-            } else {
-                char *new_domain        = xmalloc(MAX_NAME_LENGTH);
-                int   new_label_max_len = 64;
-                char *new_label         = xmalloc(new_label_max_len);
-                memset(new_label, 0, new_label_max_len);
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+    } else {
+        char *new_domain        = xmalloc(MAX_NAME_LENGTH);
+        int   new_label_max_len = 64;
+        char *new_label         = xmalloc(new_label_max_len);
+        memset(new_label, 0, new_label_max_len);
 
-                switch (label_type_aecs) {
-                case DNS_LTYPE_TIME: {
-                    struct timeval t;
-                    gettimeofday(&t, NULL);
-                    snprintf(new_label, 18, "%u-%06u", (uint64_t) t.tv_sec,
-                             (uint64_t) t.tv_usec);
-                    new_label[17] = '\0';
-                    break;
-                }
-                case DNS_LTYPE_RANDOM: {
-                    aesrand_t *aes = (aesrand_t *) arg;
-                    dns_random_bytes_aecs(new_label, 8, charset_alpha_lower_aecs, 26,
-                                          aes);
-                    new_label[8] = '\0';
-                    break;
-                }
-                case DNS_LTYPE_SRCIP: {
-                    //            snprintf(new_label, new_label_max_len,
-                    //            "%u-%u-%u-%u-%u-%u-%u",
-                    //                     probe_num + 1, dst_ip[0], dst_ip[1],
-                    //                     dst_ip[2], dst_ip[3], src_port, dns_txid);
-                    snprintf(new_label, new_label_max_len, "pr-%02x%02x%02x%02x",
-                             dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
-                    new_label[strlen(new_label)] = '\0';
-                    break;
-                }
-                default:
-                    log_fatal("dnsaecs", dnsaecs_usage_error);
-                    return EXIT_FAILURE;
-                }
+        switch (label_type_aecs) {
+        case DNS_LTYPE_TIME: {
+            struct timeval t;
+            gettimeofday(&t, NULL);
+            snprintf(new_label, 18, "%u-%06u", (uint64_t) t.tv_sec,
+                     (uint64_t) t.tv_usec);
+            new_label[17] = '\0';
+            break;
+        }
+        case DNS_LTYPE_RANDOM: {
+            aesrand_t *aes = (aesrand_t *) arg;
+            dns_random_bytes_aecs(new_label, 8, charset_alpha_lower_aecs, 26,
+                                  aes);
+            new_label[8] = '\0';
+            break;
+        }
+        case DNS_LTYPE_SRCIP: {
+            //            snprintf(new_label, new_label_max_len,
+            //            "%u-%u-%u-%u-%u-%u-%u",
+            //                     probe_num + 1, dst_ip[0], dst_ip[1],
+            //                     dst_ip[2], dst_ip[3], src_port, dns_txid);
+            snprintf(new_label, new_label_max_len, "pr-%02x%02x%02x%02x",
+                     dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
+            new_label[strlen(new_label)] = '\0';
+            break;
+        }
+        default:
+            log_fatal("dnsaecs", dnsaecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                                snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
-                                         domains_aecs[index]);
+        snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
+                 domains_aecs[index]);
 
-                                // dns packet
-                                free(qnames_aecs[index]);
+        // dns packet
+        free(qnames_aecs[index]);
 
-                                qname_lens_aecs[index] =
-                                    domain_to_qname_aecs(&qnames_aecs[index], new_domain);
-                                dns_packet_lens_aecs[index] =
-                                    sizeof(dns_header) + qname_lens_aecs[index] +
-                                    sizeof(dns_question_tail) + default_option_qname_len_aecs +
-                                    sizeof(dns_option_tail) + default_option_rdata_len_aecs;
-                                if (dns_packet_lens_aecs[index] > DNS_SEND_LEN) {
-                                    log_fatal("dnsaecs", "DNS packet bigger (%d) than our limit (%d)",
-                                              dns_packet_lens_aecs[index], DNS_SEND_LEN);
-                                    return EXIT_FAILURE;
-                                }
+        qname_lens_aecs[index] =
+            domain_to_qname_aecs(&qnames_aecs[index], new_domain);
+        dns_packet_lens_aecs[index] =
+            sizeof(dns_header) + qname_lens_aecs[index] +
+            sizeof(dns_question_tail) + default_option_qname_len_aecs +
+            sizeof(dns_option_tail) + default_option_rdata_len_aecs;
+        if (dns_packet_lens_aecs[index] > DNS_SEND_LEN) {
+            log_fatal("dnsaecs", "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_aecs[index], DNS_SEND_LEN);
+            return EXIT_FAILURE;
+        }
 
-                                free(dns_packets_aecs[index]);
+        free(dns_packets_aecs[index]);
 
-                                dns_packets_aecs[index]  = xmalloc(dns_packet_lens_aecs[index]);
-                                dns_header *dns_header_p = (dns_header *) dns_packets_aecs[index];
-                                char       *qname_p      = dns_packets_aecs[index] + sizeof(dns_header);
-                                dns_question_tail *tail_p =
-                                    (dns_question_tail *) (dns_packets_aecs[index] +
-                                                           sizeof(dns_header) + qname_lens_aecs[index]);
-                                char *option_qname_p =
-                                    (char *) (dns_packets_aecs[index] + sizeof(dns_header) +
-                                              qname_lens_aecs[index] + sizeof(dns_question_tail));
-                                dns_option_tail *option_tail_p =
-                                    (dns_option_tail *) (dns_packets_aecs[index] + sizeof(dns_header) +
-                                                         qname_lens_aecs[index] +
-                                                         sizeof(dns_question_tail) +
-                                                         default_option_qname_len_aecs);
-                                dns_option_ecs *option_ecs_p =
-                                    (dns_option_ecs *) (dns_packets_aecs[index] + sizeof(dns_header) +
-                                                        qname_lens_aecs[index] +
-                                                        sizeof(dns_question_tail) +
-                                                        default_option_qname_len_aecs +
-                                                        sizeof(dns_option_tail));
+        dns_packets_aecs[index]  = xmalloc(dns_packet_lens_aecs[index]);
+        dns_header *dns_header_p = (dns_header *) dns_packets_aecs[index];
+        char       *qname_p      = dns_packets_aecs[index] + sizeof(dns_header);
+        dns_question_tail *tail_p =
+            (dns_question_tail *) (dns_packets_aecs[index] +
+                                   sizeof(dns_header) + qname_lens_aecs[index]);
+        char *option_qname_p =
+            (char *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                      qname_lens_aecs[index] + sizeof(dns_question_tail));
+        dns_option_tail *option_tail_p =
+            (dns_option_tail *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                                 qname_lens_aecs[index] +
+                                 sizeof(dns_question_tail) +
+                                 default_option_qname_len_aecs);
+        dns_option_ecs *option_ecs_p =
+            (dns_option_ecs *) (dns_packets_aecs[index] + sizeof(dns_header) +
+                                qname_lens_aecs[index] +
+                                sizeof(dns_question_tail) +
+                                default_option_qname_len_aecs +
+                                sizeof(dns_option_tail));
 
-                                // All other header fields should be 0. Except id, which we set
-                                // per thread. Please recurse as needed.
-                                dns_header_p->rd = recursive_aecs; // Is one bit. Don't need htons
-                                // We have 1 question
-                                dns_header_p->qdcount = htons(1);
-                                memcpy(qname_p, qnames_aecs[index], qname_lens_aecs[index]);
-                                // Set the qtype to what we passed from args
-                                tail_p->qtype = htons(qtypes_aecs[index]);
-                                // Set the qclass to The Internet (TM) (R) (I hope you're happy
-                                // now Zakir)
-                                tail_p->qclass = htons(0x01);
-                                // MAGIC NUMBER. Let's be honest. This is only ever 1
+        // All other header fields should be 0. Except id, which we set
+        // per thread. Please recurse as needed.
+        dns_header_p->rd = recursive_aecs; // Is one bit. Don't need htons
+        // We have 1 question
+        dns_header_p->qdcount = htons(1);
+        memcpy(qname_p, qnames_aecs[index], qname_lens_aecs[index]);
+        // Set the qtype to what we passed from args
+        tail_p->qtype = htons(qtypes_aecs[index]);
+        // Set the qclass to The Internet (TM) (R) (I hope you're happy
+        // now Zakir)
+        tail_p->qclass = htons(0x01);
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
 
-                                // option, others set to 0
-                                dns_header_p->arcount = htons(1);
-                                memcpy(option_qname_p, default_option_qname_aecs,
-                                       default_option_qname_len_aecs);
-                                option_tail_p->type    = htons(DNS_QTYPE_OPT);
-                                option_tail_p->udpsize = htons(1232);
-                                option_tail_p->dlength = htons(default_option_rdata_len_aecs);
+        // option, others set to 0
+        dns_header_p->arcount = htons(1);
+        memcpy(option_qname_p, default_option_qname_aecs,
+               default_option_qname_len_aecs);
+        option_tail_p->type    = htons(DNS_QTYPE_OPT);
+        option_tail_p->udpsize = htons(1232);
+        option_tail_p->dlength = htons(default_option_rdata_len_aecs);
 
-                                                                // ecs
-                                                                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
-                                                                option_ecs_p->optlength  = htons(7);                 // fixed for /24
-                                                                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
-                                                                option_ecs_p->srcnmask   = 24;                       // source netmask
-                                                                option_ecs_p->scpnmask   = 0;                        // scope netmask
-                                                                uint8_t client_subnet[3] = {
-                                                                    src_ip[0], // First byte
-                                                                    src_ip[1], // Second byte
-                                                                    src_ip[2]  // Third byte
-                                                                };
-                                                                memcpy(option_ecs_p->cs, client_subnet, 3);
+        // ecs
+        option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
+        option_ecs_p->optlength  = htons(7);                 // fixed for /24
+        option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
+        option_ecs_p->srcnmask   = 24;                       // source netmask
+        option_ecs_p->scpnmask   = 0;                        // scope netmask
+        uint8_t client_subnet[3] = {
+            src_ip[0], // First byte
+            src_ip[1], // Second byte
+            src_ip[2]  // Third byte
+        };
+        memcpy(option_ecs_p->cs, client_subnet, 3);
 
-                                                                // packet
-                                                                uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
-                                                                                  dns_packet_lens_aecs[index];
-                                                                make_ip_header(ip_header, IPPROTO_UDP, ip_len);
+        // packet
+        uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
+                          dns_packet_lens_aecs[index];
+        make_ip_header(ip_header, IPPROTO_UDP, ip_len);
 
-                                                                uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_aecs[index];
-                                                                make_udp_header(udp_header, udp_len);
+        uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_aecs[index];
+        make_udp_header(udp_header, udp_len);
 
-                                                                char *payload = (char *) (&udp_header[1]);
-                                                                *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
-                                                                           sizeof(struct udphdr) + dns_packet_lens_aecs[index];
+        char *payload = (char *) (&udp_header[1]);
+        *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
+                   sizeof(struct udphdr) + dns_packet_lens_aecs[index];
 
-                                                                assert(*buf_len <= MAX_PACKET_SIZE);
+        assert(*buf_len <= MAX_PACKET_SIZE);
 
-                                                                memcpy(payload, dns_packets_aecs[index], dns_packet_lens_aecs[index]);
+        memcpy(payload, dns_packets_aecs[index], dns_packet_lens_aecs[index]);
 
-                                                                ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
-                                                                ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
-                                                                ip_header->ip_ttl        = ttl;
+        ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
+        ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+        ip_header->ip_ttl        = ttl;
 
-                                                                udp_header->uh_sport = htons(src_port);
-                                                                udp_header->uh_dport = htons(dst_port);
+        udp_header->uh_sport = htons(src_port);
+        udp_header->uh_dport = htons(dst_port);
 
-                                                                dns_header_p = (dns_header *) (&udp_header[1]);
+        dns_header_p = (dns_header *) (&udp_header[1]);
 
-                                                                dns_header_p->id = dns_txid;
+        dns_header_p->id = dns_txid;
 
-                                                                udp_header->uh_sum = 0;
-                                                                udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
-                                                                                                  ip_header->ip_dst.s_addr, udp_header);
+        udp_header->uh_sum = 0;
+        udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                          ip_header->ip_dst.s_addr, udp_header);
 
-                                                                ip_header->ip_sum = 0;
-                                                                ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
 
-                                                                free(new_domain);
-                                                                free(new_label);
-                                            }
+        free(new_domain);
+        free(new_label);
+    }
 
-                                            return EXIT_SUCCESS;
-                                }
+    return EXIT_SUCCESS;
+}
