@@ -429,3 +429,55 @@ static uint16_t get_name_helper_aecsv(const char *data, uint16_t data_len,
     assert(0);
     return 0;
 }
+
+// data: Where we are in the dns payload
+// payload: the entire udp payload
+static char *get_name_aecsv(const char *data, uint16_t data_len,
+                            const char *payload, uint16_t payload_len,
+                            uint16_t *bytes_consumed) {
+    log_trace("dnsaecsv", "call to get_name_aecsv, data_len: %d", data_len);
+    char *name      = xmalloc(MAX_NAME_LENGTH);
+    *bytes_consumed = get_name_helper_aecsv(
+        data, data_len, payload, payload_len, name, MAX_NAME_LENGTH - 1, 0);
+    if (*bytes_consumed == 0) {
+        free(name);
+        return NULL;
+    }
+    // Our memset ensured null byte.
+    assert(name[MAX_NAME_LENGTH - 1] == '\0');
+    log_trace(
+        "dnsaecsv",
+        "return success from get_name_aecsv, bytes_consumed: %d, string: %s",
+        *bytes_consumed, name);
+
+    return name;
+}
+
+static bool process_response_question_aecsv(char **data, uint16_t *data_len,
+                                            const char *payload,
+                                            uint16_t    payload_len,
+                                            fieldset_t *list) {
+    // Payload is the start of the DNS packet, including header
+    // data is handle to the start of this RR
+    // data_len is a pointer to the how much total data we have to work
+    // with. This is awful. I'm bad and should feel bad.
+    uint16_t bytes_consumed = 0;
+    char    *question_name =
+        get_name_aecsv(*data, *data_len, payload, payload_len, &bytes_consumed);
+    // Error.
+    if (question_name == NULL) {
+        return 1;
+    }
+    assert(bytes_consumed > 0);
+    if ((bytes_consumed + sizeof(dns_question_tail)) > *data_len) {
+        free(question_name);
+        return 1;
+    }
+
+    dns_question_tail *tail   = (dns_question_tail *) (*data + bytes_consumed);
+    uint16_t           qtype  = ntohs(tail->qtype);
+    uint16_t           qclass = ntohs(tail->qclass);
+    // Build our new question fieldset
+    fieldset_t *qfs = fs_new_fieldset();
+    fs_add_unsafe_string(qfs, "name", question_name, 1);
+    fs_add_uint64(qfs, "qtype", qtype);
