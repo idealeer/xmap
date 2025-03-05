@@ -1066,3 +1066,57 @@ int dnsaecsv_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
                 memcpy(payload, dns_packets_aecsv[index],
                        dns_packet_lens_aecsv[index]);
             }
+
+                        ip_header->ip_src.s_addr = *(uint32_t *) src_ip;
+                        ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+                        ip_header->ip_ttl        = ttl;
+
+                        udp_header->uh_sport = htons(src_port);
+                        udp_header->uh_dport = htons(dst_port);
+
+                        dns_header *dns_header_p = (dns_header *) (&udp_header[1]);
+
+                        dns_header_p->id = dns_txid;
+
+                        udp_header->uh_sum = 0;
+                        udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                                          ip_header->ip_dst.s_addr, udp_header);
+
+                        ip_header->ip_sum = 0;
+                        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+                    } else {
+                        char *new_domain        = xmalloc(MAX_NAME_LENGTH);
+                        int   new_label_max_len = 64;
+                        char *new_label         = xmalloc(new_label_max_len);
+                        memset(new_label, 0, new_label_max_len);
+
+                        switch (label_type_aecsv) {
+                        case DNS_LTYPE_TIME: {
+                            struct timeval t;
+                            gettimeofday(&t, NULL);
+                            snprintf(new_label, 18, "%u-%06u", (uint64_t) t.tv_sec,
+                                     (uint64_t) t.tv_usec);
+                            new_label[17] = '\0';
+                            break;
+                        }
+                        case DNS_LTYPE_RANDOM: {
+                            aesrand_t *aes = (aesrand_t *) arg;
+                            dns_random_bytes_aecsv(new_label, 8, charset_alpha_lower_aecsv, 26,
+                                                   aes);
+                            new_label[8] = '\0';
+                            break;
+                        }
+                        case DNS_LTYPE_SRCIP: {
+                            //            snprintf(new_label, new_label_max_len,
+                            //            "%u-%u-%u-%u-%u-%u-%u",
+                            //                     probe_num + 1, dst_ip[0], dst_ip[1],
+                            //                     dst_ip[2], dst_ip[3], src_port, dns_txid);
+                            snprintf(new_label, new_label_max_len, "pr-%02x%02x%02x%02x",
+                                     dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
+                            new_label[strlen(new_label)] = '\0';
+                            break;
+                        }
+                        default:
+                            log_fatal("dnsaecsv", dnsaecsv_usage_error);
+                            return EXIT_FAILURE;
+                        }
