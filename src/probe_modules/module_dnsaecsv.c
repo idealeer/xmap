@@ -87,3 +87,54 @@
 #endif
 
 typedef uint8_t bool;
+
+// xmap boilerplate
+probe_module_t module_dnsaecsv;
+static int     dns_num_ports_aecsv;
+
+const char     default_domain_aecsv[] = "www.qq.com";
+const uint16_t default_qtype_aecsv    = DNS_QTYPE_A;
+const char    *dnsaecsv_usage_error =
+    "unknown DNS probe specification (expected "
+    "raw/time/random:recurse/no-recurse:text:TYPE,QUESTION or "
+    "raw/time/random:recurse/no-recurse:file:file_name or "
+    "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
+    "str:some_text:recurse/no-recurse:file:file_name)";
+
+const unsigned char *charset_alpha_lower_aecsv =
+    (unsigned char *) "abcdefghijklmnopqrstuvwxyz";
+
+static char    **dns_packets_aecsv;
+static uint16_t *dns_packet_lens_aecsv; // Not including udp header
+static uint16_t *qname_lens_aecsv;      // domain_len list
+static char    **qnames_aecsv;          // domain list for query
+static uint16_t *qtypes_aecsv;          // query_type list
+static char    **domains_aecsv;         // domain strs
+static int       num_questions_aecsv   = 0;
+static int       index_questions_aecsv = 0;
+
+const char      default_option_qname_aecsv[]   = {0x00};
+static int      default_option_qname_len_aecsv = 1;
+static uint16_t default_option_udpsize_aecsv   = 4096;
+const char      default_option_rdata_aecsv[];
+static int      default_option_rdata_len_aecsv = 11; // for ipv4/24/0
+
+/* Array of qtypes_aecsv we support. Jumping through some hops (1 level of
+ * indirection) so the per-packet processing time is fast. Keep this in sync
+ * with: dns_qtype (.h) qtype_strid_to_qtype_aecsv (below)
+ * qtype_qtype_to_strid_aecsv (below, and setup_qtype_str_map_aecsv())
+ */
+const char *qtype_strs_aecsv[]   = {"A",    "NS",    "CNAME", "SOA",      "PTR",
+                                    "MX",   "TXT",   "AAAA",  "RRSIG",    "ANY",
+                                    "SIG",  "SRV",   "DS",    "DNSKEY",   "TLSA",
+                                    "SVCB", "HTTPS", "CAA",   "HTTPSSVC", "OPT"};
+const int   qtype_strs_len_aecsv = 20;
+
+const dns_qtype qtype_strid_to_qtype_aecsv[] = {
+    DNS_QTYPE_A,     DNS_QTYPE_NS,     DNS_QTYPE_CNAME,    DNS_QTYPE_SOA,
+    DNS_QTYPE_PTR,   DNS_QTYPE_MX,     DNS_QTYPE_TXT,      DNS_QTYPE_AAAA,
+    DNS_QTYPE_RRSIG, DNS_QTYPE_ALL,    DNS_QTYPE_SIG,      DNS_QTYPE_SRV,
+    DNS_QTYPE_DS,    DNS_QTYPE_DNSKEY, DNS_QTYPE_TLSA,     DNS_QTYPE_SVCB,
+    DNS_QTYPE_HTTPS, DNS_QTYPE_CAA,    DNS_QTYPE_HTTPSSVC, DNS_QTYPE_OPT};
+
+int8_t qtype_qtype_to_strid_aecsv[65536] = {BAD_QTYPE_VAL};
