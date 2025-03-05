@@ -259,3 +259,73 @@ static int build_global_dns_packets_aecsv(char **domains, int num_domains) {
         // now Zakir)
         tail_p->qclass = htons(0x01);
     // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+                // option, others set to 0
+                dns_header_p->arcount = htons(1);
+                memcpy(option_qname_p, default_option_qname_aecsv,
+                       default_option_qname_len_aecsv);
+                option_tail_p->type    = htons(DNS_QTYPE_OPT);
+                option_tail_p->udpsize = htons(default_option_udpsize_aecsv);
+                option_tail_p->dlength = htons(default_option_rdata_len_aecsv);
+
+                // ecs
+                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
+                option_ecs_p->optlength  = htons(7);                 // fixed for /24
+                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
+                option_ecs_p->srcnmask   = 24;                       // source netmask
+                option_ecs_p->scpnmask   = 0;                        // scope netmask
+                uint8_t client_subnet[3] = {
+                    202, // first byte
+                    0,   // second byte
+                    0    // third byte
+                };
+                memcpy(option_ecs_p->cs, client_subnet, 3);
+            }
+
+            return EXIT_SUCCESS;
+        }
+
+        static uint16_t get_name_helper_aecsv(const char *data, uint16_t data_len,
+                                              const char *payload, uint16_t payload_len,
+                                              char *name, uint16_t name_len,
+                                              uint16_t recursion_level) {
+            log_trace("dnsaecsv",
+                      "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
+                      data_len, name_len, recursion_level);
+            if (data_len == 0 || name_len == 0 || payload_len == 0) {
+                log_trace("dnsaecsv",
+                          "_get_name_helper OUT, err. 0 length field. datalen %d "
+                          "namelen %d payloadlen %d",
+                          data_len, name_len, payload_len);
+                return 0;
+            }
+            if (recursion_level > MAX_LABEL_RECURSION) {
+                log_trace("dnsaecsv", "_get_name_helper OUT. ERR, MAX RECUSION");
+                return 0;
+            }
+
+            uint16_t bytes_consumed = 0;
+            // The start of data is either a sequence of labels or a ptr.
+            while (data_len > 0) {
+                uint8_t byte = data[0];
+                // Is this a pointer?
+                if (byte >= 0xc0) {
+                    log_trace("dnsaecsv", "_get_name_helper, ptr encountered");
+                    // Do we have enough bytes to check ahead?
+                    if (data_len < 2) {
+                        log_trace("dnsaecsv",
+                                  "_get_name_helper OUT. ptr byte encountered. "
+                                  "No offset. ERR.");
+                        return 0;
+                    }
+                    // No. ntohs isn't needed here. It's because of
+                    // the upper 2 bits indicating a pointer.
+                    uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+                    log_trace("dnsaecsv", "_get_name_helper. ptr offset 0x%x", offset);
+                    if (offset >= payload_len) {
+                        log_trace(
+                            "dnsaecsv",
+                            "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                            payload_len);
+                        return 0;
+                    }
