@@ -1,47 +1,47 @@
 /*
-* XMap Copyright 2021 Xiang Li from Network and Information Security Lab
-* Tsinghua University
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at http://www.apache.org/licenses/LICENSE-2.0
-*/
+ * XMap Copyright 2021 Xiang Li from Network and Information Security Lab
+ * Tsinghua University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
 
 /* Module for scanning for open UDP DNS resolvers.
-*
-* This module optionally takes in an argument of the form:
-* LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
-* str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
-*      LABEL_TYPE: raw, str, time, random, dst-ip
-*      RECURSE: recurse, no-recurse
-*      INPUT_SRC: text, file
-*      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
-*            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
-*      file: TYPE,QUESTION;TYPE,QUESTION in each line
-*
-* Given no arguments it will default to asking for an A record for
-* www.qq.com.
-*
-* This module does minimal answer verification. It only verifies that the
-* response roughly looks like a DNS response. It will not, for example,
-* require the QR bit be set to 1. All such analysis should happen offline.
-* Specifically, to be included in the output it requires:
-* And it is marked as success.
-* - That the ports match and the packet is complete.
-* - That the ID field matches.
-* To be marked as app_success it also requires:
-* - That the QR bit be 1 and rcode == 0.
-*
-* Usage: xmap -p 53 --probe-module=dnsaecsv --probe-args="raw:text:A,qq.com"
-*			-O json --output-fields=* 8.8.8.8
-*
-* We also support multiple questions, of the form:
-* "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
-* matches the number of questions in --probe-args, and --output-filter="" to
-* remove the implicit "filter_duplicates" configuration flag.
-*
-* Based on a deprecated udp_dns module.
-*/
+ *
+ * This module optionally takes in an argument of the form:
+ * LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
+ * str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
+ *      LABEL_TYPE: raw, str, time, random, dst-ip
+ *      RECURSE: recurse, no-recurse
+ *      INPUT_SRC: text, file
+ *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
+ *      file: TYPE,QUESTION;TYPE,QUESTION in each line
+ *
+ * Given no arguments it will default to asking for an A record for
+ * www.qq.com.
+ *
+ * This module does minimal answer verification. It only verifies that the
+ * response roughly looks like a DNS response. It will not, for example,
+ * require the QR bit be set to 1. All such analysis should happen offline.
+ * Specifically, to be included in the output it requires:
+ * And it is marked as success.
+ * - That the ports match and the packet is complete.
+ * - That the ID field matches.
+ * To be marked as app_success it also requires:
+ * - That the QR bit be 1 and rcode == 0.
+ *
+ * Usage: xmap -p 53 --probe-module=dnsaecsv --probe-args="raw:text:A,qq.com"
+ *			-O json --output-fields=* 8.8.8.8
+ *
+ * We also support multiple questions, of the form:
+ * "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
+ * matches the number of questions in --probe-args, and --output-filter="" to
+ * remove the implicit "filter_duplicates" configuration flag.
+ *
+ * Based on a deprecated udp_dns module.
+ */
 
 #include <assert.h>
 #include <dirent.h>
@@ -258,174 +258,174 @@ static int build_global_dns_packets_aecsv(char **domains, int num_domains) {
         // Set the qclass to The Internet (TM) (R) (I hope you're happy
         // now Zakir)
         tail_p->qclass = htons(0x01);
-    // MAGIC NUMBER. Let's be honest. This is only ever 1
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
 
-                // option, others set to 0
-                dns_header_p->arcount = htons(1);
-                memcpy(option_qname_p, default_option_qname_aecsv,
-                       default_option_qname_len_aecsv);
-                option_tail_p->type    = htons(DNS_QTYPE_OPT);
-                option_tail_p->udpsize = htons(default_option_udpsize_aecsv);
-                option_tail_p->dlength = htons(default_option_rdata_len_aecsv);
+        // option, others set to 0
+        dns_header_p->arcount = htons(1);
+        memcpy(option_qname_p, default_option_qname_aecsv,
+               default_option_qname_len_aecsv);
+        option_tail_p->type    = htons(DNS_QTYPE_OPT);
+        option_tail_p->udpsize = htons(default_option_udpsize_aecsv);
+        option_tail_p->dlength = htons(default_option_rdata_len_aecsv);
 
-                // ecs
-                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
-                option_ecs_p->optlength  = htons(7);                 // fixed for /24
-                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
-                option_ecs_p->srcnmask   = 24;                       // source netmask
-                option_ecs_p->scpnmask   = 0;                        // scope netmask
-                uint8_t client_subnet[3] = {
-                    202, // first byte
-                    0,   // second byte
-                    0    // third byte
-                };
-                memcpy(option_ecs_p->cs, client_subnet, 3);
-            }
+        // ecs
+        option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);   // 8
+        option_ecs_p->optlength  = htons(7);                 // fixed for /24
+        option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP); // IPv4
+        option_ecs_p->srcnmask   = 24;                       // source netmask
+        option_ecs_p->scpnmask   = 0;                        // scope netmask
+        uint8_t client_subnet[3] = {
+            202, // first byte
+            0,   // second byte
+            0    // third byte
+        };
+        memcpy(option_ecs_p->cs, client_subnet, 3);
+    }
 
-            return EXIT_SUCCESS;
-        }
+    return EXIT_SUCCESS;
+}
 
-        static uint16_t get_name_helper_aecsv(const char *data, uint16_t data_len,
-                                              const char *payload, uint16_t payload_len,
-                                              char *name, uint16_t name_len,
-                                              uint16_t recursion_level) {
-            log_trace("dnsaecsv",
-                      "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
-                      data_len, name_len, recursion_level);
-            if (data_len == 0 || name_len == 0 || payload_len == 0) {
+static uint16_t get_name_helper_aecsv(const char *data, uint16_t data_len,
+                                      const char *payload, uint16_t payload_len,
+                                      char *name, uint16_t name_len,
+                                      uint16_t recursion_level) {
+    log_trace("dnsaecsv",
+              "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
+              data_len, name_len, recursion_level);
+    if (data_len == 0 || name_len == 0 || payload_len == 0) {
+        log_trace("dnsaecsv",
+                  "_get_name_helper OUT, err. 0 length field. datalen %d "
+                  "namelen %d payloadlen %d",
+                  data_len, name_len, payload_len);
+        return 0;
+    }
+    if (recursion_level > MAX_LABEL_RECURSION) {
+        log_trace("dnsaecsv", "_get_name_helper OUT. ERR, MAX RECUSION");
+        return 0;
+    }
+
+    uint16_t bytes_consumed = 0;
+    // The start of data is either a sequence of labels or a ptr.
+    while (data_len > 0) {
+        uint8_t byte = data[0];
+        // Is this a pointer?
+        if (byte >= 0xc0) {
+            log_trace("dnsaecsv", "_get_name_helper, ptr encountered");
+            // Do we have enough bytes to check ahead?
+            if (data_len < 2) {
                 log_trace("dnsaecsv",
-                          "_get_name_helper OUT, err. 0 length field. datalen %d "
-                          "namelen %d payloadlen %d",
-                          data_len, name_len, payload_len);
+                          "_get_name_helper OUT. ptr byte encountered. "
+                          "No offset. ERR.");
                 return 0;
             }
-            if (recursion_level > MAX_LABEL_RECURSION) {
-                log_trace("dnsaecsv", "_get_name_helper OUT. ERR, MAX RECUSION");
+            // No. ntohs isn't needed here. It's because of
+            // the upper 2 bits indicating a pointer.
+            uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+            log_trace("dnsaecsv", "_get_name_helper. ptr offset 0x%x", offset);
+            if (offset >= payload_len) {
+                log_trace(
+                    "dnsaecsv",
+                    "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                    payload_len);
                 return 0;
             }
 
-            uint16_t bytes_consumed = 0;
-            // The start of data is either a sequence of labels or a ptr.
-            while (data_len > 0) {
-                uint8_t byte = data[0];
-                // Is this a pointer?
-                if (byte >= 0xc0) {
-                    log_trace("dnsaecsv", "_get_name_helper, ptr encountered");
-                    // Do we have enough bytes to check ahead?
-                    if (data_len < 2) {
-                        log_trace("dnsaecsv",
-                                  "_get_name_helper OUT. ptr byte encountered. "
-                                  "No offset. ERR.");
-                        return 0;
-                    }
-                    // No. ntohs isn't needed here. It's because of
-                    // the upper 2 bits indicating a pointer.
-                    uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
-                    log_trace("dnsaecsv", "_get_name_helper. ptr offset 0x%x", offset);
-                    if (offset >= payload_len) {
-                        log_trace(
-                            "dnsaecsv",
-                            "_get_name_helper OUT. offset exceeded payload len %d ERR",
-                            payload_len);
-                        return 0;
-                    }
+            // We need to add a dot if we are:
+            // -- Not first level recursion.
+            // -- have consumed bytes
+            if (recursion_level > 0 || bytes_consumed > 0) {
 
-                                        // We need to add a dot if we are:
-                                        // -- Not first level recursion.
-                                        // -- have consumed bytes
-                                        if (recursion_level > 0 || bytes_consumed > 0) {
+                if (name_len < 1) {
+                    log_warn("dnsaecsv",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
 
-                                            if (name_len < 1) {
-                                                log_warn("dnsaecsv",
-                                                         "Exceeded static name field allocation.");
-                                                return 0;
-                                            }
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
 
-                                            name[0] = '.';
-                                            name++;
-                                            name_len--;
-                                        }
+            uint16_t rec_bytes_consumed = get_name_helper_aecsv(
+                payload + offset, payload_len - offset, payload, payload_len,
+                name, name_len, recursion_level + 1);
+            // We are done so don't bother to increment the
+            // pointers.
+            if (rec_bytes_consumed == 0) {
+                log_trace("dnsaecsv",
+                          "_get_name_helper OUT. rec level %d failed",
+                          recursion_level);
+                return 0;
+            } else {
+                bytes_consumed += 2;
+                log_trace("dnsaecsv",
+                          "_get_name_helper OUT. rec level %d success. %d rec "
+                          "bytes consumed. %d bytes consumed.",
+                          recursion_level, rec_bytes_consumed, bytes_consumed);
+                return bytes_consumed;
+            }
+        } else if (byte == '\0') {
+            // don't bother with pointer incrementation. We're done.
+            bytes_consumed += 1;
+            log_trace("dnsaecsv",
+                      "_get_name_helper OUT. rec level %d success. %d bytes "
+                      "consumed.",
+                      recursion_level, bytes_consumed);
+            return bytes_consumed;
+        } else {
+            log_trace("dnsaecsv", "_get_name_helper, segment 0x%hx encountered",
+                      byte);
+            // We've now consumed a byte.
+            ++data;
+            --data_len;
+            // Mark byte consumed after we check for first
+            // iteration. Do we have enough data left (must have
+            // null byte too)?
+            if ((byte + 1) > data_len) {
+                log_trace("dnsaecsv",
+                          "_get_name_helper OUT. ERR. Not enough data "
+                          "for segment %hd");
+                return 0;
+            }
+            // If we've consumed any bytes and are in a label, we're
+            // in a label chain. We need to add a dot.
+            if (bytes_consumed > 0) {
 
-                                        uint16_t rec_bytes_consumed = get_name_helper_aecsv(
-                                            payload + offset, payload_len - offset, payload, payload_len,
-                                            name, name_len, recursion_level + 1);
-                                        // We are done so don't bother to increment the
-                                        // pointers.
-                                        if (rec_bytes_consumed == 0) {
-                                            log_trace("dnsaecsv",
-                                                      "_get_name_helper OUT. rec level %d failed",
-                                                      recursion_level);
-                                            return 0;
-                                        } else {
-                                            bytes_consumed += 2;
-                                            log_trace("dnsaecsv",
-                                                      "_get_name_helper OUT. rec level %d success. %d rec "
-                                                      "bytes consumed. %d bytes consumed.",
-                                                      recursion_level, rec_bytes_consumed, bytes_consumed);
-                                            return bytes_consumed;
-                                        }
-                                    } else if (byte == '\0') {
-                                        // don't bother with pointer incrementation. We're done.
-                                        bytes_consumed += 1;
-                                        log_trace("dnsaecsv",
-                                                  "_get_name_helper OUT. rec level %d success. %d bytes "
-                                                  "consumed.",
-                                                  recursion_level, bytes_consumed);
-                                        return bytes_consumed;
-                                    } else {
-                                        log_trace("dnsaecsv", "_get_name_helper, segment 0x%hx encountered",
-                                                  byte);
-                                        // We've now consumed a byte.
-                                        ++data;
-                                        --data_len;
-                                        // Mark byte consumed after we check for first
-                                        // iteration. Do we have enough data left (must have
-                                        // null byte too)?
-                                        if ((byte + 1) > data_len) {
-                                            log_trace("dnsaecsv",
-                                                      "_get_name_helper OUT. ERR. Not enough data "
-                                                      "for segment %hd");
-                                            return 0;
-                                        }
-                                        // If we've consumed any bytes and are in a label, we're
-                                        // in a label chain. We need to add a dot.
-                                        if (bytes_consumed > 0) {
+                if (name_len < 1) {
+                    log_warn("dnsaecsv",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
 
-                                            if (name_len < 1) {
-                                                log_warn("dnsaecsv",
-                                                         "Exceeded static name field allocation.");
-                                                return 0;
-                                            }
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
+            // Now we've consumed a byte.
+            ++bytes_consumed;
+            // Did we run out of our arbitrary buffer?
+            if (byte > name_len) {
+                log_warn("dnsaecsv", "Exceeded static name field allocation.");
+                return 0;
+            }
 
-                                            name[0] = '.';
-                                            name++;
-                                            name_len--;
-                                        }
-                                        // Now we've consumed a byte.
-                                        ++bytes_consumed;
-                                        // Did we run out of our arbitrary buffer?
-                                        if (byte > name_len) {
-                                            log_warn("dnsaecsv", "Exceeded static name field allocation.");
-                                            return 0;
-                                        }
-
-                                        assert(data_len > 0);
-                                        memcpy(name, data, byte);
-                                        name += byte;
-                                        name_len -= byte;
-                                        data_len -= byte;
-                                        data += byte;
-                                        bytes_consumed += byte;
-                                        // Handled in the byte+1 check above.
-                                        assert(data_len > 0);
-                                    }
-                                }
-                                // We should never get here.
-                                // For each byte we either have:
-                                // -- a ptr, which terminates
-                                // -- a null byte, which terminates
-                                // -- a segment length which either terminates or ensures we keep
-                                // looping
-                                assert(0);
-                                return 0;
-                            }
+            assert(data_len > 0);
+            memcpy(name, data, byte);
+            name += byte;
+            name_len -= byte;
+            data_len -= byte;
+            data += byte;
+            bytes_consumed += byte;
+            // Handled in the byte+1 check above.
+            assert(data_len > 0);
+        }
+    }
+    // We should never get here.
+    // For each byte we either have:
+    // -- a ptr, which terminates
+    // -- a null byte, which terminates
+    // -- a segment length which either terminates or ensures we keep
+    // looping
+    assert(0);
+    return 0;
+}
