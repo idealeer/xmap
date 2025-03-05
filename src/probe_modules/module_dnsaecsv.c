@@ -956,3 +956,56 @@ static int dnsaecsv_global_init(struct state_conf *conf) {
     else
         return EXIT_SUCCESS;
 }
+
+static int dnsaecsv_global_cleanup(UNUSED struct state_conf *xconf,
+                                   UNUSED struct state_send *xsend,
+                                   UNUSED struct state_recv *xrecv) {
+    if (dns_packets_aecsv) {
+        for (int i = 0; i < num_questions_aecsv; i++) {
+            if (dns_packets_aecsv[i]) {
+                free(dns_packets_aecsv[i]);
+            }
+        }
+        free(dns_packets_aecsv);
+    }
+    dns_packets_aecsv = NULL;
+
+    if (qnames_aecsv) {
+        for (int i = 0; i < num_questions_aecsv; i++) {
+            if (qnames_aecsv[i]) {
+                free(qnames_aecsv[i]);
+            }
+        }
+        free(qnames_aecsv);
+    }
+    qnames_aecsv = NULL;
+
+    if (dns_packet_lens_aecsv) {
+        free(dns_packet_lens_aecsv);
+    }
+
+    if (qname_lens_aecsv) {
+        free(qname_lens_aecsv);
+    }
+
+    if (qtypes_aecsv) {
+        free(qtypes_aecsv);
+    }
+
+    free(label_aecsv);
+
+    return EXIT_SUCCESS;
+}
+
+int dnsaecsv_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
+                         void **arg_ptr) {
+    memset(buf, 0, MAX_PACKET_SIZE);
+
+    // Setup assuming num_questions_aecsv == 0
+    struct ether_header *eth_header = (struct ether_header *) buf;
+    make_eth_header(eth_header, src, gw);
+
+    struct ip *ip_header = (struct ip *) (&eth_header[1]);
+    uint16_t   ip_len =
+        sizeof(struct ip) + sizeof(struct udphdr) + dns_packet_lens_aecsv[0];
+    make_ip_header(ip_header, IPPROTO_UDP, ip_len);
