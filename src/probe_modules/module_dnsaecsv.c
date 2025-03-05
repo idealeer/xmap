@@ -797,3 +797,54 @@ static int load_question_from_str_aecsv(const char *type_q_str) {
             type_q_str = probe_q_delimiter_p + domain_len + 1;
     }
 }
+
+static int load_question_from_file_aecsv(const char *file) {
+    log_debug("dnsaecsv", "load dns query domains from file");
+
+    FILE *fp = fopen(file, "r");
+    if (fp == NULL) {
+        log_error("dnsaecsv", "null dns domain file");
+        return EXIT_FAILURE;
+    }
+
+    char  line[1024];
+    int   line_len = 1024;
+    char *ret, *pos;
+
+    while (!feof(fp)) {
+        ret = fgets(line, line_len, fp);
+        if (ret == NULL) return EXIT_SUCCESS;
+        pos = strchr(line, '\n');
+        if (pos != NULL) *pos = '\0';
+        if (load_question_from_str_aecsv(line)) return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int dns_random_bytes_aecsv(char *dst, int len, const unsigned char *charset,
+                           int charset_len, aesrand_t *aes) {
+    int i;
+    for (i = 0; i < len; i++) {
+        *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
+    }
+
+    return i;
+}
+
+/*
+ * Start of required xmap exports.
+ */
+
+static int dnsaecsv_global_init(struct state_conf *conf) {
+    num_questions_aecsv = conf->target_index_num;
+
+    if (!conf->probe_args) {
+        conf->target_index_num = 1;
+        num_questions_aecsv    = 1;
+    }
+
+    if (num_questions_aecsv < 1) {
+        log_fatal("dnsaecsv", "invalid number of probes for the DNS module: %d",
+                  num_questions_aecsv);
+    }
