@@ -329,3 +329,103 @@ static int build_global_dns_packets_aecsv(char **domains, int num_domains) {
                             payload_len);
                         return 0;
                     }
+
+                                        // We need to add a dot if we are:
+                                        // -- Not first level recursion.
+                                        // -- have consumed bytes
+                                        if (recursion_level > 0 || bytes_consumed > 0) {
+
+                                            if (name_len < 1) {
+                                                log_warn("dnsaecsv",
+                                                         "Exceeded static name field allocation.");
+                                                return 0;
+                                            }
+
+                                            name[0] = '.';
+                                            name++;
+                                            name_len--;
+                                        }
+
+                                        uint16_t rec_bytes_consumed = get_name_helper_aecsv(
+                                            payload + offset, payload_len - offset, payload, payload_len,
+                                            name, name_len, recursion_level + 1);
+                                        // We are done so don't bother to increment the
+                                        // pointers.
+                                        if (rec_bytes_consumed == 0) {
+                                            log_trace("dnsaecsv",
+                                                      "_get_name_helper OUT. rec level %d failed",
+                                                      recursion_level);
+                                            return 0;
+                                        } else {
+                                            bytes_consumed += 2;
+                                            log_trace("dnsaecsv",
+                                                      "_get_name_helper OUT. rec level %d success. %d rec "
+                                                      "bytes consumed. %d bytes consumed.",
+                                                      recursion_level, rec_bytes_consumed, bytes_consumed);
+                                            return bytes_consumed;
+                                        }
+                                    } else if (byte == '\0') {
+                                        // don't bother with pointer incrementation. We're done.
+                                        bytes_consumed += 1;
+                                        log_trace("dnsaecsv",
+                                                  "_get_name_helper OUT. rec level %d success. %d bytes "
+                                                  "consumed.",
+                                                  recursion_level, bytes_consumed);
+                                        return bytes_consumed;
+                                    } else {
+                                        log_trace("dnsaecsv", "_get_name_helper, segment 0x%hx encountered",
+                                                  byte);
+                                        // We've now consumed a byte.
+                                        ++data;
+                                        --data_len;
+                                        // Mark byte consumed after we check for first
+                                        // iteration. Do we have enough data left (must have
+                                        // null byte too)?
+                                        if ((byte + 1) > data_len) {
+                                            log_trace("dnsaecsv",
+                                                      "_get_name_helper OUT. ERR. Not enough data "
+                                                      "for segment %hd");
+                                            return 0;
+                                        }
+                                        // If we've consumed any bytes and are in a label, we're
+                                        // in a label chain. We need to add a dot.
+                                        if (bytes_consumed > 0) {
+
+                                            if (name_len < 1) {
+                                                log_warn("dnsaecsv",
+                                                         "Exceeded static name field allocation.");
+                                                return 0;
+                                            }
+
+                                            name[0] = '.';
+                                            name++;
+                                            name_len--;
+                                        }
+                                        // Now we've consumed a byte.
+                                        ++bytes_consumed;
+                                        // Did we run out of our arbitrary buffer?
+                                        if (byte > name_len) {
+                                            log_warn("dnsaecsv", "Exceeded static name field allocation.");
+                                            return 0;
+                                        }
+
+                                        assert(data_len > 0);
+                                        memcpy(name, data, byte);
+                                        name += byte;
+                                        name_len -= byte;
+                                        data_len -= byte;
+                                        data += byte;
+                                        bytes_consumed += byte;
+                                        // Handled in the byte+1 check above.
+                                        assert(data_len > 0);
+                                    }
+                                }
+                                // We should never get here.
+                                // For each byte we either have:
+                                // -- a ptr, which terminates
+                                // -- a null byte, which terminates
+                                // -- a segment length which either terminates or ensures we keep
+                                // looping
+                                assert(0);
+                                return 0;
+                            }
