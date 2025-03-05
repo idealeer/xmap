@@ -138,3 +138,73 @@ const dns_qtype qtype_strid_to_qtype_aecsv[] = {
     DNS_QTYPE_HTTPS, DNS_QTYPE_CAA,    DNS_QTYPE_HTTPSSVC, DNS_QTYPE_OPT};
 
 int8_t qtype_qtype_to_strid_aecsv[65536] = {BAD_QTYPE_VAL};
+
+void setup_qtype_str_map_aecsv() {
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_A]        = 0;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_NS]       = 1;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_CNAME]    = 2;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_SOA]      = 3;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_PTR]      = 4;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_MX]       = 5;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_TXT]      = 6;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_AAAA]     = 7;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_RRSIG]    = 8;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_ALL]      = 9;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_SIG]      = 10;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_SRV]      = 11;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_DS]       = 12;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_DNSKEY]   = 13;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_TLSA]     = 14;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_SVCB]     = 15;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_HTTPS]    = 16;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_CAA]      = 17;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_HTTPSSVC] = 18;
+    qtype_qtype_to_strid_aecsv[DNS_QTYPE_OPT]      = 19;
+}
+
+static uint16_t qtype_str_to_code_aecsv(const char *str) {
+    for (int i = 0; i < qtype_strs_len_aecsv; i++) {
+        if (strcmp(qtype_strs_aecsv[i], str) == 0)
+            return qtype_strid_to_qtype_aecsv[i];
+    }
+
+    return 0;
+}
+
+static char    *label_aecsv      = NULL;
+static uint16_t label_len_aecsv  = 0;
+static uint16_t label_type_aecsv = DNS_LTYPE_RAW;
+static uint16_t recursive_aecsv  = 1;
+
+static uint16_t domain_to_qname_aecsv(char **qname_handle, const char *domain) {
+    if (domain[0] == '.') {
+        char *qname   = xmalloc(1);
+        qname[0]      = 0x00;
+        *qname_handle = qname;
+        return 1;
+    }
+
+    // String + 1byte header + null byte
+    uint16_t len   = strlen(domain) + 1 + 1;
+    char    *qname = xmalloc(len);
+    // Add a . before the domain. This will make the following simpler.
+    qname[0] = '.';
+    // Move the domain into the qname buffer.
+    strcpy(qname + 1, domain);
+
+    for (int i = 0; i < len; i++) {
+        if (qname[i] == '.') {
+            int j;
+            for (j = i + 1; j < (len - 1); j++) {
+                if (qname[j] == '.') {
+                    break;
+                }
+            }
+            qname[i] = j - i - 1;
+        }
+    }
+    *qname_handle = qname;
+    assert((*qname_handle)[len - 1] == '\0');
+
+    return len;
+}
