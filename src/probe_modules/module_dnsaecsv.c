@@ -592,4 +592,67 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
                 fs_add_unsafe_string(afs, "rdata", rdata_with_pref, 1);
             }
         }
-    } 
+    }  else if (type == DNS_QTYPE_TXT) {
+        if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+            log_warn("dnsaecsv",
+                     "TXT record with wrong TXT len. Not processing.");
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else if (rdlength < 1) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *txt = xmalloc(rdlength);
+            memcpy(txt, rdata + 1, rdlength - 1);
+            fs_add_unsafe_string(afs, "rdata", txt, 1);
+        }
+    } else if (type == DNS_QTYPE_A) {
+        if (rdlength != 4) {
+            log_warn("dnsaecsv",
+                     "A record with IP of length %d. Not processing.",
+                     rdlength);
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *addr = strdup(inet_ntoa(*(struct in_addr *) rdata));
+            fs_add_unsafe_string(afs, "rdata", addr, 1);
+        }
+    } else if (type == DNS_QTYPE_AAAA) {
+        if (rdlength != 16) {
+            log_warn("dnsaecsv",
+                     "AAAA record with IP of length %d. Not processing.",
+                     rdlength);
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *ipv6_str = xmalloc(INET6_ADDRSTRLEN);
+
+            inet_ntop(AF_INET6, (struct sockaddr_in6 *) rdata, ipv6_str,
+                      INET6_ADDRSTRLEN);
+
+            fs_add_unsafe_string(afs, "rdata", ipv6_str, 1);
+        }
+    } else if (type == DNS_QTYPE_SIG || type == DNS_QTYPE_SRV ||
+               type == DNS_QTYPE_DS || type == DNS_QTYPE_DNSKEY ||
+               type == DNS_QTYPE_TLSA || type == DNS_QTYPE_SVCB ||
+               type == DNS_QTYPE_HTTPS || type == DNS_QTYPE_CAA ||
+               type == DNS_QTYPE_HTTPSSVC) {
+        if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+            log_warn(
+                "dnsaecsv",
+                "SRV-like record with wrong SRV-like len. Not processing.");
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else if (rdlength < 1) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *txt = xmalloc(rdlength);
+            memcpy(txt, rdata + 1, rdlength - 1);
+            fs_add_unsafe_string(afs, "rdata", txt, 1);
+        }
+    }
