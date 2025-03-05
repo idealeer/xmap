@@ -1658,3 +1658,59 @@ static fielddef_t fields[] = {
              " the DNS response"},
     {.name = "raw_data", .type = "binary", .desc = "UDP payload"},
 };
+
+probe_module_t module_dnsaecsv = {
+    .ipv46_flag      = 4,
+    .name            = "dnsaecsv",
+    .packet_length   = DNS_SEND_LEN + UDP_HEADER_LEN,
+    .pcap_filter     = "udp || icmp",
+    .pcap_snaplen    = PCAP_SNAPLEN,
+    .port_args       = 1,
+    .global_init     = &dnsaecsv_global_init,
+    .thread_init     = &dnsaecsv_thread_init,
+    .make_packet     = &dnsaecsv_make_packet,
+    .print_packet    = &dnsaecsv_print_packet,
+    .validate_packet = &dnsaecsv_validate_packet,
+    .process_packet  = &dnsaecsv_process_packet,
+    .close           = &dnsaecsv_global_cleanup,
+    .output_type     = OUTPUT_TYPE_DYNAMIC,
+    .fields          = fields,
+    .numfields       = sizeof(fields) / sizeof(fields[0]),
+    .helptext =
+        "This module sends out DNS queries and parses basic responses.\n"
+        "When many queries (a qname) are sent to a target, port&txid changes.\n"
+        "Queries are appended with an EDNS0 option: UDP pkt size = 4,096.\n"
+        "Besides, ECS with variable src_ip/24/0 is appended to the tail.\n"
+        "By default, the module performs an A record lookup for www.qq.com.\n"
+        "You can specify other queries using the --probe-args argument\n"
+        "in the form: 'label_type:input_src:type,query;type,query', e.g.,\n"
+        "'raw:text:A,qq.com;NS,qq.com'. The module supports\n"
+        "sending the the following types of queries: A, NS, CNAME, SOA, PTR,\n"
+        "MX, TXT, AAAA, RRSIG, ANY, SIG, SRV, DS, DNSKEY, TLSA, SVCB, HTTPS,\n"
+        "CAA, HTTPSSVC, and OPT. The module will accept and attempt\n"
+        "to parse all DNS responses. There is currently support for parsing\n"
+        "out full data from A, NS, CNAME, MX, TXT, and AAAA.\n"
+        "Query format: label_type:recurse:input_src:type,query;type,query\n"
+        "Any other types will be output in raw form.\n"
+        "   label_type: raw, str, time, random, dst-ip\n"
+        "       raw: do nothing to the query domain, e.g., qq.com\n"
+        "       str: add the 'str' subdomain, e.g., www.qq.com\n"
+        "       time: add the s+μs subdomain, e.g., 1620027515-568043.qq.com\n"
+        "       random: add random subdomain, e.g., lefzwnrq.qq.com\n"
+        "       dst-ip: add probe num + src ip, e.g., 1.1-2-3-4.qq.com\n"
+        "   recurse: recurse, no-recurse\n"
+        "       recurse: recursive query\n"
+        "       no-recurse: non-recursive query\n"
+        "   input_src: text, file\n"
+        "       text: like A,qq.com;AAAA,qq.com\n"
+        "       file: each line is like a text\n"
+        "   type: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG,\n"
+        "         SRV, DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, HTTPSSVC, and OPT.\n"
+        "   query: A,qq.com;AAAA,qq.com\n"
+        "Examples:\n"
+        "   --probe-args=raw/time/random:recurse/no-recurse:text:type,query\n"
+        "   --probe-args=raw/time/random:recurse/no-recurse:file:file_name\n"
+        "   --probe-args=str:SomeText:recurse/no-recurse:text:type,query\n"
+        "   --probe-args=str:SomeText:recurse/no-recurse:file:file_name\n"
+        "   --probe-args=dst-ip:recurse/no-recurse:text:type,query\n"
+        "   --probe-args=dst-ip:recurse/no-recurse:file:file_name"};
