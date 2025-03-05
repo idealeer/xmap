@@ -560,7 +560,7 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
     if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
         uint16_t rdata_bytes_consumed = 0;
         char *rdata_name = get_name_aecsv(rdata, rdlength, payload, payload_len,
-                                                       &rdata_bytes_consumed);
+                                          &rdata_bytes_consumed);
         if (rdata_name == NULL) {
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -592,7 +592,7 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
                 fs_add_unsafe_string(afs, "rdata", rdata_with_pref, 1);
             }
         }
-    }  else if (type == DNS_QTYPE_TXT) {
+    } else if (type == DNS_QTYPE_TXT) {
         if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
             log_warn("dnsaecsv",
                      "TXT record with wrong TXT len. Not processing.");
@@ -658,11 +658,13 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
     } else if (type == DNS_QTYPE_OPT) {
         dns_option_tail *option_tail =
             (dns_option_tail *) (*data + bytes_consumed);
-        uint16_t udpsize        = ntohs(option_tail->udpsize);
-        uint8_t  ercode         = option_tail->ercode;
-        uint8_t  eversion       = option_tail->eversion;
-        uint16_t dodnssec       = option_tail->dodnssec;
-        uint16_t option_z       = (((option_tail->dodnssec << 7) + option_tail->z1) << 8) + option_tail->z2;
+        uint16_t udpsize  = ntohs(option_tail->udpsize);
+        uint8_t  ercode   = option_tail->ercode;
+        uint8_t  eversion = option_tail->eversion;
+        uint16_t dodnssec = option_tail->dodnssec;
+        uint16_t option_z =
+            (((option_tail->dodnssec << 7) + option_tail->z1) << 8) +
+            option_tail->z2;
         uint16_t option_dlength = ntohs(option_tail->dlength);
         char    *option_data    = option_tail->data;
 
@@ -726,4 +728,72 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
               *data_len);
 
     return 0;
+}
+
+static int load_question_from_str_aecsv(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dnsaecsv", dnsaecsv_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_aecsv >= num_questions_aecsv) {
+            log_error("dnsaecsv", "less probes than questions configured. Add "
+                                  "additional questions.");
+            return EXIT_FAILURE;
+        }
+
+        int domain_len = 0;
+
+        if (probe_arg_delimiter_p) {
+            domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+        } else {
+            domain_len = strlen(probe_q_delimiter_p) - 1;
+        }
+        assert(domain_len > 0);
+
+        if (label_type_aecsv == DNS_LTYPE_STR) {
+            domains_aecsv[index_questions_aecsv] =
+                xmalloc(label_len_aecsv + 1 + domain_len + 1);
+            strncpy(domains_aecsv[index_questions_aecsv], label_aecsv,
+                    label_len_aecsv);
+            domains_aecsv[index_questions_aecsv][label_len_aecsv] = '.';
+            strncpy(domains_aecsv[index_questions_aecsv] + label_len_aecsv + 1,
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_aecsv[index_questions_aecsv]
+                         [label_len_aecsv + 1 + domain_len] = '\0';
+        } else {
+            domains_aecsv[index_questions_aecsv] = xmalloc(domain_len + 1);
+            strncpy(domains_aecsv[index_questions_aecsv],
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_aecsv[index_questions_aecsv][domain_len] = '\0';
+        }
+
+        char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+        strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+        qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+
+        qtypes_aecsv[index_questions_aecsv] =
+            qtype_str_to_code_aecsv(strupr(qtype_str));
+        if (!qtypes_aecsv[index_questions_aecsv]) {
+            log_error("dnsaecsv", "incorrect qtype supplied: %s", qtype_str);
+            free(qtype_str);
+            return EXIT_FAILURE;
+        }
+        free(qtype_str);
+
+        index_questions_aecsv++;
+        if (probe_arg_delimiter_p)
+            type_q_str = probe_q_delimiter_p + domain_len + 2;
+        else
+            type_q_str = probe_q_delimiter_p + domain_len + 1;
+    }
 }
