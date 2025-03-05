@@ -538,3 +538,58 @@ static bool process_response_answer_aecsv(char **data, uint16_t *data_len,
         return 1;
     }
     // Build our new question fieldset
+    fieldset_t *afs = fs_new_fieldset();
+    fs_add_unsafe_string(afs, "name", answer_name, 1);
+    fs_add_uint64(afs, "type", type);
+    if (type > MAX_QTYPE || qtype_qtype_to_strid_aecsv[type] == BAD_QTYPE_VAL) {
+        fs_add_string(afs, "type_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(
+            afs, "type_str",
+            (char *) qtype_strs_aecsv[qtype_qtype_to_strid_aecsv[type]], 0);
+    }
+    if (type != DNS_QTYPE_OPT) {
+        fs_add_uint64(afs, "class", class);
+        fs_add_uint64(afs, "ttl", ttl);
+        fs_add_uint64(afs, "rdlength", rdlength);
+    }
+
+    // XXX Fill this out for the other types we care about.
+    if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
+        uint16_t rdata_bytes_consumed = 0;
+        char *rdata_name = get_name_aecsv(rdata, rdlength, payload, payload_len,
+                                                       &rdata_bytes_consumed);
+        if (rdata_name == NULL) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            fs_add_unsafe_string(afs, "rdata", rdata_name, 1);
+        }
+    } else if (type == DNS_QTYPE_MX) {
+        uint16_t rdata_bytes_consumed = 0;
+        if (rdlength <= 4) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            char *rdata_name =
+                get_name_aecsv(rdata + 2, rdlength - 2, payload, payload_len,
+                               &rdata_bytes_consumed);
+            if (rdata_name == NULL) {
+                fs_add_uint64(afs, "rdata_is_parsed", 0);
+                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+            } else {
+                // (largest value 16bit) + " " + answer + null
+                char *rdata_with_pref = xmalloc(5 + 1 + strlen(rdata_name) + 1);
+
+                uint8_t num_printed = snprintf(rdata_with_pref, 6, "%hu ",
+                                               ntohs(*(uint16_t *) rdata));
+                memcpy(rdata_with_pref + num_printed, rdata_name,
+                       strlen(rdata_name));
+                fs_add_uint64(afs, "rdata_is_parsed", 1);
+                fs_add_unsafe_string(afs, "rdata", rdata_with_pref, 1);
+            }
+        }
+    } 
