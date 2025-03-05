@@ -1120,3 +1120,58 @@ int dnsaecsv_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
                             log_fatal("dnsaecsv", dnsaecsv_usage_error);
                             return EXIT_FAILURE;
                         }
+
+                                                snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
+                                                         domains_aecsv[index]);
+
+                                                // dns packet
+                                                free(qnames_aecsv[index]);
+
+                                                qname_lens_aecsv[index] =
+                                                    domain_to_qname_aecsv(&qnames_aecsv[index], new_domain);
+                                                dns_packet_lens_aecsv[index] =
+                                                    sizeof(dns_header) + qname_lens_aecsv[index] +
+                                                    sizeof(dns_question_tail) + default_option_qname_len_aecsv +
+                                                    sizeof(dns_option_tail) + default_option_rdata_len_aecsv;
+                                                if (dns_packet_lens_aecsv[index] > DNS_SEND_LEN) {
+                                                    log_fatal("dnsaecsv", "DNS packet bigger (%d) than our limit (%d)",
+                                                              dns_packet_lens_aecsv[index], DNS_SEND_LEN);
+                                                    return EXIT_FAILURE;
+                                                }
+
+                                                free(dns_packets_aecsv[index]);
+
+                                                dns_packets_aecsv[index] = xmalloc(dns_packet_lens_aecsv[index]);
+                                                dns_header *dns_header_p = (dns_header *) dns_packets_aecsv[index];
+                                                char       *qname_p = dns_packets_aecsv[index] + sizeof(dns_header);
+                                                dns_question_tail *tail_p =
+                                                    (dns_question_tail *) (dns_packets_aecsv[index] +
+                                                                           sizeof(dns_header) +
+                                                                           qname_lens_aecsv[index]);
+                                                char *option_qname_p =
+                                                    (char *) (dns_packets_aecsv[index] + sizeof(dns_header) +
+                                                              qname_lens_aecsv[index] + sizeof(dns_question_tail));
+                                                dns_option_tail *option_tail_p =
+                                                    (dns_option_tail *) (dns_packets_aecsv[index] + sizeof(dns_header) +
+                                                                         qname_lens_aecsv[index] +
+                                                                         sizeof(dns_question_tail) +
+                                                                         default_option_qname_len_aecsv);
+                                                dns_option_ecs *option_ecs_p =
+                                                    (dns_option_ecs *) (dns_packets_aecsv[index] + sizeof(dns_header) +
+                                                                        qname_lens_aecsv[index] +
+                                                                        sizeof(dns_question_tail) +
+                                                                        default_option_qname_len_aecsv +
+                                                                        sizeof(dns_option_tail));
+
+                                                // All other header fields should be 0. Except id, which we set
+                                                // per thread. Please recurse as needed.
+                                                dns_header_p->rd = recursive_aecsv; // Is one bit. Don't need htons
+                                                // We have 1 question
+                                                dns_header_p->qdcount = htons(1);
+                                                memcpy(qname_p, qnames_aecsv[index], qname_lens_aecsv[index]);
+                                                // Set the qtype to what we passed from args
+                                                tail_p->qtype = htons(qtypes_aecsv[index]);
+                                                // Set the qclass to The Internet (TM) (R) (I hope you're happy
+                                                // now Zakir)
+                                                tail_p->qclass = htons(0x01);
+                                            // MAGIC NUMBER. Let's be honest. This is only ever 1
