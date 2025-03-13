@@ -65,3 +65,56 @@
 #include "validate.h"
 
 #include "module_dns.h"
+
+#define DNS_SEND_LEN 512 // This is arbitrary
+#define UDP_HEADER_LEN 8
+#define PCAP_SNAPLEN 1500 // This is even more arbitrary
+#define UNUSED __attribute__((unused))
+#define MAX_QTYPE 65535
+#define ICMP_UNREACH_HEADER_SIZE 8
+#define BAD_QTYPE_STR "BAD QTYPE"
+#define BAD_QTYPE_VAL -1
+#define MAX_LABEL_RECURSION 10
+#define DNS_QR_ANSWER 1
+
+// Note: each label has a max length of 63 bytes. So someone has to be doing
+// something really annoying. Will raise a warning.
+// THIS INCLUDES THE NULL BYTE
+#define MAX_NAME_LENGTH 512
+
+#if defined(__NetBSD__) && !defined(__cplusplus) && defined(bool)
+#undef bool
+#endif
+
+typedef uint8_t bool;
+
+// xmap boilerplate
+probe_module_t module_dnsc;
+static int     dns_num_ports_c;
+
+const char     default_domain_c[] = "www.qq.com";
+const uint16_t default_qtype_c    = DNS_QTYPE_A;
+const char    *dnsc_usage_error =
+    "unknown DNS probe specification (expected "
+    "raw/time/random:recurse/no-recurse:text:TYPE,QUESTION or "
+    "raw/time/random:recurse/no-recurse:file:file_name or "
+    "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
+    "str:some_text:recurse/no-recurse:file:file_name)";
+
+const unsigned char *charset_alpha_lower_c =
+    (unsigned char *) "abcdefghijklmnopqrstuvwxyz";
+
+static char    **dns_packets_c;
+static uint16_t *dns_packet_lens_c; // Not including udp header
+static uint16_t *qname_lens_c;      // domain_len list
+static char    **qnames_c;          // domain list for query
+static uint16_t *qtypes_c;          // query_type list
+static char    **domains_c;         // domain strs
+static int       num_questions_c   = 0;
+static int       index_questions_c = 0;
+
+/* Array of qtypes_c we support. Jumping through some hops (1 level of
+ * indirection) so the per-packet processing time is fast. Keep this in sync
+ * with: dns_qtype (.h) qtype_strid_to_qtype_c (below) qtype_qtype_to_strid_c
+ * (below, and setup_qtype_str_map_c())
+ */
