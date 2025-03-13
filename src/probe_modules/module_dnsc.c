@@ -698,3 +698,56 @@ static int load_question_from_file_c(const char *file) {
 
     return EXIT_SUCCESS;
 }
+
+int dns_random_bytes_c(char *dst, int len, const unsigned char *charset,
+                       int charset_len, aesrand_t *aes) {
+    int i;
+    for (i = 0; i < len; i++) {
+        *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
+    }
+
+    return i;
+}
+
+/*
+ * Start of required xmap exports.
+ */
+
+static int dnsc_global_init(struct state_conf *conf) {
+    num_questions_c = conf->target_index_num;
+
+    if (!conf->probe_args) {
+        conf->target_index_num = 1;
+        num_questions_c       = 1;
+    }
+
+    if (num_questions_c < 1) {
+        log_fatal("dnsc", "invalid number of probes for the DNS module: %d",
+                  num_questions_c);
+    }
+
+    // Setup the global structures
+    dns_packets_c     = xmalloc(sizeof(char *) * num_questions_c);
+    dns_packet_lens_c = xmalloc(sizeof(uint16_t) * num_questions_c);
+    qname_lens_c      = xmalloc(sizeof(uint16_t) * num_questions_c);
+    qnames_c          = xmalloc(sizeof(char *) * num_questions_c);
+    qtypes_c          = xmalloc(sizeof(uint16_t) * num_questions_c);
+    domains_c         = xmalloc(sizeof(char *) * num_questions_c);
+
+    for (int i = 0; i < num_questions_c; i++) {
+        domains_c[i] = (char *) default_domain_c;
+        qtypes_c[i]  = default_qtype_c;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_c = conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_c();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnsc", dnsc_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
