@@ -771,58 +771,58 @@ static int load_question_from_str_6acookiev(const char *type_q_str) {
             domains_6acookiev[index_questions_6acookiev][domain_len] = '\0';
         }
 
-                char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
-                strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
-                qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+        char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+        strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+        qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
 
-                qtypes_6acookiev[index_questions_6acookiev] =
-                    qtype_str_to_code_6acookiev(strupr(qtype_str));
-                if (!qtypes_6acookiev[index_questions_6acookiev]) {
-                    log_error("dns6acookiev", "incorrect qtype supplied: %s",
-                              qtype_str);
-                    free(qtype_str);
-                    return EXIT_FAILURE;
-                }
-                free(qtype_str);
-
-                index_questions_6acookiev++;
-                if (probe_arg_delimiter_p)
-                    type_q_str = probe_q_delimiter_p + domain_len + 2;
-                else
-                    type_q_str = probe_q_delimiter_p + domain_len + 1;
-            }
+        qtypes_6acookiev[index_questions_6acookiev] =
+            qtype_str_to_code_6acookiev(strupr(qtype_str));
+        if (!qtypes_6acookiev[index_questions_6acookiev]) {
+            log_error("dns6acookiev", "incorrect qtype supplied: %s",
+                      qtype_str);
+            free(qtype_str);
+            return EXIT_FAILURE;
         }
+        free(qtype_str);
 
-                static int load_question_from_file_6acookiev(const char *file) {
-                    log_debug("dns6acookiev", "load dns query domains from file");
+        index_questions_6acookiev++;
+        if (probe_arg_delimiter_p)
+            type_q_str = probe_q_delimiter_p + domain_len + 2;
+        else
+            type_q_str = probe_q_delimiter_p + domain_len + 1;
+    }
+}
 
-                    FILE *fp = fopen(file, "r");
-                    if (fp == NULL) {
-                        log_error("dns6acookiev", "null dns domain file");
-                        return EXIT_FAILURE;
-                    }
+static int load_question_from_file_6acookiev(const char *file) {
+    log_debug("dns6acookiev", "load dns query domains from file");
 
-                    char  line[1024];
-                    int   line_len = 1024;
-                    char *ret, *pos;
+    FILE *fp = fopen(file, "r");
+    if (fp == NULL) {
+        log_error("dns6acookiev", "null dns domain file");
+        return EXIT_FAILURE;
+    }
 
-                    while (!feof(fp)) {
-                        ret = fgets(line, line_len, fp);
-                        if (ret == NULL) return EXIT_SUCCESS;
-                        pos = strchr(line, '\n');
-                        if (pos != NULL) *pos = '\0';
-                        if (load_question_from_str_6acookiev(line)) return EXIT_FAILURE;
-                    }
+    char  line[1024];
+    int   line_len = 1024;
+    char *ret, *pos;
 
-                    return EXIT_SUCCESS;
-                }
+    while (!feof(fp)) {
+        ret = fgets(line, line_len, fp);
+        if (ret == NULL) return EXIT_SUCCESS;
+        pos = strchr(line, '\n');
+        if (pos != NULL) *pos = '\0';
+        if (load_question_from_str_6acookiev(line)) return EXIT_FAILURE;
+    }
 
-                int dns_random_bytes_6acookiev(char *dst, int len, const unsigned char *charset,
-                                               int charset_len, aesrand_t *aes) {
-                    int i;
-                    for (i = 0; i < len; i++) {
-                        *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
-                    }
+    return EXIT_SUCCESS;
+}
 
-                    return i;
-                }
+int dns_random_bytes_6acookiev(char *dst, int len, const unsigned char *charset,
+                               int charset_len, aesrand_t *aes) {
+    int i;
+    for (i = 0; i < len; i++) {
+        *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
+    }
+
+    return i;
+}
