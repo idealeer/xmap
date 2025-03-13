@@ -224,3 +224,61 @@ static int build_global_dns_packets_cse(char **domains, int num_domains) {
                       dns_packet_lens_cse[i], DNS_SEND_LEN);
             return EXIT_FAILURE;
         }
+
+                dns_packets_cse[i]              = xmalloc(dns_packet_lens_cse[i]);
+                dns_header        *dns_header_p = (dns_header *) dns_packets_cse[i];
+                char              *qname_p = dns_packets_cse[i] + sizeof(dns_header);
+                dns_question_tail *tail_p =
+                    (dns_question_tail *) (dns_packets_cse[i] + sizeof(dns_header) +
+                                           qname_lens_cse[i]);
+                char *option_qname_p =
+                    (char *) (dns_packets_cse[i] + sizeof(dns_header) +
+                              qname_lens_cse[i] + sizeof(dns_question_tail));
+                dns_option_tail *option_tail_p =
+                    (dns_option_tail *) (dns_packets_cse[i] + sizeof(dns_header) +
+                                         qname_lens_cse[i] + sizeof(dns_question_tail) +
+                                         default_option_qname_len_cse);
+
+                // All other header fields should be 0. Except id, which we set
+                // per thread. Please recurse as needed.
+                dns_header_p->rd = recursive_cse; // Is one bit. Don't need htons
+                // We have 1 question
+                dns_header_p->qdcount = htons(1);
+                memcpy(qname_p, qnames_cse[i], qname_lens_cse[i]);
+                // Set the qtype to what we passed from args
+                tail_p->qtype = htons(qtypes_cse[i]);
+                // Set the qclass to The Internet (TM) (R) (I hope you're happy
+                // now Zakir)
+                tail_p->qclass = htons(0x01);
+                // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+                // option, others set to 0
+                dns_header_p->arcount = htons(1);
+                memcpy(option_qname_p, default_option_qname_cse,
+                       default_option_qname_len_cse);
+                option_tail_p->type     = htons(DNS_QTYPE_OPT);
+                option_tail_p->udpsize  = htons(default_option_udpsize_cse);
+                option_tail_p->dodnssec = 1;
+            }
+
+            return EXIT_SUCCESS;
+        }
+
+        static uint16_t get_name_helper_cse(const char *data, uint16_t data_len,
+                                            const char *payload, uint16_t payload_len,
+                                            char *name, uint16_t name_len,
+                                            uint16_t recursion_level) {
+            log_trace("dnscse",
+                      "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
+                      data_len, name_len, recursion_level);
+            if (data_len == 0 || name_len == 0 || payload_len == 0) {
+                log_trace("dnscse",
+                          "_get_name_helper OUT, err. 0 length field. datalen %d "
+                          "namelen %d payloadlen %d",
+                          data_len, name_len, payload_len);
+                return 0;
+            }
+            if (recursion_level > MAX_LABEL_RECURSION) {
+                log_trace("dnscse", "_get_name_helper OUT. ERR, MAX RECUSION");
+                return 0;
+            }
