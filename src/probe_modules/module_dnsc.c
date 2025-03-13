@@ -751,3 +751,84 @@ static int dnsc_global_init(struct state_conf *conf) {
             return EXIT_FAILURE;
         }
         ++c;
+
+                // label type
+                if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+                    label_type_c = DNS_LTYPE_RAW;
+                    log_debug("dnsc", "raw label prefix");
+                } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+                    label_type_c = DNS_LTYPE_TIME;
+                    log_debug("dnsc", "time label prefix");
+                } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+                    label_type_c = DNS_LTYPE_RANDOM;
+                    log_debug("dnsc", "random label prefix");
+                } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+                    label_type_c    = DNS_LTYPE_STR;
+                    conf->probe_args = c;
+                    c                = strchr(conf->probe_args, ':');
+                    if (!c) {
+                        log_error("dnsc", dnsc_usage_error);
+                        return EXIT_FAILURE;
+                    }
+                    label_len_c = c - conf->probe_args;
+                    label_c     = xmalloc(label_len_c);
+                    strncpy(label_c, conf->probe_args, label_len_c);
+                    ++c;
+                    log_debug("dnsc", "label prefix: %s, len: %d", label_c,
+                              label_len_c);
+                } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+                    label_type_c = DNS_LTYPE_SRCIP;
+                    log_debug("dnsc", "dst-ip label prefix");
+                } else {
+                    log_error("dnsc", dnsc_usage_error);
+                    return EXIT_FAILURE;
+                }
+
+                conf->probe_args = c;
+                c                = strchr(conf->probe_args, ':');
+                if (!c) {
+                    log_error("dnsc", dnsc_usage_error);
+                    return EXIT_FAILURE;
+                }
+                ++c;
+
+                // recursive query
+                if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+                    recursive_c = 1;
+                } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+                    recursive_c = 0;
+                } else {
+                    log_error("dnsc", dnsc_usage_error);
+                    return EXIT_FAILURE;
+                }
+
+                conf->probe_args = c;
+                c                = strchr(conf->probe_args, ':');
+                if (!c) {
+                    log_error("dnsc", dnsc_usage_error);
+                    return EXIT_FAILURE;
+                }
+                ++c;
+
+                // input query
+                if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+                    if (load_question_from_str_c(c)) return EXIT_FAILURE;
+                } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+                    if (load_question_from_file_c(c)) return EXIT_FAILURE;
+                } else {
+                    log_error("dnsc", dnsc_usage_error);
+                    return EXIT_FAILURE;
+                }
+
+                if (index_questions_c < num_questions_c) {
+                    log_error("dnsc", "more probes than questions configured. Add "
+                                      "additional probes.");
+                    return EXIT_FAILURE;
+                }
+            }
+
+            if (label_type_c == DNS_LTYPE_RAW || label_type_c == DNS_LTYPE_STR)
+                return build_global_dns_packets_c(domains_c, num_questions_c);
+            else
+                return EXIT_SUCCESS;
+        }
