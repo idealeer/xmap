@@ -65,3 +65,56 @@
 #include "validate.h"
 
 #include "module_dns.h"
+
+#define DNS_SEND_LEN 512 // This is arbitrary
+#define UDP_HEADER_LEN 8
+#define PCAP_SNAPLEN 1500 // This is even more arbitrary
+#define UNUSED __attribute__((unused))
+#define MAX_QTYPE 65535
+#define ICMP6_UNREACH_HEADER_SIZE 8
+#define BAD_QTYPE_STR "BAD QTYPE"
+#define BAD_QTYPE_VAL -1
+#define MAX_LABEL_RECURSION 10
+#define DNS_QR_ANSWER 1
+
+// Note: each label has a max length of 63 bytes. So someone has to be doing
+// something really annoying. Will raise a warning.
+// THIS INCLUDES THE NULL BYTE
+#define MAX_NAME_LENGTH 512
+
+#if defined(__NetBSD__) && !defined(__cplusplus) && defined(bool)
+#undef bool
+#endif
+
+typedef uint8_t bool;
+
+// xmap boilerplate
+probe_module_t module_dns6acookiev;
+static int     dns_num_ports_6acookiev;
+
+const char     default_domain_6acookiev[] = "www.qq.com";
+const uint16_t default_qtype_6acookiev    = DNS_QTYPE_A;
+const char    *dns6acookiev_usage_error =
+    "unknown DNS probe specification (expected "
+    "raw/time/random:recurse/no-recurse:text:TYPE,QUESTION or "
+    "raw/time/random:recurse/no-recurse:file:file_name or "
+    "str:some_text:recurse/no-recurse:text:TYPE,QUESTION or "
+    "str:some_text:recurse/no-recurse:file:file_name)";
+
+const unsigned char *charset_alpha_lower_6acookiev =
+    (unsigned char *) "abcdefghijklmnopqrstuvwxyz";
+
+static char    **dns_packets_6acookiev;
+static uint16_t *dns_packet_lens_6acookiev; // Not including udp header
+static uint16_t *qname_lens_6acookiev;      // domain_len list
+static char    **qnames_6acookiev;          // domain list for query
+static uint16_t *qtypes_6acookiev;          // query_type list
+static char    **domains_6acookiev;         // domain strs
+static int       num_questions_6acookiev   = 0;
+static int       index_questions_6acookiev = 0;
+
+const char      default_option_qname_6acookiev[]   = {0x00};
+static int      default_option_qname_len_6acookiev = 1;
+static uint16_t default_option_udpsize_6acookiev   = 4096;
+const char      default_option_rdata_6acookiev[];
+static int      default_option_rdata_len_6acookiev = 20;
