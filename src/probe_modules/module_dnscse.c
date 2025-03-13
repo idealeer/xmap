@@ -460,174 +460,206 @@ static bool process_response_question_cse(char **data, uint16_t *data_len,
     fs_add_unsafe_string(qfs, "name", question_name, 1);
     fs_add_uint64(qfs, "qtype", qtype);
 
-        if (qtype > MAX_QTYPE || qtype_qtype_to_strid_cse[qtype] == BAD_QTYPE_VAL) {
-            fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
-        } else {
-            // I've written worse things than this 3rd arg. But I want to be
-            // fast.
-            fs_add_string(qfs, "qtype_str",
-                          (char *) qtype_strs_cse[qtype_qtype_to_strid_cse[qtype]],
-                          0);
-        }
-
-        fs_add_uint64(qfs, "qclass", qclass);
-        // Now we're adding the new fs to the list.
-        fs_add_fieldset(list, NULL, qfs);
-        // Now update the pointers.
-        *data     = *data + bytes_consumed + sizeof(dns_question_tail);
-        *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
-
-        return 0;
+    if (qtype > MAX_QTYPE || qtype_qtype_to_strid_cse[qtype] == BAD_QTYPE_VAL) {
+        fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(qfs, "qtype_str",
+                      (char *) qtype_strs_cse[qtype_qtype_to_strid_cse[qtype]],
+                      0);
     }
 
-    static bool process_response_answer_cse(char **data, uint16_t *data_len,
-                                            const char *payload,
-                                            uint16_t    payload_len,
-                                            fieldset_t *list) {
-        log_trace("dnscse", "call to process_response_answer_cse, data_len: %d",
-                  *data_len);
-        // Payload is the start of the DNS packet, including header
-        // data is handle to the start of this RR
-        // data_len is a pointer to the how much total data we have to work
-        // with. This is awful. I'm bad and should feel bad.
-        uint16_t bytes_consumed = 0;
-        char    *answer_name =
-            get_name_cse(*data, *data_len, payload, payload_len, &bytes_consumed);
-        // Error.
-        if (answer_name == NULL) {
-            return 1;
-        }
-        assert(bytes_consumed > 0);
-        if ((bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
-            free(answer_name);
-            return 1;
-        }
+    fs_add_uint64(qfs, "qclass", qclass);
+    // Now we're adding the new fs to the list.
+    fs_add_fieldset(list, NULL, qfs);
+    // Now update the pointers.
+    *data     = *data + bytes_consumed + sizeof(dns_question_tail);
+    *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
 
-        dns_answer_tail *tail = (dns_answer_tail *) (*data + bytes_consumed);
-        uint16_t         type = ntohs(tail->type);
-        uint16_t class        = ntohs(tail->class);
-        uint32_t ttl          = ntohl(tail->ttl);
-        uint16_t rdlength     = ntohs(tail->rdlength);
-        char    *rdata        = tail->rdata;
+    return 0;
+}
 
-        if ((rdlength + bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
-            free(answer_name);
-            return 1;
-        }
-        // Build our new question fieldset
-        fieldset_t *afs = fs_new_fieldset();
-        fs_add_unsafe_string(afs, "name", answer_name, 1);
-        fs_add_uint64(afs, "type", type);
-        if (type > MAX_QTYPE || qtype_qtype_to_strid_cse[type] == BAD_QTYPE_VAL) {
-            fs_add_string(afs, "type_str", (char *) BAD_QTYPE_STR, 0);
+static bool process_response_answer_cse(char **data, uint16_t *data_len,
+                                        const char *payload,
+                                        uint16_t    payload_len,
+                                        fieldset_t *list) {
+    log_trace("dnscse", "call to process_response_answer_cse, data_len: %d",
+              *data_len);
+    // Payload is the start of the DNS packet, including header
+    // data is handle to the start of this RR
+    // data_len is a pointer to the how much total data we have to work
+    // with. This is awful. I'm bad and should feel bad.
+    uint16_t bytes_consumed = 0;
+    char    *answer_name =
+        get_name_cse(*data, *data_len, payload, payload_len, &bytes_consumed);
+    // Error.
+    if (answer_name == NULL) {
+        return 1;
+    }
+    assert(bytes_consumed > 0);
+    if ((bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+        free(answer_name);
+        return 1;
+    }
+
+    dns_answer_tail *tail = (dns_answer_tail *) (*data + bytes_consumed);
+    uint16_t         type = ntohs(tail->type);
+    uint16_t class        = ntohs(tail->class);
+    uint32_t ttl          = ntohl(tail->ttl);
+    uint16_t rdlength     = ntohs(tail->rdlength);
+    char    *rdata        = tail->rdata;
+
+    if ((rdlength + bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+        free(answer_name);
+        return 1;
+    }
+    // Build our new question fieldset
+    fieldset_t *afs = fs_new_fieldset();
+    fs_add_unsafe_string(afs, "name", answer_name, 1);
+    fs_add_uint64(afs, "type", type);
+    if (type > MAX_QTYPE || qtype_qtype_to_strid_cse[type] == BAD_QTYPE_VAL) {
+        fs_add_string(afs, "type_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(afs, "type_str",
+                      (char *) qtype_strs_cse[qtype_qtype_to_strid_cse[type]],
+                      0);
+    }
+    if (type != DNS_QTYPE_OPT) {
+        fs_add_uint64(afs, "class", class);
+        fs_add_uint64(afs, "ttl", ttl);
+        fs_add_uint64(afs, "rdlength", rdlength);
+    }
+
+    // XXX Fill this out for the other types we care about.
+    if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
+        uint16_t rdata_bytes_consumed = 0;
+        char *rdata_name = get_name_cse(rdata, rdlength, payload, payload_len,
+                                        &rdata_bytes_consumed);
+        if (rdata_name == NULL) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
         } else {
-            // I've written worse things than this 3rd arg. But I want to be
-            // fast.
-            fs_add_string(afs, "type_str",
-                          (char *) qtype_strs_cse[qtype_qtype_to_strid_cse[type]],
-                          0);
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            fs_add_unsafe_string(afs, "rdata", rdata_name, 1);
         }
-        if (type != DNS_QTYPE_OPT) {
-            fs_add_uint64(afs, "class", class);
-            fs_add_uint64(afs, "ttl", ttl);
-            fs_add_uint64(afs, "rdlength", rdlength);
-        }
-
-        // XXX Fill this out for the other types we care about.
-        if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
-            uint16_t rdata_bytes_consumed = 0;
-            char *rdata_name = get_name_cse(rdata, rdlength, payload, payload_len,
-                                                         &rdata_bytes_consumed);
+    } else if (type == DNS_QTYPE_MX) {
+        uint16_t rdata_bytes_consumed = 0;
+        if (rdlength <= 4) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            char *rdata_name = get_name_cse(rdata + 2, rdlength - 2, payload,
+                                            payload_len, &rdata_bytes_consumed);
             if (rdata_name == NULL) {
                 fs_add_uint64(afs, "rdata_is_parsed", 0);
                 fs_add_binary(afs, "rdata", rdlength, rdata, 0);
             } else {
-                fs_add_uint64(afs, "rdata_is_parsed", 1);
-                fs_add_unsafe_string(afs, "rdata", rdata_name, 1);
-            }
-        } else if (type == DNS_QTYPE_MX) {
-            uint16_t rdata_bytes_consumed = 0;
-            if (rdlength <= 4) {
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else {
-                char *rdata_name = get_name_cse(rdata + 2, rdlength - 2, payload,
-                                                payload_len, &rdata_bytes_consumed);
-                if (rdata_name == NULL) {
-                    fs_add_uint64(afs, "rdata_is_parsed", 0);
-                    fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-                } else {
-                    // (largest value 16bit) + " " + answer + null
-                    char *rdata_with_pref = xmalloc(5 + 1 + strlen(rdata_name) + 1);
+                // (largest value 16bit) + " " + answer + null
+                char *rdata_with_pref = xmalloc(5 + 1 + strlen(rdata_name) + 1);
 
-                    uint8_t num_printed = snprintf(rdata_with_pref, 6, "%hu ",
-                                                   ntohs(*(uint16_t *) rdata));
-                    memcpy(rdata_with_pref + num_printed, rdata_name,
-                           strlen(rdata_name));
-                    fs_add_uint64(afs, "rdata_is_parsed", 1);
-                    fs_add_unsafe_string(afs, "rdata", rdata_with_pref, 1);
-                }
-            }
-        }  else if (type == DNS_QTYPE_TXT) {
-            if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
-                log_warn("dnscse",
-                         "TXT record with wrong TXT len. Not processing.");
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else if (rdlength < 1) {
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else {
+                uint8_t num_printed = snprintf(rdata_with_pref, 6, "%hu ",
+                                               ntohs(*(uint16_t *) rdata));
+                memcpy(rdata_with_pref + num_printed, rdata_name,
+                       strlen(rdata_name));
                 fs_add_uint64(afs, "rdata_is_parsed", 1);
-                char *txt = xmalloc(rdlength);
-                memcpy(txt, rdata + 1, rdlength - 1);
-                fs_add_unsafe_string(afs, "rdata", txt, 1);
+                fs_add_unsafe_string(afs, "rdata", rdata_with_pref, 1);
             }
-        } else if (type == DNS_QTYPE_A) {
-            if (rdlength != 4) {
-                log_warn("dnscse", "A record with IP of length %d. Not processing.",
-                         rdlength);
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else {
-                fs_add_uint64(afs, "rdata_is_parsed", 1);
-                char *addr = strdup(inet_ntoa(*(struct in_addr *) rdata));
-                fs_add_unsafe_string(afs, "rdata", addr, 1);
-            }
-        } else if (type == DNS_QTYPE_AAAA) {
-            if (rdlength != 16) {
-                log_warn("dnscse",
-                         "AAAA record with IP of length %d. Not processing.",
-                         rdlength);
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else {
-                fs_add_uint64(afs, "rdata_is_parsed", 1);
-                char *ipv6_str = xmalloc(INET6_ADDRSTRLEN);
+        }
+    } else if (type == DNS_QTYPE_TXT) {
+        if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+            log_warn("dnscse",
+                     "TXT record with wrong TXT len. Not processing.");
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else if (rdlength < 1) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *txt = xmalloc(rdlength);
+            memcpy(txt, rdata + 1, rdlength - 1);
+            fs_add_unsafe_string(afs, "rdata", txt, 1);
+        }
+    } else if (type == DNS_QTYPE_A) {
+        if (rdlength != 4) {
+            log_warn("dnscse", "A record with IP of length %d. Not processing.",
+                     rdlength);
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *addr = strdup(inet_ntoa(*(struct in_addr *) rdata));
+            fs_add_unsafe_string(afs, "rdata", addr, 1);
+        }
+    } else if (type == DNS_QTYPE_AAAA) {
+        if (rdlength != 16) {
+            log_warn("dnscse",
+                     "AAAA record with IP of length %d. Not processing.",
+                     rdlength);
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *ipv6_str = xmalloc(INET6_ADDRSTRLEN);
 
-                inet_ntop(AF_INET6, (struct sockaddr_in6 *) rdata, ipv6_str,
-                          INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, (struct sockaddr_in6 *) rdata, ipv6_str,
+                      INET6_ADDRSTRLEN);
 
-                fs_add_unsafe_string(afs, "rdata", ipv6_str, 1);
-            }
-        } else if (type == DNS_QTYPE_SIG || type == DNS_QTYPE_SRV ||
-                   type == DNS_QTYPE_DS || type == DNS_QTYPE_DNSKEY ||
-                   type == DNS_QTYPE_TLSA || type == DNS_QTYPE_SVCB ||
-                   type == DNS_QTYPE_HTTPS || type == DNS_QTYPE_CAA ||
-                   type == DNS_QTYPE_HTTPSSVC) {
-            if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
-                log_warn(
-                    "dnscse",
-                    "SRV-like record with wrong SRV-like len. Not processing.");
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else if (rdlength < 1) {
-                fs_add_uint64(afs, "rdata_is_parsed", 0);
-                fs_add_binary(afs, "rdata", rdlength, rdata, 0);
-            } else {
-                fs_add_uint64(afs, "rdata_is_parsed", 1);
-                char *txt = xmalloc(rdlength);
-                memcpy(txt, rdata + 1, rdlength - 1);
-                fs_add_unsafe_string(afs, "rdata", txt, 1);
-            }
-        } 
+            fs_add_unsafe_string(afs, "rdata", ipv6_str, 1);
+        }
+    } else if (type == DNS_QTYPE_SIG || type == DNS_QTYPE_SRV ||
+               type == DNS_QTYPE_DS || type == DNS_QTYPE_DNSKEY ||
+               type == DNS_QTYPE_TLSA || type == DNS_QTYPE_SVCB ||
+               type == DNS_QTYPE_HTTPS || type == DNS_QTYPE_CAA ||
+               type == DNS_QTYPE_HTTPSSVC) {
+        if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+            log_warn(
+                "dnscse",
+                "SRV-like record with wrong SRV-like len. Not processing.");
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else if (rdlength < 1) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *txt = xmalloc(rdlength);
+            memcpy(txt, rdata + 1, rdlength - 1);
+            fs_add_unsafe_string(afs, "rdata", txt, 1);
+        }
+    } else if (type == DNS_QTYPE_OPT) {
+        dns_option_tail *option_tail =
+            (dns_option_tail *) (*data + bytes_consumed);
+        uint16_t udpsize        = ntohs(option_tail->udpsize);
+        uint8_t  ercode         = option_tail->ercode;
+        uint8_t  eversion       = option_tail->eversion;
+        uint16_t dodnssec       = option_tail->dodnssec;
+        uint16_t option_z       = option_tail->z1 << 8 + option_tail->z2;
+        uint16_t option_dlength = ntohs(option_tail->dlength);
+        char    *option_data    = option_tail->data;
+
+        fs_add_uint64(afs, "udpsize", udpsize);
+        fs_add_uint64(afs, "ercode", ercode);
+        fs_add_uint64(afs, "eversion", eversion);
+        fs_add_uint64(afs, "dodnssec", dodnssec);
+        fs_add_uint64(afs, "z", option_z);
+        fs_add_uint64(afs, "dlength", option_dlength);
+        fs_add_binary(afs, "data", option_dlength, option_data, 0);
+    } else {
+        fs_add_uint64(afs, "rdata_is_parsed", 0);
+        fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+    }
+    // Now we're adding the new fs to the list.
+    fs_add_fieldset(list, NULL, afs);
+    // Now update the pointers.
+    *data     = *data + bytes_consumed + sizeof(dns_answer_tail) + rdlength;
+    *data_len = *data_len - bytes_consumed - sizeof(dns_answer_tail) - rdlength;
+    log_trace("dnscse",
+              "return success from process_response_answer_cse, data_len: %d",
+              *data_len);
+
+    return 0;
+}
