@@ -781,3 +781,61 @@ static int dnscse_global_init(struct state_conf *conf) {
         log_fatal("dnscse", "invalid number of probes for the DNS module: %d",
                   num_questions_cse);
     }
+
+        // Setup the global structures
+        dns_packets_cse     = xmalloc(sizeof(char *) * num_questions_cse);
+        dns_packet_lens_cse = xmalloc(sizeof(uint16_t) * num_questions_cse);
+        qname_lens_cse      = xmalloc(sizeof(uint16_t) * num_questions_cse);
+        qnames_cse          = xmalloc(sizeof(char *) * num_questions_cse);
+        qtypes_cse          = xmalloc(sizeof(uint16_t) * num_questions_cse);
+        domains_cse         = xmalloc(sizeof(char *) * num_questions_cse);
+
+        for (int i = 0; i < num_questions_cse; i++) {
+            domains_cse[i] = (char *) default_domain_cse;
+            qtypes_cse[i]  = default_qtype_cse;
+        }
+
+        // This is xmap boilerplate. Why do I have to write this?
+        dns_num_ports_cse = conf->source_port_last - conf->source_port_first + 1;
+        setup_qtype_str_map_cse();
+
+        if (conf->probe_args &&
+            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+            char *c = strchr(conf->probe_args, ':');
+            if (!c) {
+                log_error("dnscse", dnscse_usage_error);
+                return EXIT_FAILURE;
+            }
+            ++c;
+
+            // label type
+            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+                label_type_cse = DNS_LTYPE_RAW;
+                log_debug("dnscse", "raw label prefix");
+            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+                label_type_cse = DNS_LTYPE_TIME;
+                log_debug("dnscse", "time label prefix");
+            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+                label_type_cse = DNS_LTYPE_RANDOM;
+                log_debug("dnscse", "random label prefix");
+            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+                label_type_cse   = DNS_LTYPE_STR;
+                conf->probe_args = c;
+                c                = strchr(conf->probe_args, ':');
+                if (!c) {
+                    log_error("dnscse", dnscse_usage_error);
+                    return EXIT_FAILURE;
+                }
+                label_len_cse = c - conf->probe_args;
+                label_cse     = xmalloc(label_len_cse);
+                strncpy(label_cse, conf->probe_args, label_len_cse);
+                ++c;
+                log_debug("dnscse", "label prefix: %s, len: %d", label_cse,
+                          label_len_cse);
+            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+                label_type_cse = DNS_LTYPE_SRCIP;
+                log_debug("dnscse", "dst-ip label prefix");
+            } else {
+                log_error("dnscse", dnscse_usage_error);
+                return EXIT_FAILURE;
+            }
