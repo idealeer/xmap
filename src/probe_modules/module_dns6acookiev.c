@@ -1379,64 +1379,68 @@ int dns6acookiev_validate_packet(const struct ip *ip_hdr, uint32_t len,
         }
 
         struct ip6_hdr *ip6_inner_header = (struct ip6_hdr *) &icmp6_header[1];
-    // find original destination IPv6 and check that we sent a packet
-    // to that IPv6 address
+        // find original destination IPv6 and check that we sent a packet
+        // to that IPv6 address
 
-                // This is the UDP packet we sent
-                struct udphdr *udp_inner_header =
-                    (struct udphdr *) (&ip6_inner_header[1]);
-                // we can always check the destination port because this is the
-                // original packet and wouldn't have been altered by something
-                // responding on a different port
-                uint16_t sport = ntohs(udp_inner_header->uh_sport);
-                uint16_t dport = ntohs(udp_inner_header->uh_dport);
+        // This is the UDP packet we sent
+        struct udphdr *udp_inner_header =
+            (struct udphdr *) (&ip6_inner_header[1]);
+        // we can always check the destination port because this is the
+        // original packet and wouldn't have been altered by something
+        // responding on a different port
+        uint16_t sport = ntohs(udp_inner_header->uh_sport);
+        uint16_t dport = ntohs(udp_inner_header->uh_dport);
 
-                if (!xconf.target_port_flag[dport]) {
-                    return PACKET_INVALID;
-                }
+        if (!xconf.target_port_flag[dport]) {
+            return PACKET_INVALID;
+        }
 
-                uint8_t validation[VALIDATE_BYTES];
-                validate_gen((uint8_t *) &(ip6_inner_header->ip6_src),
-                             (uint8_t *) &(ip6_inner_header->ip6_dst), dport,
-                             validation);
+        uint8_t validation[VALIDATE_BYTES];
+        validate_gen((uint8_t *) &(ip6_inner_header->ip6_src),
+                     (uint8_t *) &(ip6_inner_header->ip6_dst), dport,
+                     validation);
 
-                if (!check_dns_src_port(sport, dns_num_ports_6acookiev, validation)) {
-                    return PACKET_INVALID;
-                }
+        if (!check_dns_src_port(sport, dns_num_ports_6acookiev, validation)) {
+            return PACKET_INVALID;
+        }
 
-                dns_header_p = (dns_header *) (&udp_inner_header[1]);
+        dns_header_p = (dns_header *) (&udp_inner_header[1]);
 
-                if (!check_dnsa_txid(dns_header_p->id, validation)) {
-                    return PACKET_INVALID;
-                }
+        if (!check_dnsa_txid(dns_header_p->id, validation)) {
+            return PACKET_INVALID;
+        }
 
-                // find original destination IP and check that we sent a packet
-                // to that IP address
-                if (!blocklist_is_allowed_ip(
-                        (uint8_t *) &(ip6_inner_header->ip6_dst))) {
-                    return PACKET_INVALID;
-                }
+        // find original destination IP and check that we sent a packet
+        // to that IP address
+        if (!blocklist_is_allowed_ip(
+                (uint8_t *) &(ip6_inner_header->ip6_dst))) {
+            return PACKET_INVALID;
+        }
 
-            } else {
-                return PACKET_INVALID;
-            }
+    } else {
+        return PACKET_INVALID;
+    }
 
-            char              *qname     = ((char *) dns_header_p) + sizeof(dns_header);
-            int                qname_len = strlen(qname) + 1;
-            dns_question_tail *tail_p =
-                (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
-                                       qname_len);
+    char              *qname     = ((char *) dns_header_p) + sizeof(dns_header);
+    int                qname_len = strlen(qname) + 1;
+    dns_question_tail *tail_p =
+        (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
+                               qname_len);
 
-            int   ip_type_domain_len = xconf.ipv46_bytes + 2 + strlen(qname);
-            char *ip_type_domain     = xmalloc(ip_type_domain_len);
-            memcpy(ip_type_domain, (char *) &(ip6_header->ip6_src), xconf.ipv46_bytes);
-            ip_type_domain[xconf.ipv46_bytes]     = (char) (tail_p->qtype >> 8u);
-            ip_type_domain[xconf.ipv46_bytes + 1] = (char) (tail_p->qtype & 0xffu);
-            memcpy(ip_type_domain + xconf.ipv46_bytes + 2, qname, strlen(qname));
-            if (bloom_filter_check_string(&xrecv.bf, (const char *) ip_type_domain,
-                                          ip_type_domain_len) == BLOOM_FAILURE) {
-                bloom_filter_add_string(&xrecv.bf, (const char *) ip_type_domain,
-                                        ip_type_domain_len);
-                *is_repeat = 0;
-            }
-            free(ip_type_domain);
+    int   ip_type_domain_len = xconf.ipv46_bytes + 2 + strlen(qname);
+    char *ip_type_domain     = xmalloc(ip_type_domain_len);
+    memcpy(ip_type_domain, (char *) &(ip6_header->ip6_src), xconf.ipv46_bytes);
+    ip_type_domain[xconf.ipv46_bytes]     = (char) (tail_p->qtype >> 8u);
+    ip_type_domain[xconf.ipv46_bytes + 1] = (char) (tail_p->qtype & 0xffu);
+    memcpy(ip_type_domain + xconf.ipv46_bytes + 2, qname, strlen(qname));
+    if (bloom_filter_check_string(&xrecv.bf, (const char *) ip_type_domain,
+                                  ip_type_domain_len) == BLOOM_FAILURE) {
+        bloom_filter_add_string(&xrecv.bf, (const char *) ip_type_domain,
+                                ip_type_domain_len);
+        *is_repeat = 0;
+    }
+    free(ip_type_domain);
+
+    // Looks good.
+    return PACKET_VALID;
+}
