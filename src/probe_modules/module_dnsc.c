@@ -1074,3 +1074,62 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
     return EXIT_SUCCESS;
 }
+
+void dnsc_print_packet(FILE *fp, void *packet) {
+    struct ether_header *eth_header   = (struct ether_header *) packet;
+    struct ip           *ip_header    = (struct ip *) (&eth_header[1]);
+    struct udphdr       *udp_header   = (struct udphdr *) (&ip_header[1]);
+    dns_header          *dns_header_p = (dns_header *) (&udp_header[1]);
+
+    uint16_t udp_len        = ntohs(udp_header->uh_ulen);
+    char    *data           = ((char *) dns_header_p) + sizeof(dns_header);
+    uint16_t data_len       = udp_len - sizeof(udp_header) - sizeof(dns_header);
+    uint16_t bytes_consumed = 0;
+    char    *question_name  = get_name_c(data, data_len, (char *) dns_header_p,
+                                                   udp_len, &bytes_consumed);
+    char    *qname          = ((char *) dns_header_p) + sizeof(dns_header);
+    int      qname_len      = strlen(qname) + 1;
+    dns_question_tail *tail_p =
+        (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
+                               qname_len);
+
+    fprintf_eth_header(fp, eth_header);
+    fprintf_ip_header(fp, ip_header);
+    fprintf(fp,
+            "UDP\n"
+            "\tSource Port(2B)\t\t: %u\n"
+            "\tDestination Port(2B)\t: %u\n"
+            "\tLength(2B)\t\t: %u\n"
+            "\tChecksum(2B)\t\t: 0x%04x\n",
+            ntohs(udp_header->uh_sport), ntohs(udp_header->uh_dport),
+            ntohs(udp_header->uh_ulen), ntohs(udp_header->uh_sum));
+    fprintf(fp,
+            "DNS\n"
+            "\tTransaction ID(2B)\t: 0x%04x\n"
+            "\tFlags(2B)\t\t: 0x%04x\n"
+            "\tQuestions(2B)\t\t: %u\n"
+            "\tAnswer RRs(2B)\t\t: %u\n"
+            "\tAuthority RRs(2B)\t: %u\n"
+            "\tAdditional RRs(2B)\t: %u\n"
+            "\tQueries\t\t\t: \n"
+            "\t\t\t\t: %s: type %s, class IN\n",
+            ntohs(dns_header_p->id), ntohs(dns_header_p->rd),
+            ntohs(dns_header_p->qdcount), ntohs(dns_header_p->ancount),
+            ntohs(dns_header_p->nscount), ntohs(dns_header_p->arcount),
+            question_name,
+            qtype_strs_c[qtype_qtype_to_strid_c[(uint16_t) tail_p->qtype]]);
+    fprintf(fp, "------------------------------------------------------\n");
+
+    free(question_name);
+}
+
+int dnsc_validate_packet(const struct ip *ip_hdr, uint32_t len,
+                         UNUSED int *is_repeat, UNUSED void *buf,
+                         UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
+    dns_header *dns_header_p;
+    if (ip_hdr->ip_p == IPPROTO_UDP) {
+        if ((4 * ip_hdr->ip_hl + sizeof(struct udphdr)) > len) {
+            // buffer not large enough to contain expected udp
+            // header
+            return PACKET_INVALID;
+        }
