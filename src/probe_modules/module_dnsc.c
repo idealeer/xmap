@@ -267,9 +267,8 @@ static uint16_t get_name_helper_c(const char *data, uint16_t data_len,
             log_trace("dnsc", "_get_name_helper, ptr encountered");
             // Do we have enough bytes to check ahead?
             if (data_len < 2) {
-                log_trace("dnsc",
-                          "_get_name_helper OUT. ptr byte encountered. "
-                          "No offset. ERR.");
+                log_trace("dnsc", "_get_name_helper OUT. ptr byte encountered. "
+                                  "No offset. ERR.");
                 return 0;
             }
             // No. ntohs isn't needed here. It's because of
@@ -299,154 +298,153 @@ static uint16_t get_name_helper_c(const char *data, uint16_t data_len,
                 name_len--;
             }
 
-                        uint16_t rec_bytes_consumed = get_name_helper_c(
-                            payload + offset, payload_len - offset, payload, payload_len,
-                            name, name_len, recursion_level + 1);
-                        // We are done so don't bother to increment the
-                        // pointers.
-                        if (rec_bytes_consumed == 0) {
-                            log_trace("dnsc", "_get_name_helper OUT. rec level %d failed",
-                                      recursion_level);
-                            return 0;
-                        } else {
-                            bytes_consumed += 2;
-                            log_trace("dnsc",
-                                      "_get_name_helper OUT. rec level %d success. %d rec "
-                                      "bytes consumed. %d bytes consumed.",
-                                      recursion_level, rec_bytes_consumed, bytes_consumed);
-                            return bytes_consumed;
-                        }
-                    } else if (byte == '\0') {
-                        // don't bother with pointer incrementation. We're done.
-                        bytes_consumed += 1;
-                        log_trace("dnsc",
-                                  "_get_name_helper OUT. rec level %d success. %d bytes "
-                                  "consumed.",
-                                  recursion_level, bytes_consumed);
-                        return bytes_consumed;
-                    } else {
-                        log_trace("dnsc", "_get_name_helper, segment 0x%hx encountered",
-                                  byte);
-                        // We've now consumed a byte.
-                        ++data;
-                        --data_len;
-                        // Mark byte consumed after we check for first
-                        // iteration. Do we have enough data left (must have
-                        // null byte too)?
-                        if ((byte + 1) > data_len) {
-                            log_trace("dnsc", "_get_name_helper OUT. ERR. Not enough data "
-                                              "for segment %hd");
-                            return 0;
-                        }
-                        // If we've consumed any bytes and are in a label, we're
-                        // in a label chain. We need to add a dot.
-                        if (bytes_consumed > 0) {
+            uint16_t rec_bytes_consumed = get_name_helper_c(
+                payload + offset, payload_len - offset, payload, payload_len,
+                name, name_len, recursion_level + 1);
+            // We are done so don't bother to increment the
+            // pointers.
+            if (rec_bytes_consumed == 0) {
+                log_trace("dnsc", "_get_name_helper OUT. rec level %d failed",
+                          recursion_level);
+                return 0;
+            } else {
+                bytes_consumed += 2;
+                log_trace("dnsc",
+                          "_get_name_helper OUT. rec level %d success. %d rec "
+                          "bytes consumed. %d bytes consumed.",
+                          recursion_level, rec_bytes_consumed, bytes_consumed);
+                return bytes_consumed;
+            }
+        } else if (byte == '\0') {
+            // don't bother with pointer incrementation. We're done.
+            bytes_consumed += 1;
+            log_trace("dnsc",
+                      "_get_name_helper OUT. rec level %d success. %d bytes "
+                      "consumed.",
+                      recursion_level, bytes_consumed);
+            return bytes_consumed;
+        } else {
+            log_trace("dnsc", "_get_name_helper, segment 0x%hx encountered",
+                      byte);
+            // We've now consumed a byte.
+            ++data;
+            --data_len;
+            // Mark byte consumed after we check for first
+            // iteration. Do we have enough data left (must have
+            // null byte too)?
+            if ((byte + 1) > data_len) {
+                log_trace("dnsc", "_get_name_helper OUT. ERR. Not enough data "
+                                  "for segment %hd");
+                return 0;
+            }
+            // If we've consumed any bytes and are in a label, we're
+            // in a label chain. We need to add a dot.
+            if (bytes_consumed > 0) {
 
-                            if (name_len < 1) {
-                                log_warn("dnsc", "Exceeded static name field allocation.");
-                                return 0;
-                            }
+                if (name_len < 1) {
+                    log_warn("dnsc", "Exceeded static name field allocation.");
+                    return 0;
+                }
 
-                            name[0] = '.';
-                            name++;
-                            name_len--;
-                        }
-                        // Now we've consumed a byte.
-                        ++bytes_consumed;
-                        // Did we run out of our arbitrary buffer?
-                        if (byte > name_len) {
-                            log_warn("dnsc", "Exceeded static name field allocation.");
-                            return 0;
-                        }
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
+            // Now we've consumed a byte.
+            ++bytes_consumed;
+            // Did we run out of our arbitrary buffer?
+            if (byte > name_len) {
+                log_warn("dnsc", "Exceeded static name field allocation.");
+                return 0;
+            }
 
-                                                assert(data_len > 0);
-                                                memcpy(name, data, byte);
-                                                name += byte;
-                                                name_len -= byte;
-                                                data_len -= byte;
-                                                data += byte;
-                                                bytes_consumed += byte;
-                                                // Handled in the byte+1 check above.
-                                                assert(data_len > 0);
-                                            }
-                            }
-                            // We should never get here.
-                            // For each byte we either have:
-                            // -- a ptr, which terminates
-                            // -- a null byte, which terminates
-                            // -- a segment length which either terminates or ensures we keep
-                            // looping
-                            assert(0);
-                            return 0;
-                        }
+            assert(data_len > 0);
+            memcpy(name, data, byte);
+            name += byte;
+            name_len -= byte;
+            data_len -= byte;
+            data += byte;
+            bytes_consumed += byte;
+            // Handled in the byte+1 check above.
+            assert(data_len > 0);
+        }
+    }
+    // We should never get here.
+    // For each byte we either have:
+    // -- a ptr, which terminates
+    // -- a null byte, which terminates
+    // -- a segment length which either terminates or ensures we keep
+    // looping
+    assert(0);
+    return 0;
+}
 
-                        // data: Where we are in the dns payload
-                        // payload: the entire udp payload
-                        static char *get_name_c(const char *data, uint16_t data_len,
-                                                const char *payload, uint16_t payload_len,
-                                                uint16_t *bytes_consumed) {
-                            log_trace("dnsc", "call to get_name_c, data_len: %d", data_len);
-                            char *name      = xmalloc(MAX_NAME_LENGTH);
-                            *bytes_consumed = get_name_helper_c(data, data_len, payload, payload_len,
-                                                                name, MAX_NAME_LENGTH - 1, 0);
-                            if (*bytes_consumed == 0) {
-                                free(name);
-                                return NULL;
-                            }
-                            // Our memset ensured null byte.
-                            assert(name[MAX_NAME_LENGTH - 1] == '\0');
-                            log_trace("dnsc",
-                                      "return success from get_name_c, bytes_consumed: %d, string: %s",
-                                      *bytes_consumed, name);
+// data: Where we are in the dns payload
+// payload: the entire udp payload
+static char *get_name_c(const char *data, uint16_t data_len,
+                        const char *payload, uint16_t payload_len,
+                        uint16_t *bytes_consumed) {
+    log_trace("dnsc", "call to get_name_c, data_len: %d", data_len);
+    char *name      = xmalloc(MAX_NAME_LENGTH);
+    *bytes_consumed = get_name_helper_c(data, data_len, payload, payload_len,
+                                        name, MAX_NAME_LENGTH - 1, 0);
+    if (*bytes_consumed == 0) {
+        free(name);
+        return NULL;
+    }
+    // Our memset ensured null byte.
+    assert(name[MAX_NAME_LENGTH - 1] == '\0');
+    log_trace("dnsc",
+              "return success from get_name_c, bytes_consumed: %d, string: %s",
+              *bytes_consumed, name);
 
-                            return name;
-                        }
+    return name;
+}
 
-                        static bool process_response_question_c(char **data, uint16_t *data_len,
-                                                                const char *payload,
-                                                                uint16_t    payload_len,
-                                                                fieldset_t *list) {
-                            // Payload is the start of the DNS packet, including header
-                            // data is handle to the start of this RR
-                            // data_len is a pointer to the how much total data we have to work
-                            // with. This is awful. I'm bad and should feel bad.
-                            uint16_t bytes_consumed = 0;
-                            char    *question_name =
-                                get_name_c(*data, *data_len, payload, payload_len, &bytes_consumed);
-                            // Error.
-                            if (question_name == NULL) {
-                                return 1;
-                            }
-                            assert(bytes_consumed > 0);
-                            if ((bytes_consumed + sizeof(dns_question_tail)) > *data_len) {
-                                free(question_name);
-                                return 1;
-                            }
+static bool process_response_question_c(char **data, uint16_t *data_len,
+                                        const char *payload,
+                                        uint16_t    payload_len,
+                                        fieldset_t *list) {
+    // Payload is the start of the DNS packet, including header
+    // data is handle to the start of this RR
+    // data_len is a pointer to the how much total data we have to work
+    // with. This is awful. I'm bad and should feel bad.
+    uint16_t bytes_consumed = 0;
+    char    *question_name =
+        get_name_c(*data, *data_len, payload, payload_len, &bytes_consumed);
+    // Error.
+    if (question_name == NULL) {
+        return 1;
+    }
+    assert(bytes_consumed > 0);
+    if ((bytes_consumed + sizeof(dns_question_tail)) > *data_len) {
+        free(question_name);
+        return 1;
+    }
 
-                                                        dns_question_tail *tail   = (dns_question_tail *) (*data + bytes_consumed);
-                                                        uint16_t           qtype  = ntohs(tail->qtype);
-                                                        uint16_t           qclass = ntohs(tail->qclass);
-                                                        // Build our new question fieldset
-                                                        fieldset_t *qfs = fs_new_fieldset();
-                                                        fs_add_unsafe_string(qfs, "name", question_name, 1);
-                                                        fs_add_uint64(qfs, "qtype", qtype);
+    dns_question_tail *tail   = (dns_question_tail *) (*data + bytes_consumed);
+    uint16_t           qtype  = ntohs(tail->qtype);
+    uint16_t           qclass = ntohs(tail->qclass);
+    // Build our new question fieldset
+    fieldset_t *qfs = fs_new_fieldset();
+    fs_add_unsafe_string(qfs, "name", question_name, 1);
+    fs_add_uint64(qfs, "qtype", qtype);
 
-                                                        if (qtype > MAX_QTYPE || qtype_qtype_to_strid_c[qtype] == BAD_QTYPE_VAL) {
-                                                            fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
-                                                        } else {
-                                                            // I've written worse things than this 3rd arg. But I want to be
-                                                            // fast.
-                                                            fs_add_string(qfs, "qtype_str",
-                                                                          (char *) qtype_strs_c[qtype_qtype_to_strid_c[qtype]],
-                                                                          0);
-                                                        }
+    if (qtype > MAX_QTYPE || qtype_qtype_to_strid_c[qtype] == BAD_QTYPE_VAL) {
+        fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(qfs, "qtype_str",
+                      (char *) qtype_strs_c[qtype_qtype_to_strid_c[qtype]], 0);
+    }
 
-                                                        fs_add_uint64(qfs, "qclass", qclass);
-                                                        // Now we're adding the new fs to the list.
-                                                        fs_add_fieldset(list, NULL, qfs);
-                                                        // Now update the pointers.
-                                                        *data     = *data + bytes_consumed + sizeof(dns_question_tail);
-                                                        *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
+    fs_add_uint64(qfs, "qclass", qclass);
+    // Now we're adding the new fs to the list.
+    fs_add_fieldset(list, NULL, qfs);
+    // Now update the pointers.
+    *data     = *data + bytes_consumed + sizeof(dns_question_tail);
+    *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
 
-                                                        return 0;
-                                                    }
+    return 0;
+}
