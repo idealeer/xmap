@@ -956,3 +956,75 @@ static int dns6acookiev_global_init(struct state_conf *conf) {
     else
         return EXIT_SUCCESS;
 }
+
+static int dns6acookiev_global_cleanup(UNUSED struct state_conf *xconf,
+                                       UNUSED struct state_send *xsend,
+                                       UNUSED struct state_recv *xrecv) {
+    if (dns_packets_6acookiev) {
+        for (int i = 0; i < num_questions_6acookiev; i++) {
+            if (dns_packets_6acookiev[i]) {
+                free(dns_packets_6acookiev[i]);
+            }
+        }
+        free(dns_packets_6acookiev);
+    }
+    dns_packets_6acookiev = NULL;
+
+    if (qnames_6acookiev) {
+        for (int i = 0; i < num_questions_6acookiev; i++) {
+            if (qnames_6acookiev[i]) {
+                free(qnames_6acookiev[i]);
+            }
+        }
+        free(qnames_6acookiev);
+    }
+    qnames_6acookiev = NULL;
+
+    if (dns_packet_lens_6acookiev) {
+        free(dns_packet_lens_6acookiev);
+    }
+
+    if (qname_lens_6acookiev) {
+        free(qname_lens_6acookiev);
+    }
+
+    if (qtypes_6acookiev) {
+        free(qtypes_6acookiev);
+    }
+
+    free(label_6acookiev);
+
+    return EXIT_SUCCESS;
+}
+
+int dns6acookiev_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
+                             void **arg_ptr) {
+    memset(buf, 0, MAX_PACKET_SIZE);
+
+    // Setup assuming num_questions_6acookiev == 0
+    struct ether_header *eth_header = (struct ether_header *) buf;
+    make_eth6_header(eth_header, src, gw);
+
+    struct ip6_hdr *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
+    uint16_t payload_len = sizeof(struct udphdr) + dns_packet_lens_6acookiev[0];
+    make_ip6_header(ip6_header, IPPROTO_UDP, payload_len);
+
+    struct udphdr *udp6_header = (struct udphdr *) (&ip6_header[1]);
+    uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_6acookiev[0];
+    make_udp_header(udp6_header, udp_len);
+
+    char *payload = (char *) (&udp6_header[1]);
+    module_dns6acookiev.packet_length =
+        sizeof(struct ether_header) + sizeof(struct ip6_hdr) +
+        sizeof(struct udphdr) + dns_packet_lens_6acookiev[0];
+    assert(module_dns6acookiev.packet_length <= MAX_PACKET_SIZE);
+
+    memcpy(payload, dns_packets_6acookiev[0], dns_packet_lens_6acookiev[0]);
+
+    // Seed our random number generator with the global generator
+    uint32_t   seed = aesrand_getword(xconf.aes);
+    aesrand_t *aes  = aesrand_init_from_seed(seed);
+    *arg_ptr        = aes;
+
+    return EXIT_SUCCESS;
+}
