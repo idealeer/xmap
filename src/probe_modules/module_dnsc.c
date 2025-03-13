@@ -873,8 +873,7 @@ static int dnsc_global_cleanup(UNUSED struct state_conf *xconf,
     return EXIT_SUCCESS;
 }
 
-int dnsc_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
-                     void **arg_ptr) {
+int dnsc_thread_init(void *buf, macaddr_t *src, macaddr_t *gw, void **arg_ptr) {
     memset(buf, 0, MAX_PACKET_SIZE);
 
     // Setup assuming num_questions_c == 0
@@ -890,7 +889,7 @@ int dnsc_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
     uint16_t       udp_len    = sizeof(struct udphdr) + dns_packet_lens_c[0];
     make_udp_header(udp_header, udp_len);
 
-    char *payload              = (char *) (&udp_header[1]);
+    char *payload             = (char *) (&udp_header[1]);
     module_dnsc.packet_length = sizeof(struct ether_header) +
                                 sizeof(struct ip) + sizeof(struct udphdr) +
                                 dns_packet_lens_c[0];
@@ -927,8 +926,7 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
                               dns_packet_lens_c[index];
             make_ip_header(ip_header, IPPROTO_UDP, ip_len);
 
-            uint16_t udp_len =
-                sizeof(struct udphdr) + dns_packet_lens_c[index];
+            uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_c[index];
             make_udp_header(udp_header, udp_len);
 
             char *payload = (char *) (&udp_header[1]);
@@ -945,7 +943,7 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         dst_ip_byte[3]           = dst_ip_byte[3] + 1;
         ip_header->ip_src.s_addr = *(uint32_t *) dst_ip;
         dst_ip_byte[3]           = dst_ip_byte[3] - 1;
-        ip_header->ip_ttl = ttl;
+        ip_header->ip_ttl        = ttl;
 
         udp_header->uh_sport = htons(src_port);
         udp_header->uh_dport = htons(dst_port);
@@ -1002,8 +1000,7 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         // dns packet
         free(qnames_c[index]);
 
-        qname_lens_c[index] =
-            domain_to_qname_c(&qnames_c[index], new_domain);
+        qname_lens_c[index] = domain_to_qname_c(&qnames_c[index], new_domain);
         dns_packet_lens_c[index] = sizeof(dns_header) + qname_lens_c[index] +
                                    sizeof(dns_question_tail);
         if (dns_packet_lens_c[index] > DNS_SEND_LEN) {
@@ -1014,66 +1011,66 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
         free(dns_packets_c[index]);
 
-                dns_packets_c[index]           = xmalloc(dns_packet_lens_c[index]);
-                dns_header        *dns_header_p = (dns_header *) dns_packets_c[index];
-                char              *qname_p = dns_packets_c[index] + sizeof(dns_header);
-                dns_question_tail *tail_p =
-                    (dns_question_tail *) (dns_packets_c[index] + sizeof(dns_header) +
-                                           qname_lens_c[index]);
+        dns_packets_c[index]            = xmalloc(dns_packet_lens_c[index]);
+        dns_header        *dns_header_p = (dns_header *) dns_packets_c[index];
+        char              *qname_p = dns_packets_c[index] + sizeof(dns_header);
+        dns_question_tail *tail_p =
+            (dns_question_tail *) (dns_packets_c[index] + sizeof(dns_header) +
+                                   qname_lens_c[index]);
 
-                // All other header fields should be 0. Except id, which we set
-                // per thread. Please recurse as needed.
-                dns_header_p->rd = recursive_c; // Is one bit. Don't need htons
-                // We have 1 question
-                dns_header_p->qdcount = htons(1);
-                memcpy(qname_p, qnames_c[index], qname_lens_c[index]);
-                // Set the qtype to what we passed from args
-                tail_p->qtype = htons(qtypes_c[index]);
-                // Set the qclass to The Internet (TM) (R) (I hope you're happy
-                // now Zakir)
-                tail_p->qclass = htons(0x01);
-                // MAGIC NUMBER. Let's be honest. This is only ever 1
+        // All other header fields should be 0. Except id, which we set
+        // per thread. Please recurse as needed.
+        dns_header_p->rd = recursive_c; // Is one bit. Don't need htons
+        // We have 1 question
+        dns_header_p->qdcount = htons(1);
+        memcpy(qname_p, qnames_c[index], qname_lens_c[index]);
+        // Set the qtype to what we passed from args
+        tail_p->qtype = htons(qtypes_c[index]);
+        // Set the qclass to The Internet (TM) (R) (I hope you're happy
+        // now Zakir)
+        tail_p->qclass = htons(0x01);
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
 
-                // packet
-                uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
-                                  dns_packet_lens_c[index];
-                make_ip_header(ip_header, IPPROTO_UDP, ip_len);
+        // packet
+        uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
+                          dns_packet_lens_c[index];
+        make_ip_header(ip_header, IPPROTO_UDP, ip_len);
 
-                uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_c[index];
-                make_udp_header(udp_header, udp_len);
+        uint16_t udp_len = sizeof(struct udphdr) + dns_packet_lens_c[index];
+        make_udp_header(udp_header, udp_len);
 
-                char *payload = (char *) (&udp_header[1]);
-                *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
-                           sizeof(struct udphdr) + dns_packet_lens_c[index];
+        char *payload = (char *) (&udp_header[1]);
+        *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
+                   sizeof(struct udphdr) + dns_packet_lens_c[index];
 
-                assert(*buf_len <= MAX_PACKET_SIZE);
+        assert(*buf_len <= MAX_PACKET_SIZE);
 
-                memcpy(payload, dns_packets_c[index], dns_packet_lens_c[index]);
+        memcpy(payload, dns_packets_c[index], dns_packet_lens_c[index]);
 
-                ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
-                uint8_t *dst_ip_byte     = (uint8_t *) dst_ip;
-                dst_ip_byte[3]           = dst_ip_byte[3] + 1;
-                ip_header->ip_src.s_addr = *(uint32_t *) dst_ip;
-                dst_ip_byte[3]           = dst_ip_byte[3] - 1;
-                ip_header->ip_ttl = ttl;
+        ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+        uint8_t *dst_ip_byte     = (uint8_t *) dst_ip;
+        dst_ip_byte[3]           = dst_ip_byte[3] + 1;
+        ip_header->ip_src.s_addr = *(uint32_t *) dst_ip;
+        dst_ip_byte[3]           = dst_ip_byte[3] - 1;
+        ip_header->ip_ttl        = ttl;
 
-                udp_header->uh_sport = htons(src_port);
-                udp_header->uh_dport = htons(dst_port);
+        udp_header->uh_sport = htons(src_port);
+        udp_header->uh_dport = htons(dst_port);
 
-                dns_header_p = (dns_header *) (&udp_header[1]);
+        dns_header_p = (dns_header *) (&udp_header[1]);
 
-                dns_header_p->id = dns_txid;
+        dns_header_p->id = dns_txid;
 
-                udp_header->uh_sum = 0;
-                udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
-                                                  ip_header->ip_dst.s_addr, udp_header);
+        udp_header->uh_sum = 0;
+        udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                          ip_header->ip_dst.s_addr, udp_header);
 
-                ip_header->ip_sum = 0;
-                ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
 
-                free(new_domain);
-                free(new_label);
-            }
+        free(new_domain);
+        free(new_label);
+    }
 
-            return EXIT_SUCCESS;
-        }
+    return EXIT_SUCCESS;
+}
