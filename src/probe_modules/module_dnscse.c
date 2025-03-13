@@ -782,149 +782,149 @@ static int dnscse_global_init(struct state_conf *conf) {
                   num_questions_cse);
     }
 
-        // Setup the global structures
-        dns_packets_cse     = xmalloc(sizeof(char *) * num_questions_cse);
-        dns_packet_lens_cse = xmalloc(sizeof(uint16_t) * num_questions_cse);
-        qname_lens_cse      = xmalloc(sizeof(uint16_t) * num_questions_cse);
-        qnames_cse          = xmalloc(sizeof(char *) * num_questions_cse);
-        qtypes_cse          = xmalloc(sizeof(uint16_t) * num_questions_cse);
-        domains_cse         = xmalloc(sizeof(char *) * num_questions_cse);
+    // Setup the global structures
+    dns_packets_cse     = xmalloc(sizeof(char *) * num_questions_cse);
+    dns_packet_lens_cse = xmalloc(sizeof(uint16_t) * num_questions_cse);
+    qname_lens_cse      = xmalloc(sizeof(uint16_t) * num_questions_cse);
+    qnames_cse          = xmalloc(sizeof(char *) * num_questions_cse);
+    qtypes_cse          = xmalloc(sizeof(uint16_t) * num_questions_cse);
+    domains_cse         = xmalloc(sizeof(char *) * num_questions_cse);
 
-        for (int i = 0; i < num_questions_cse; i++) {
-            domains_cse[i] = (char *) default_domain_cse;
-            qtypes_cse[i]  = default_qtype_cse;
+    for (int i = 0; i < num_questions_cse; i++) {
+        domains_cse[i] = (char *) default_domain_cse;
+        qtypes_cse[i]  = default_qtype_cse;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_cse = conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_cse();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
         }
+        ++c;
 
-        // This is xmap boilerplate. Why do I have to write this?
-        dns_num_ports_cse = conf->source_port_last - conf->source_port_first + 1;
-        setup_qtype_str_map_cse();
-
-        if (conf->probe_args &&
-            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
-            char *c = strchr(conf->probe_args, ':');
+        // label type
+        if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+            label_type_cse = DNS_LTYPE_RAW;
+            log_debug("dnscse", "raw label prefix");
+        } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+            label_type_cse = DNS_LTYPE_TIME;
+            log_debug("dnscse", "time label prefix");
+        } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+            label_type_cse = DNS_LTYPE_RANDOM;
+            log_debug("dnscse", "random label prefix");
+        } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+            label_type_cse   = DNS_LTYPE_STR;
+            conf->probe_args = c;
+            c                = strchr(conf->probe_args, ':');
             if (!c) {
                 log_error("dnscse", dnscse_usage_error);
                 return EXIT_FAILURE;
             }
+            label_len_cse = c - conf->probe_args;
+            label_cse     = xmalloc(label_len_cse);
+            strncpy(label_cse, conf->probe_args, label_len_cse);
             ++c;
+            log_debug("dnscse", "label prefix: %s, len: %d", label_cse,
+                      label_len_cse);
+        } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+            label_type_cse = DNS_LTYPE_SRCIP;
+            log_debug("dnscse", "dst-ip label prefix");
+        } else {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
 
-            // label type
-            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
-                label_type_cse = DNS_LTYPE_RAW;
-                log_debug("dnscse", "raw label prefix");
-            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
-                label_type_cse = DNS_LTYPE_TIME;
-                log_debug("dnscse", "time label prefix");
-            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
-                label_type_cse = DNS_LTYPE_RANDOM;
-                log_debug("dnscse", "random label prefix");
-            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-                label_type_cse   = DNS_LTYPE_STR;
-                conf->probe_args = c;
-                c                = strchr(conf->probe_args, ':');
-                if (!c) {
-                    log_error("dnscse", dnscse_usage_error);
-                    return EXIT_FAILURE;
-                }
-                label_len_cse = c - conf->probe_args;
-                label_cse     = xmalloc(label_len_cse);
-                strncpy(label_cse, conf->probe_args, label_len_cse);
-                ++c;
-                log_debug("dnscse", "label prefix: %s, len: %d", label_cse,
-                          label_len_cse);
-            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
-                label_type_cse = DNS_LTYPE_SRCIP;
-                log_debug("dnscse", "dst-ip label prefix");
-            } else {
-                log_error("dnscse", dnscse_usage_error);
-                return EXIT_FAILURE;
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
+
+        // recursive query
+        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+            recursive_cse = 1;
+        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+            recursive_cse = 0;
+        } else {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
+
+        // input query
+        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+            if (load_question_from_str_cse(c)) return EXIT_FAILURE;
+        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+            if (load_question_from_file_cse(c)) return EXIT_FAILURE;
+        } else {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_cse < num_questions_cse) {
+            log_error("dnscse", "more probes than questions configured. Add "
+                                "additional probes.");
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (label_type_cse == DNS_LTYPE_RAW || label_type_cse == DNS_LTYPE_STR)
+        return build_global_dns_packets_cse(domains_cse, num_questions_cse);
+    else
+        return EXIT_SUCCESS;
+}
+
+static int dnscse_global_cleanup(UNUSED struct state_conf *xconf,
+                                 UNUSED struct state_send *xsend,
+                                 UNUSED struct state_recv *xrecv) {
+    if (dns_packets_cse) {
+        for (int i = 0; i < num_questions_cse; i++) {
+            if (dns_packets_cse[i]) {
+                free(dns_packets_cse[i]);
             }
+        }
+        free(dns_packets_cse);
+    }
+    dns_packets_cse = NULL;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dnscse", dnscse_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
-
-                        // recursive query
-                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
-                            recursive_cse = 1;
-                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
-                            recursive_cse = 0;
-                        } else {
-                            log_error("dnscse", dnscse_usage_error);
-                            return EXIT_FAILURE;
-                        }
-
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dnscse", dnscse_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
-
-                        // input query
-                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
-                            if (load_question_from_str_cse(c)) return EXIT_FAILURE;
-                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
-                            if (load_question_from_file_cse(c)) return EXIT_FAILURE;
-                        } else {
-                            log_error("dnscse", dnscse_usage_error);
-                            return EXIT_FAILURE;
-                        }
-
-                        if (index_questions_cse < num_questions_cse) {
-                            log_error("dnscse", "more probes than questions configured. Add "
-                                                "additional probes.");
-                            return EXIT_FAILURE;
-                        }
-                    }
-
-                    if (label_type_cse == DNS_LTYPE_RAW || label_type_cse == DNS_LTYPE_STR)
-                        return build_global_dns_packets_cse(domains_cse, num_questions_cse);
-                    else
-                        return EXIT_SUCCESS;
+    if (qnames_cse) {
+        for (int i = 0; i < num_questions_cse; i++) {
+            if (qnames_cse[i]) {
+                free(qnames_cse[i]);
             }
+        }
+        free(qnames_cse);
+    }
+    qnames_cse = NULL;
 
-                        static int dnscse_global_cleanup(UNUSED struct state_conf *xconf,
-                                                         UNUSED struct state_send *xsend,
-                                                         UNUSED struct state_recv *xrecv) {
-                            if (dns_packets_cse) {
-                                for (int i = 0; i < num_questions_cse; i++) {
-                                    if (dns_packets_cse[i]) {
-                                        free(dns_packets_cse[i]);
-                                    }
-                                }
-                                free(dns_packets_cse);
-                            }
-                            dns_packets_cse = NULL;
+    if (dns_packet_lens_cse) {
+        free(dns_packet_lens_cse);
+    }
 
-                            if (qnames_cse) {
-                                for (int i = 0; i < num_questions_cse; i++) {
-                                    if (qnames_cse[i]) {
-                                        free(qnames_cse[i]);
-                                    }
-                                }
-                                free(qnames_cse);
-                            }
-                            qnames_cse = NULL;
+    if (qname_lens_cse) {
+        free(qname_lens_cse);
+    }
 
-                            if (dns_packet_lens_cse) {
-                                free(dns_packet_lens_cse);
-                            }
+    if (qtypes_cse) {
+        free(qtypes_cse);
+    }
 
-                            if (qname_lens_cse) {
-                                free(qname_lens_cse);
-                            }
+    free(label_cse);
 
-                            if (qtypes_cse) {
-                                free(qtypes_cse);
-                            }
-
-                            free(label_cse);
-
-                            return EXIT_SUCCESS;
-                        }
+    return EXIT_SUCCESS;
+}
