@@ -832,3 +832,76 @@ static int dnsc_global_init(struct state_conf *conf) {
     else
         return EXIT_SUCCESS;
 }
+
+static int dnsc_global_cleanup(UNUSED struct state_conf *xconf,
+                               UNUSED struct state_send *xsend,
+                               UNUSED struct state_recv *xrecv) {
+    if (dns_packets_c) {
+        for (int i = 0; i < num_questions_c; i++) {
+            if (dns_packets_c[i]) {
+                free(dns_packets_c[i]);
+            }
+        }
+        free(dns_packets_c);
+    }
+    dns_packets_c = NULL;
+
+    if (qnames_c) {
+        for (int i = 0; i < num_questions_c; i++) {
+            if (qnames_c[i]) {
+                free(qnames_c[i]);
+            }
+        }
+        free(qnames_c);
+    }
+    qnames_c = NULL;
+
+    if (dns_packet_lens_c) {
+        free(dns_packet_lens_c);
+    }
+
+    if (qname_lens_c) {
+        free(qname_lens_c);
+    }
+
+    if (qtypes_c) {
+        free(qtypes_c);
+    }
+
+    free(label_c);
+
+    return EXIT_SUCCESS;
+}
+
+int dnsc_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
+                     void **arg_ptr) {
+    memset(buf, 0, MAX_PACKET_SIZE);
+
+    // Setup assuming num_questions_c == 0
+    struct ether_header *eth_header = (struct ether_header *) buf;
+    make_eth_header(eth_header, src, gw);
+
+    struct ip *ip_header = (struct ip *) (&eth_header[1]);
+    uint16_t   ip_len =
+        sizeof(struct ip) + sizeof(struct udphdr) + dns_packet_lens_c[0];
+    make_ip_header(ip_header, IPPROTO_UDP, ip_len);
+
+    struct udphdr *udp_header = (struct udphdr *) (&ip_header[1]);
+    uint16_t       udp_len    = sizeof(struct udphdr) + dns_packet_lens_c[0];
+    make_udp_header(udp_header, udp_len);
+
+    char *payload              = (char *) (&udp_header[1]);
+    module_dnsc.packet_length = sizeof(struct ether_header) +
+                                sizeof(struct ip) + sizeof(struct udphdr) +
+                                dns_packet_lens_c[0];
+    assert(module_dnsc.packet_length <= MAX_PACKET_SIZE);
+
+    memcpy(payload, dns_packets_c[0], dns_packet_lens_c[0]);
+
+    // Seed our random number generator with the global generator
+    uint32_t   seed = aesrand_getword(xconf.aes);
+    aesrand_t *aes  = aesrand_init_from_seed(seed);
+    *arg_ptr        = aes;
+
+    return EXIT_SUCCESS;
+}
