@@ -284,3 +284,66 @@ static int build_global_dns_packets_6acookiev(char **domains, int num_domains) {
 
     return EXIT_SUCCESS;
 }
+
+static uint16_t get_name_helper_6acookiev(const char *data, uint16_t data_len,
+                                          const char *payload,
+                                          uint16_t payload_len, char *name,
+                                          uint16_t name_len,
+                                          uint16_t recursion_level) {
+    log_trace("dns6acookiev",
+              "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
+              data_len, name_len, recursion_level);
+    if (data_len == 0 || name_len == 0 || payload_len == 0) {
+        log_trace("dns6acookiev",
+                  "_get_name_helper OUT, err. 0 length field. datalen %d "
+                  "namelen %d payloadlen %d",
+                  data_len, name_len, payload_len);
+        return 0;
+    }
+    if (recursion_level > MAX_LABEL_RECURSION) {
+        log_trace("dns6acookiev", "_get_name_helper OUT. ERR, MAX RECUSION");
+        return 0;
+    }
+
+    uint16_t bytes_consumed = 0;
+    // The start of data is either a sequence of labels or a ptr.
+    while (data_len > 0) {
+        uint8_t byte = data[0];
+        // Is this a pointer?
+        if (byte >= 0xc0) {
+            log_trace("dns6acookiev", "_get_name_helper, ptr encountered");
+            // Do we have enough bytes to check ahead?
+            if (data_len < 2) {
+                log_trace("dns6acookiev",
+                          "_get_name_helper OUT. ptr byte encountered. "
+                          "No offset. ERR.");
+                return 0;
+            }
+            // No. ntohs isn't needed here. It's because of
+            // the upper 2 bits indicating a pointer.
+            uint16_t offset = ((byte & 0x03) << 8) | (uint8_t) data[1];
+            log_trace("dns6acookiev", "_get_name_helper. ptr offset 0x%x",
+                      offset);
+            if (offset >= payload_len) {
+                log_trace(
+                    "dns6acookiev",
+                    "_get_name_helper OUT. offset exceeded payload len %d ERR",
+                    payload_len);
+                return 0;
+            }
+
+            // We need to add a dot if we are:
+            // -- Not first level recursion.
+            // -- have consumed bytes
+            if (recursion_level > 0 || bytes_consumed > 0) {
+
+                if (name_len < 1) {
+                    log_warn("dns6acookiev",
+                             "Exceeded static name field allocation.");
+                    return 0;
+                }
+
+                name[0] = '.';
+                name++;
+                name_len--;
+            }
