@@ -118,3 +118,61 @@ static int       index_questions_c = 0;
  * with: dns_qtype (.h) qtype_strid_to_qtype_c (below) qtype_qtype_to_strid_c
  * (below, and setup_qtype_str_map_c())
  */
+const char *qtype_strs_c[]   = {"A",    "NS",    "CNAME", "SOA",     "PTR",
+                                "MX",   "TXT",   "AAAA",  "RRSIG",   "ANY",
+                                "SIG",  "SRV",   "DS",    "DNSKEY",  "TLSA",
+                                "SVCB", "HTTPS", "CAA",   "HTTPSSVC"};
+const int   qtype_strs_len_c = 19;
+
+const dns_qtype qtype_strid_to_qtype_c[] = {
+    DNS_QTYPE_A,     DNS_QTYPE_NS,     DNS_QTYPE_CNAME,   DNS_QTYPE_SOA,
+    DNS_QTYPE_PTR,   DNS_QTYPE_MX,     DNS_QTYPE_TXT,     DNS_QTYPE_AAAA,
+    DNS_QTYPE_RRSIG, DNS_QTYPE_ALL,    DNS_QTYPE_SIG,     DNS_QTYPE_SRV,
+    DNS_QTYPE_DS,    DNS_QTYPE_DNSKEY, DNS_QTYPE_TLSA,    DNS_QTYPE_SVCB,
+    DNS_QTYPE_HTTPS, DNS_QTYPE_CAA,    DNS_QTYPE_HTTPSSVC};
+
+int8_t qtype_qtype_to_strid_c[65536] = {BAD_QTYPE_VAL};
+
+void setup_qtype_str_map_c() {
+    qtype_qtype_to_strid_c[DNS_QTYPE_A]        = 0;
+    qtype_qtype_to_strid_c[DNS_QTYPE_NS]       = 1;
+    qtype_qtype_to_strid_c[DNS_QTYPE_CNAME]    = 2;
+    qtype_qtype_to_strid_c[DNS_QTYPE_SOA]      = 3;
+    qtype_qtype_to_strid_c[DNS_QTYPE_PTR]      = 4;
+    qtype_qtype_to_strid_c[DNS_QTYPE_MX]       = 5;
+    qtype_qtype_to_strid_c[DNS_QTYPE_TXT]      = 6;
+    qtype_qtype_to_strid_c[DNS_QTYPE_AAAA]     = 7;
+    qtype_qtype_to_strid_c[DNS_QTYPE_RRSIG]    = 8;
+    qtype_qtype_to_strid_c[DNS_QTYPE_ALL]      = 9;
+    qtype_qtype_to_strid_c[DNS_QTYPE_SIG]      = 10;
+    qtype_qtype_to_strid_c[DNS_QTYPE_SRV]      = 11;
+    qtype_qtype_to_strid_c[DNS_QTYPE_DS]       = 12;
+    qtype_qtype_to_strid_c[DNS_QTYPE_DNSKEY]   = 13;
+    qtype_qtype_to_strid_c[DNS_QTYPE_TLSA]     = 14;
+    qtype_qtype_to_strid_c[DNS_QTYPE_SVCB]     = 15;
+    qtype_qtype_to_strid_c[DNS_QTYPE_HTTPS]    = 16;
+    qtype_qtype_to_strid_c[DNS_QTYPE_CAA]      = 17;
+    qtype_qtype_to_strid_c[DNS_QTYPE_HTTPSSVC] = 18;
+}
+
+static uint16_t qtype_str_to_code_c(const char *str) {
+    for (int i = 0; i < qtype_strs_len_c; i++) {
+        if (strcmp(qtype_strs_c[i], str) == 0)
+            return qtype_strid_to_qtype_c[i];
+    }
+
+    return 0;
+}
+
+static char    *label_c      = NULL;
+static uint16_t label_len_c  = 0;
+static uint16_t label_type_c = DNS_LTYPE_RAW;
+static uint16_t recursive_c  = 1;
+
+static uint16_t domain_to_qname_c(char **qname_handle, const char *domain) {
+    if (domain[0] == '.') {
+        char *qname   = xmalloc(1);
+        qname[0]      = 0x00;
+        *qname_handle = qname;
+        return 1;
+    }
