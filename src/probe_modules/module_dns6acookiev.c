@@ -1145,3 +1145,67 @@ int dns6acookiev_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
                       dns_packet_lens_6acookiev[index], DNS_SEND_LEN);
             return EXIT_FAILURE;
         }
+
+                free(dns_packets_6acookiev[index]);
+
+                dns_packets_6acookiev[index] =
+                    xmalloc(dns_packet_lens_6acookiev[index]);
+                dns_header *dns_header_p = (dns_header *) dns_packets_6acookiev[index];
+                char       *qname_p = dns_packets_6acookiev[index] + sizeof(dns_header);
+                dns_question_tail *tail_p =
+                    (dns_question_tail *) (dns_packets_6acookiev[index] +
+                                           sizeof(dns_header) +
+                                           qname_lens_6acookiev[index]);
+                char *option_qname_p =
+                    (char *) (dns_packets_6acookiev[index] + sizeof(dns_header) +
+                              qname_lens_6acookiev[index] + sizeof(dns_question_tail));
+                dns_option_tail *option_tail_p =
+                    (dns_option_tail *) (dns_packets_6acookiev[index] +
+                                         sizeof(dns_header) +
+                                         qname_lens_6acookiev[index] +
+                                         sizeof(dns_question_tail) +
+                                         default_option_qname_len_6acookiev);
+                dns_option_cookie *option_cookie_p =
+                    (dns_option_cookie *) (dns_packets_6acookiev[index] +
+                                           sizeof(dns_header) +
+                                           qname_lens_6acookiev[index] +
+                                           sizeof(dns_question_tail) +
+                                           default_option_qname_len_6acookiev +
+                                           sizeof(dns_option_tail));
+
+                // All other header fields should be 0. Except id, which we set
+                // per thread. Please recurse as needed.
+                dns_header_p->rd = recursive_6acookiev; // Is one bit. Don't need htons
+                // We have 1 question
+                dns_header_p->qdcount = htons(1);
+                memcpy(qname_p, qnames_6acookiev[index], qname_lens_6acookiev[index]);
+                // Set the qtype to what we passed from args
+                tail_p->qtype = htons(qtypes_6acookiev[index]);
+                // Set the qclass to The Internet (TM) (R) (I hope you're happy
+                // now Zakir)
+                tail_p->qclass = htons(0x01);
+                // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+                // option, others set to 0
+                dns_header_p->arcount = htons(1);
+                memcpy(option_qname_p, default_option_qname_6acookiev,
+                       default_option_qname_len_6acookiev);
+                option_tail_p->type    = htons(DNS_QTYPE_OPT);
+                option_tail_p->udpsize = htons(default_option_udpsize_6acookiev);
+                option_tail_p->dlength = htons(default_option_rdata_len_6acookiev);
+
+                // cookie
+                option_cookie_p->optcode   = htons(DNS_OPTCODE_COOKIE); // 8
+                option_cookie_p->optlength = htons(16);                 // fixed
+                uint8_t cookie[8]          = {
+                    0x00,
+                    0x01,
+                    0x02,
+                    0x03,
+                    src_ip[0],
+                    src_ip[1],
+                    (src_ip[2] + (probe_num / 256)) % 256,
+                    (src_ip[3] + probe_num) % 256,
+                };
+                memcpy(option_cookie_p->clientcookie, cookie, 8);
+                memcpy(option_cookie_p->servercookie, cookie, 8);
