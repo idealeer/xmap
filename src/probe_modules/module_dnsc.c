@@ -574,4 +574,59 @@ static bool process_response_answer_c(char **data, uint16_t *data_len,
 
             fs_add_unsafe_string(afs, "rdata", ipv6_str, 1);
         }
+    } else if (type == DNS_QTYPE_SIG || type == DNS_QTYPE_SRV ||
+               type == DNS_QTYPE_DS || type == DNS_QTYPE_DNSKEY ||
+               type == DNS_QTYPE_TLSA || type == DNS_QTYPE_SVCB ||
+               type == DNS_QTYPE_HTTPS || type == DNS_QTYPE_CAA ||
+               type == DNS_QTYPE_HTTPSSVC) {
+        if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
+            log_warn(
+                "dnsc",
+                "SRV-like record with wrong SRV-like len. Not processing.");
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else if (rdlength < 1) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            char *txt = xmalloc(rdlength);
+            memcpy(txt, rdata + 1, rdlength - 1);
+            fs_add_unsafe_string(afs, "rdata", txt, 1);
+        }
+    } else {
+        fs_add_uint64(afs, "rdata_is_parsed", 0);
+        fs_add_binary(afs, "rdata", rdlength, rdata, 0);
     }
+    // Now we're adding the new fs to the list.
+    fs_add_fieldset(list, NULL, afs);
+    // Now update the pointers.
+    *data     = *data + bytes_consumed + sizeof(dns_answer_tail) + rdlength;
+    *data_len = *data_len - bytes_consumed - sizeof(dns_answer_tail) - rdlength;
+    log_trace("dnsc",
+              "return success from process_response_answer_c, data_len: %d",
+              *data_len);
+
+    return 0;
+}
+
+static int load_question_from_str_c(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dnsc", dnsc_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_c >= num_questions_c) {
+            log_error("dnsc", "less probes than questions configured. Add "
+                              "additional questions.");
+            return EXIT_FAILURE;
+        }
