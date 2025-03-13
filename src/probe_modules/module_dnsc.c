@@ -448,3 +448,66 @@ static bool process_response_question_c(char **data, uint16_t *data_len,
 
     return 0;
 }
+
+static bool process_response_answer_c(char **data, uint16_t *data_len,
+                                      const char *payload,
+                                      uint16_t payload_len, fieldset_t *list) {
+    log_trace("dnsc", "call to process_response_answer_c, data_len: %d",
+              *data_len);
+    // Payload is the start of the DNS packet, including header
+    // data is handle to the start of this RR
+    // data_len is a pointer to the how much total data we have to work
+    // with. This is awful. I'm bad and should feel bad.
+    uint16_t bytes_consumed = 0;
+    char    *answer_name =
+        get_name_c(*data, *data_len, payload, payload_len, &bytes_consumed);
+    // Error.
+    if (answer_name == NULL) {
+        return 1;
+    }
+    assert(bytes_consumed > 0);
+    if ((bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+        free(answer_name);
+        return 1;
+    }
+
+    dns_answer_tail *tail = (dns_answer_tail *) (*data + bytes_consumed);
+    uint16_t         type = ntohs(tail->type);
+    uint16_t class        = ntohs(tail->class);
+    uint32_t ttl          = ntohl(tail->ttl);
+    uint16_t rdlength     = ntohs(tail->rdlength);
+    char    *rdata        = tail->rdata;
+
+    if ((rdlength + bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+        free(answer_name);
+        return 1;
+    }
+    // Build our new question fieldset
+    fieldset_t *afs = fs_new_fieldset();
+    fs_add_unsafe_string(afs, "name", answer_name, 1);
+    fs_add_uint64(afs, "type", type);
+    if (type > MAX_QTYPE || qtype_qtype_to_strid_c[type] == BAD_QTYPE_VAL) {
+        fs_add_string(afs, "type_str", (char *) BAD_QTYPE_STR, 0);
+    } else {
+        // I've written worse things than this 3rd arg. But I want to be
+        // fast.
+        fs_add_string(afs, "type_str",
+                      (char *) qtype_strs_c[qtype_qtype_to_strid_c[type]], 0);
+    }
+    fs_add_uint64(afs, "class", class);
+    fs_add_uint64(afs, "ttl", ttl);
+    fs_add_uint64(afs, "rdlength", rdlength);
+
+    // XXX Fill this out for the other types we care about.
+    if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
+        uint16_t rdata_bytes_consumed = 0;
+        char    *rdata_name = get_name_c(rdata, rdlength, payload, payload_len,
+                                                   &rdata_bytes_consumed);
+        if (rdata_name == NULL) {
+            fs_add_uint64(afs, "rdata_is_parsed", 0);
+            fs_add_binary(afs, "rdata", rdlength, rdata, 0);
+        } else {
+            fs_add_uint64(afs, "rdata_is_parsed", 1);
+            fs_add_unsafe_string(afs, "rdata", rdata_name, 1);
+        }
+    }
