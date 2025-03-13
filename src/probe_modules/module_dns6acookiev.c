@@ -719,3 +719,54 @@ static bool process_response_answer_6acookiev(char **data, uint16_t *data_len,
 
     return 0;
 }
+
+static int load_question_from_str_6acookiev(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dns6acookiev", dns6acookiev_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_6acookiev >= num_questions_6acookiev) {
+            log_error("dns6acookiev",
+                      "less probes than questions configured. Add "
+                      "additional questions.");
+            return EXIT_FAILURE;
+        }
+
+        int domain_len = 0;
+
+        if (probe_arg_delimiter_p) {
+            domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+        } else {
+            domain_len = strlen(probe_q_delimiter_p) - 1;
+        }
+        assert(domain_len > 0);
+
+        if (label_type_6acookiev == DNS_LTYPE_STR) {
+            domains_6acookiev[index_questions_6acookiev] =
+                xmalloc(label_len_6acookiev + 1 + domain_len + 1);
+            strncpy(domains_6acookiev[index_questions_6acookiev],
+                    label_6acookiev, label_len_6acookiev);
+            domains_6acookiev[index_questions_6acookiev][label_len_6acookiev] =
+                '.';
+            strncpy(domains_6acookiev[index_questions_6acookiev] +
+                        label_len_6acookiev + 1,
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_6acookiev[index_questions_6acookiev]
+                             [label_len_6acookiev + 1 + domain_len] = '\0';
+        } else {
+            domains_6acookiev[index_questions_6acookiev] =
+                xmalloc(domain_len + 1);
+            strncpy(domains_6acookiev[index_questions_6acookiev],
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_6acookiev[index_questions_6acookiev][domain_len] = '\0';
+        }
