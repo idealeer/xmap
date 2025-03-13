@@ -1,47 +1,47 @@
 /*
-* XMap Copyright 2021 Xiang Li from Network and Information Security Lab
-* Tsinghua University
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at http://www.apache.org/licenses/LICENSE-2.0
-*/
+ * XMap Copyright 2021 Xiang Li from Network and Information Security Lab
+ * Tsinghua University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
 
 /* Module for scanning for open UDP DNS resolvers.
-*
-* This module optionally takes in an argument of the form:
-* LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
-* str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
-*      LABEL_TYPE: raw, str, time, random, dst-ip
-*      RECURSE: recurse, no-recurse
-*      INPUT_SRC: text, file
-*      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
-*            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
-*      file: TYPE,QUESTION;TYPE,QUESTION in each line
-*
-* Given no arguments it will default to asking for an A record for
-* www.qq.com.
-*
-* This module does minimal answer verification. It only verifies that the
-* response roughly looks like a DNS response. It will not, for example,
-* require the QR bit be set to 1. All such analysis should happen offline.
-* Specifically, to be included in the output it requires:
-* And it is marked as success.
-* - That the ports match and the packet is complete.
-* - That the ID field matches.
-* To be marked as app_success it also requires:
-* - That the QR bit be 1 and rcode == 0.
-*
-* Usage: xmap -p 53 --probe-module=dnsc --probe-args="raw:text:A,qq.com"
-*			-O json --output-fields=* 8.8.8.8
-*
-* We also support multiple questions, of the form:
-* "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
-* matches the number of questions in --probe-args, and --output-filter="" to
-* remove the implicit "filter_duplicates" configuration flag.
-*
-* Based on a deprecated udp_dns module.
-*/
+ *
+ * This module optionally takes in an argument of the form:
+ * LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
+ * str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
+ *      LABEL_TYPE: raw, str, time, random, dst-ip
+ *      RECURSE: recurse, no-recurse
+ *      INPUT_SRC: text, file
+ *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
+ *      file: TYPE,QUESTION;TYPE,QUESTION in each line
+ *
+ * Given no arguments it will default to asking for an A record for
+ * www.qq.com.
+ *
+ * This module does minimal answer verification. It only verifies that the
+ * response roughly looks like a DNS response. It will not, for example,
+ * require the QR bit be set to 1. All such analysis should happen offline.
+ * Specifically, to be included in the output it requires:
+ * And it is marked as success.
+ * - That the ports match and the packet is complete.
+ * - That the ID field matches.
+ * To be marked as app_success it also requires:
+ * - That the QR bit be 1 and rcode == 0.
+ *
+ * Usage: xmap -p 53 --probe-module=dnsc --probe-args="raw:text:A,qq.com"
+ *			-O json --output-fields=* 8.8.8.8
+ *
+ * We also support multiple questions, of the form:
+ * "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
+ * matches the number of questions in --probe-args, and --output-filter="" to
+ * remove the implicit "filter_duplicates" configuration flag.
+ *
+ * Based on a deprecated udp_dns module.
+ */
 
 #include <assert.h>
 #include <dirent.h>
@@ -157,8 +157,7 @@ void setup_qtype_str_map_c() {
 
 static uint16_t qtype_str_to_code_c(const char *str) {
     for (int i = 0; i < qtype_strs_len_c; i++) {
-        if (strcmp(qtype_strs_c[i], str) == 0)
-            return qtype_strid_to_qtype_c[i];
+        if (strcmp(qtype_strs_c[i], str) == 0) return qtype_strid_to_qtype_c[i];
     }
 
     return 0;
@@ -177,65 +176,65 @@ static uint16_t domain_to_qname_c(char **qname_handle, const char *domain) {
         return 1;
     }
 
-        // String + 1byte header + null byte
-        uint16_t len   = strlen(domain) + 1 + 1;
-        char    *qname = xmalloc(len);
-        // Add a . before the domain. This will make the following simpler.
-        qname[0] = '.';
-        // Move the domain into the qname buffer.
-        strcpy(qname + 1, domain);
+    // String + 1byte header + null byte
+    uint16_t len   = strlen(domain) + 1 + 1;
+    char    *qname = xmalloc(len);
+    // Add a . before the domain. This will make the following simpler.
+    qname[0] = '.';
+    // Move the domain into the qname buffer.
+    strcpy(qname + 1, domain);
 
-        for (int i = 0; i < len; i++) {
-            if (qname[i] == '.') {
-                int j;
-                for (j = i + 1; j < (len - 1); j++) {
-                    if (qname[j] == '.') {
-                        break;
-                    }
+    for (int i = 0; i < len; i++) {
+        if (qname[i] == '.') {
+            int j;
+            for (j = i + 1; j < (len - 1); j++) {
+                if (qname[j] == '.') {
+                    break;
                 }
-                qname[i] = j - i - 1;
             }
+            qname[i] = j - i - 1;
         }
-        *qname_handle = qname;
-        assert((*qname_handle)[len - 1] == '\0');
-
-        return len;
     }
+    *qname_handle = qname;
+    assert((*qname_handle)[len - 1] == '\0');
 
-    static int build_global_dns_packets_c(char **domains, int num_domains) {
-        for (int i = 0; i < num_domains; i++) {
-            qname_lens_c[i] = domain_to_qname_c(&qnames_c[i], domains[i]);
-            if (domains[i] != (char *) default_domain_c) {
-                free(domains[i]);
-            }
-            dns_packet_lens_c[i] =
-                sizeof(dns_header) + qname_lens_c[i] + sizeof(dns_question_tail);
-            if (dns_packet_lens_c[i] > DNS_SEND_LEN) {
-                log_fatal("dnsc", "DNS packet bigger (%d) than our limit (%d)",
-                          dns_packet_lens_c[i], DNS_SEND_LEN);
-                return EXIT_FAILURE;
-            }
+    return len;
+}
 
-            dns_packets_c[i]               = xmalloc(dns_packet_lens_c[i]);
-            dns_header        *dns_header_p = (dns_header *) dns_packets_c[i];
-            char              *qname_p = dns_packets_c[i] + sizeof(dns_header);
-            dns_question_tail *tail_p =
-                (dns_question_tail *) (dns_packets_c[i] + sizeof(dns_header) +
-                                       qname_lens_c[i]);
-
-            // All other header fields should be 0. Except id, which we set
-            // per thread. Please recurse as needed.
-            dns_header_p->rd = recursive_c; // Is one bit. Don't need htons
-            // We have 1 question
-            dns_header_p->qdcount = htons(1);
-            memcpy(qname_p, qnames_c[i], qname_lens_c[i]);
-            // Set the qtype to what we passed from args
-            tail_p->qtype = htons(qtypes_c[i]);
-            // Set the qclass to The Internet (TM) (R) (I hope you're happy
-            // now Zakir)
-            tail_p->qclass = htons(0x01);
-            // MAGIC NUMBER. Let's be honest. This is only ever 1
+static int build_global_dns_packets_c(char **domains, int num_domains) {
+    for (int i = 0; i < num_domains; i++) {
+        qname_lens_c[i] = domain_to_qname_c(&qnames_c[i], domains[i]);
+        if (domains[i] != (char *) default_domain_c) {
+            free(domains[i]);
+        }
+        dns_packet_lens_c[i] =
+            sizeof(dns_header) + qname_lens_c[i] + sizeof(dns_question_tail);
+        if (dns_packet_lens_c[i] > DNS_SEND_LEN) {
+            log_fatal("dnsc", "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_c[i], DNS_SEND_LEN);
+            return EXIT_FAILURE;
         }
 
-        return EXIT_SUCCESS;
+        dns_packets_c[i]                = xmalloc(dns_packet_lens_c[i]);
+        dns_header        *dns_header_p = (dns_header *) dns_packets_c[i];
+        char              *qname_p      = dns_packets_c[i] + sizeof(dns_header);
+        dns_question_tail *tail_p =
+            (dns_question_tail *) (dns_packets_c[i] + sizeof(dns_header) +
+                                   qname_lens_c[i]);
+
+        // All other header fields should be 0. Except id, which we set
+        // per thread. Please recurse as needed.
+        dns_header_p->rd = recursive_c; // Is one bit. Don't need htons
+        // We have 1 question
+        dns_header_p->qdcount = htons(1);
+        memcpy(qname_p, qnames_c[i], qname_lens_c[i]);
+        // Set the qtype to what we passed from args
+        tail_p->qtype = htons(qtypes_c[i]);
+        // Set the qclass to The Internet (TM) (R) (I hope you're happy
+        // now Zakir)
+        tail_p->qclass = htons(0x01);
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
     }
+
+    return EXIT_SUCCESS;
+}
