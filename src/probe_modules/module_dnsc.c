@@ -630,3 +630,57 @@ static int load_question_from_str_c(const char *type_q_str) {
                               "additional questions.");
             return EXIT_FAILURE;
         }
+
+                int domain_len = 0;
+
+                if (probe_arg_delimiter_p) {
+                    domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+                } else {
+                    domain_len = strlen(probe_q_delimiter_p) - 1;
+                }
+                assert(domain_len > 0);
+
+                if (label_type_c == DNS_LTYPE_STR) {
+                    domains_c[index_questions_c] =
+                        xmalloc(label_len_c + 1 + domain_len + 1);
+                    strncpy(domains_c[index_questions_c], label_c, label_len_c);
+                    domains_c[index_questions_c][label_len_c] = '.';
+                    strncpy(domains_c[index_questions_c] + label_len_c + 1,
+                            probe_q_delimiter_p + 1, domain_len);
+                    domains_c[index_questions_c][label_len_c + 1 + domain_len] =
+                        '\0';
+                } else {
+                    domains_c[index_questions_c] = xmalloc(domain_len + 1);
+                    strncpy(domains_c[index_questions_c], probe_q_delimiter_p + 1,
+                            domain_len);
+                    domains_c[index_questions_c][domain_len] = '\0';
+                }
+
+                char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+                strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+                qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+
+                qtypes_c[index_questions_c] = qtype_str_to_code_c(strupr(qtype_str));
+                if (!qtypes_c[index_questions_c]) {
+                    log_error("dnsc", "incorrect qtype supplied: %s", qtype_str);
+                    free(qtype_str);
+                    return EXIT_FAILURE;
+                }
+                free(qtype_str);
+
+                index_questions_c++;
+                if (probe_arg_delimiter_p)
+                    type_q_str = probe_q_delimiter_p + domain_len + 2;
+                else
+                    type_q_str = probe_q_delimiter_p + domain_len + 1;
+            }
+        }
+
+        static int load_question_from_file_c(const char *file) {
+            log_debug("dnsc", "load dns query domains from file");
+
+            FILE *fp = fopen(file, "r");
+            if (fp == NULL) {
+                log_error("dnsc", "null dns domain file");
+                return EXIT_FAILURE;
+            }
