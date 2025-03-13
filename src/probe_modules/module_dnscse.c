@@ -839,3 +839,92 @@ static int dnscse_global_init(struct state_conf *conf) {
                 log_error("dnscse", dnscse_usage_error);
                 return EXIT_FAILURE;
             }
+
+                        conf->probe_args = c;
+                        c                = strchr(conf->probe_args, ':');
+                        if (!c) {
+                            log_error("dnscse", dnscse_usage_error);
+                            return EXIT_FAILURE;
+                        }
+                        ++c;
+
+                        // recursive query
+                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+                            recursive_cse = 1;
+                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+                            recursive_cse = 0;
+                        } else {
+                            log_error("dnscse", dnscse_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        conf->probe_args = c;
+                        c                = strchr(conf->probe_args, ':');
+                        if (!c) {
+                            log_error("dnscse", dnscse_usage_error);
+                            return EXIT_FAILURE;
+                        }
+                        ++c;
+
+                        // input query
+                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+                            if (load_question_from_str_cse(c)) return EXIT_FAILURE;
+                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+                            if (load_question_from_file_cse(c)) return EXIT_FAILURE;
+                        } else {
+                            log_error("dnscse", dnscse_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        if (index_questions_cse < num_questions_cse) {
+                            log_error("dnscse", "more probes than questions configured. Add "
+                                                "additional probes.");
+                            return EXIT_FAILURE;
+                        }
+                    }
+
+                    if (label_type_cse == DNS_LTYPE_RAW || label_type_cse == DNS_LTYPE_STR)
+                        return build_global_dns_packets_cse(domains_cse, num_questions_cse);
+                    else
+                        return EXIT_SUCCESS;
+            }
+
+                        static int dnscse_global_cleanup(UNUSED struct state_conf *xconf,
+                                                         UNUSED struct state_send *xsend,
+                                                         UNUSED struct state_recv *xrecv) {
+                            if (dns_packets_cse) {
+                                for (int i = 0; i < num_questions_cse; i++) {
+                                    if (dns_packets_cse[i]) {
+                                        free(dns_packets_cse[i]);
+                                    }
+                                }
+                                free(dns_packets_cse);
+                            }
+                            dns_packets_cse = NULL;
+
+                            if (qnames_cse) {
+                                for (int i = 0; i < num_questions_cse; i++) {
+                                    if (qnames_cse[i]) {
+                                        free(qnames_cse[i]);
+                                    }
+                                }
+                                free(qnames_cse);
+                            }
+                            qnames_cse = NULL;
+
+                            if (dns_packet_lens_cse) {
+                                free(dns_packet_lens_cse);
+                            }
+
+                            if (qname_lens_cse) {
+                                free(qname_lens_cse);
+                            }
+
+                            if (qtypes_cse) {
+                                free(qtypes_cse);
+                            }
+
+                            free(label_cse);
+
+                            return EXIT_SUCCESS;
+                        }
