@@ -905,3 +905,59 @@ int dnsc_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 
     return EXIT_SUCCESS;
 }
+
+int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
+                     ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
+                     int probe_num, index_h_t index, void *arg) {
+    struct ether_header *eth_header = (struct ether_header *) buf;
+    struct ip           *ip_header  = (struct ip *) (&eth_header[1]);
+    struct udphdr       *udp_header = (struct udphdr *) (&ip_header[1]);
+
+    uint8_t validation[VALIDATE_BYTES];
+    validate_gen(src_ip, dst_ip, dst_port, validation);
+
+    port_h_t src_port = get_src_port(dns_num_ports_c, 0, validation);
+    uint16_t dns_txid = get_dns_txid(validation);
+
+    if (label_type_c == DNS_LTYPE_RAW || label_type_c == DNS_LTYPE_STR) {
+        // For num_questions_c == 1, we handle this in per-thread init. Do less
+        // work
+        if (num_questions_c > 1) {
+            uint16_t ip_len = sizeof(struct ip) + sizeof(struct udphdr) +
+                              dns_packet_lens_c[index];
+            make_ip_header(ip_header, IPPROTO_UDP, ip_len);
+
+            uint16_t udp_len =
+                sizeof(struct udphdr) + dns_packet_lens_c[index];
+            make_udp_header(udp_header, udp_len);
+
+            char *payload = (char *) (&udp_header[1]);
+            *buf_len      = sizeof(struct ether_header) + sizeof(struct ip) +
+                       sizeof(struct udphdr) + dns_packet_lens_c[index];
+
+            assert(*buf_len <= MAX_PACKET_SIZE);
+
+            memcpy(payload, dns_packets_c[index], dns_packet_lens_c[index]);
+        }
+
+        ip_header->ip_dst.s_addr = *(uint32_t *) dst_ip;
+        uint8_t *dst_ip_byte     = (uint8_t *) dst_ip;
+        dst_ip_byte[3]           = dst_ip_byte[3] + 1;
+        ip_header->ip_src.s_addr = *(uint32_t *) dst_ip;
+        dst_ip_byte[3]           = dst_ip_byte[3] - 1;
+        ip_header->ip_ttl = ttl;
+
+        udp_header->uh_sport = htons(src_port);
+        udp_header->uh_dport = htons(dst_port);
+
+        dns_header *dns_header_p = (dns_header *) (&udp_header[1]);
+
+        dns_header_p->id = dns_txid;
+
+        udp_header->uh_sum = 0;
+        udp_header->uh_sum = udp_checksum(ip_header->ip_src.s_addr,
+                                          ip_header->ip_dst.s_addr, udp_header);
+
+        ip_header->ip_sum = 0;
+        ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
+    }
