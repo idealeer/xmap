@@ -826,3 +826,81 @@ int dns_random_bytes_6acookiev(char *dst, int len, const unsigned char *charset,
 
     return i;
 }
+
+/*
+ * Start of required xmap exports.
+ */
+
+static int dns6acookiev_global_init(struct state_conf *conf) {
+    num_questions_6acookiev = conf->target_index_num;
+
+    if (!conf->probe_args) {
+        conf->target_index_num  = 1;
+        num_questions_6acookiev = 1;
+    }
+
+    if (num_questions_6acookiev < 1) {
+        log_fatal("dns6acookiev",
+                  "invalid number of probes for the DNS module: %d",
+                  num_questions_6acookiev);
+    }
+
+    // Setup the global structures
+    dns_packets_6acookiev = xmalloc(sizeof(char *) * num_questions_6acookiev);
+    dns_packet_lens_6acookiev =
+        xmalloc(sizeof(uint16_t) * num_questions_6acookiev);
+    qname_lens_6acookiev = xmalloc(sizeof(uint16_t) * num_questions_6acookiev);
+    qnames_6acookiev     = xmalloc(sizeof(char *) * num_questions_6acookiev);
+    qtypes_6acookiev     = xmalloc(sizeof(uint16_t) * num_questions_6acookiev);
+    domains_6acookiev    = xmalloc(sizeof(char *) * num_questions_6acookiev);
+
+    for (int i = 0; i < num_questions_6acookiev; i++) {
+        domains_6acookiev[i] = (char *) default_domain_6acookiev;
+        qtypes_6acookiev[i]  = default_qtype_6acookiev;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_6acookiev =
+        conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_6acookiev();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dns6acookiev", dns6acookiev_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
+
+        // label type
+        if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+            label_type_6acookiev = DNS_LTYPE_RAW;
+            log_debug("dns6acookiev", "raw label prefix");
+        } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+            label_type_6acookiev = DNS_LTYPE_TIME;
+            log_debug("dns6acookiev", "time label prefix");
+        } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+            label_type_6acookiev = DNS_LTYPE_RANDOM;
+            log_debug("dns6acookiev", "random label prefix");
+        } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+            label_type_6acookiev = DNS_LTYPE_STR;
+            conf->probe_args     = c;
+            c                    = strchr(conf->probe_args, ':');
+            if (!c) {
+                log_error("dns6acookiev", dns6acookiev_usage_error);
+                return EXIT_FAILURE;
+            }
+            label_len_6acookiev = c - conf->probe_args;
+            label_6acookiev     = xmalloc(label_len_6acookiev);
+            strncpy(label_6acookiev, conf->probe_args, label_len_6acookiev);
+            ++c;
+            log_debug("dns6acookiev", "label prefix: %s, len: %d",
+                      label_6acookiev, label_len_6acookiev);
+        } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+            label_type_6acookiev = DNS_LTYPE_SRCIP;
+            log_debug("dns6acookiev", "dst-ip label prefix");
+        } else {
+            log_error("dns6acookiev", dns6acookiev_usage_error);
+            return EXIT_FAILURE;
+        }
