@@ -1133,3 +1133,56 @@ int dnsc_validate_packet(const struct ip *ip_hdr, uint32_t len,
             // header
             return PACKET_INVALID;
         }
+
+                struct udphdr *udp_header =
+                    (struct udphdr *) ((char *) ip_hdr + 4 * ip_hdr->ip_hl);
+                uint16_t sport = ntohs(udp_header->uh_dport);
+                uint16_t dport = ntohs(udp_header->uh_sport);
+
+                if (!xconf.target_port_flag[dport]) {
+                    return PACKET_INVALID;
+                }
+
+                uint8_t validation[VALIDATE_BYTES];
+                validate_gen((uint8_t *) &(ip_hdr->ip_dst.s_addr),
+                             (uint8_t *) &(ip_hdr->ip_src.s_addr), dport, validation);
+
+                if (!check_dns_src_port(sport, dns_num_ports_c, validation)) {
+                    return PACKET_INVALID;
+                }
+
+                dns_header_p = (dns_header *) (&udp_header[1]);
+
+                if (!check_dns_txid(dns_header_p->id, validation)) {
+                    return PACKET_INVALID;
+                }
+
+                if (!blocklist_is_allowed_ip((uint8_t *) &(ip_hdr->ip_src.s_addr))) {
+                    return PACKET_INVALID;
+                }
+
+            } else if (ip_hdr->ip_p == IPPROTO_ICMP) {
+                // UDP can return ICMP Destination unreach
+                // IP( ICMP( IP( UDP ) ) ) for a destination unreach
+                const uint32_t min_len = 4 * ip_hdr->ip_hl + ICMP_UNREACH_HEADER_SIZE +
+                                         sizeof(struct ip) + sizeof(struct udphdr);
+                if (len < min_len) {
+                    // Not enough information for us to validate
+                    return PACKET_INVALID;
+                }
+
+                struct icmp *icmp_header =
+                    (struct icmp *) ((char *) ip_hdr + 4 * ip_hdr->ip_hl);
+                if (!(icmp_header->icmp_type == ICMP_TIMXCEED ||
+                      icmp_header->icmp_type == ICMP_UNREACH ||
+                      icmp_header->icmp_type == ICMP_PARAMPROB)) {
+                    return PACKET_INVALID;
+                }
+
+                struct ip *ip_inner_header =
+                    (struct ip *) ((char *) icmp_header + ICMP_UNREACH_HEADER_SIZE);
+                // Now we know the actual inner ip length, we should recheck the
+                // buffer
+                if (len < 4 * ip_inner_header->ip_hl - sizeof(struct ip) + min_len) {
+                    return PACKET_INVALID;
+                }
