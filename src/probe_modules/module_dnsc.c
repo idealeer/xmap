@@ -422,3 +422,31 @@ static uint16_t get_name_helper_c(const char *data, uint16_t data_len,
                                 free(question_name);
                                 return 1;
                             }
+
+                                                        dns_question_tail *tail   = (dns_question_tail *) (*data + bytes_consumed);
+                                                        uint16_t           qtype  = ntohs(tail->qtype);
+                                                        uint16_t           qclass = ntohs(tail->qclass);
+                                                        // Build our new question fieldset
+                                                        fieldset_t *qfs = fs_new_fieldset();
+                                                        fs_add_unsafe_string(qfs, "name", question_name, 1);
+                                                        fs_add_uint64(qfs, "qtype", qtype);
+
+                                                        if (qtype > MAX_QTYPE || qtype_qtype_to_strid_c[qtype] == BAD_QTYPE_VAL) {
+                                                            fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
+                                                        } else {
+                                                            // I've written worse things than this 3rd arg. But I want to be
+                                                            // fast.
+                                                            fs_add_string(qfs, "qtype_str",
+                                                                          (char *) qtype_strs_c[qtype_qtype_to_strid_c[qtype]],
+                                                                          0);
+                                                        }
+
+                                                        fs_add_uint64(qfs, "qclass", qclass);
+                                                        // Now we're adding the new fs to the list.
+                                                        fs_add_fieldset(list, NULL, qfs);
+                                                        // Now update the pointers.
+                                                        *data     = *data + bytes_consumed + sizeof(dns_question_tail);
+                                                        *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
+
+                                                        return 0;
+                                                    }
