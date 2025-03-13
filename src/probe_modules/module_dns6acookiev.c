@@ -1319,3 +1319,65 @@ void dns6acookiev_print_packet(FILE *fp, void *packet) {
 
     free(question_name);
 }
+
+int dns6acookiev_validate_packet(const struct ip *ip_hdr, uint32_t len,
+                                 UNUSED int *is_repeat, UNUSED void *buf,
+                                 UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
+    struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
+    dns_header     *dns_header_p;
+
+    if (ip6_header->ip6_nxt == IPPROTO_UDP) {
+        if ((sizeof(struct ip6_hdr) + sizeof(struct udphdr)) > len) {
+            // buffer not large enough to contain expected udp
+            // header
+            return PACKET_INVALID;
+        }
+
+        struct udphdr *udp_header = (struct udphdr *) (&ip6_header[1]);
+        uint16_t       sport      = ntohs(udp_header->uh_dport);
+        uint16_t       dport      = ntohs(udp_header->uh_sport);
+
+        if (!xconf.target_port_flag[dport]) {
+            return PACKET_INVALID;
+        }
+
+        uint8_t validation[VALIDATE_BYTES];
+        validate_gen((uint8_t *) &(ip6_header->ip6_dst),
+                     (uint8_t *) &(ip6_header->ip6_src), dport, validation);
+
+        if (!check_dns_src_port(sport, dns_num_ports_6acookiev, validation)) {
+            return PACKET_INVALID;
+        }
+
+        dns_header_p = (dns_header *) (&udp_header[1]);
+
+        if (!check_dnsa_txid(dns_header_p->id, validation)) {
+            return PACKET_INVALID;
+        }
+
+        if (!blocklist_is_allowed_ip((uint8_t *) &(ip6_header->ip6_src))) {
+            return PACKET_INVALID;
+        }
+
+    } else if (ip6_header->ip6_nxt == IPPROTO_ICMPV6) {
+        // UDP can return ICMPv6 Destination unreach
+        // IPv6( ICMPv6( IPv6( UDP ) ) ) for a destination unreach
+        const uint32_t min_len = sizeof(struct ip6_hdr) +
+                                 ICMP6_UNREACH_HEADER_SIZE +
+                                 sizeof(struct ip6_hdr) + sizeof(struct udphdr);
+        if (len < min_len) {
+            // Not enough information for us to validate
+            return PACKET_INVALID;
+        }
+
+        struct icmp6_hdr *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
+        if (!(icmp6_header->icmp6_type == ICMP6_TIME_EXCEEDED ||
+              icmp6_header->icmp6_type == ICMP6_DST_UNREACH ||
+              icmp6_header->icmp6_type == ICMP6_PACKET_TOO_BIG ||
+              icmp6_header->icmp6_type == ICMP6_PARAM_PROB)) {
+            return PACKET_INVALID;
+        }
+
+        struct ip6_hdr *ip6_inner_header = (struct ip6_hdr *) &icmp6_header[1];
+    // find original destination IPv6 and check that we sent a packet
+    // to that IPv6 address
