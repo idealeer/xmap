@@ -176,3 +176,66 @@ static uint16_t domain_to_qname_c(char **qname_handle, const char *domain) {
         *qname_handle = qname;
         return 1;
     }
+
+        // String + 1byte header + null byte
+        uint16_t len   = strlen(domain) + 1 + 1;
+        char    *qname = xmalloc(len);
+        // Add a . before the domain. This will make the following simpler.
+        qname[0] = '.';
+        // Move the domain into the qname buffer.
+        strcpy(qname + 1, domain);
+
+        for (int i = 0; i < len; i++) {
+            if (qname[i] == '.') {
+                int j;
+                for (j = i + 1; j < (len - 1); j++) {
+                    if (qname[j] == '.') {
+                        break;
+                    }
+                }
+                qname[i] = j - i - 1;
+            }
+        }
+        *qname_handle = qname;
+        assert((*qname_handle)[len - 1] == '\0');
+
+        return len;
+    }
+
+    static int build_global_dns_packets_c(char **domains, int num_domains) {
+        for (int i = 0; i < num_domains; i++) {
+            qname_lens_c[i] = domain_to_qname_c(&qnames_c[i], domains[i]);
+            if (domains[i] != (char *) default_domain_c) {
+                free(domains[i]);
+            }
+            dns_packet_lens_c[i] =
+                sizeof(dns_header) + qname_lens_c[i] + sizeof(dns_question_tail);
+            if (dns_packet_lens_c[i] > DNS_SEND_LEN) {
+                log_fatal("dnsc", "DNS packet bigger (%d) than our limit (%d)",
+                          dns_packet_lens_c[i], DNS_SEND_LEN);
+                return EXIT_FAILURE;
+            }
+
+            dns_packets_c[i]               = xmalloc(dns_packet_lens_c[i]);
+            dns_header        *dns_header_p = (dns_header *) dns_packets_c[i];
+            char              *qname_p = dns_packets_c[i] + sizeof(dns_header);
+            dns_question_tail *tail_p =
+                (dns_question_tail *) (dns_packets_c[i] + sizeof(dns_header) +
+                                       qname_lens_c[i]);
+
+            // All other header fields should be 0. Except id, which we set
+            // per thread. Please recurse as needed.
+            dns_header_p->rd = recursive_c; // Is one bit. Don't need htons
+            // We have 1 question
+            dns_header_p->qdcount = htons(1);
+            memcpy(qname_p, qnames_c[i], qname_lens_c[i]);
+            // Set the qtype to what we passed from args
+            tail_p->qtype = htons(qtypes_c[i]);
+            // Set the qclass to The Internet (TM) (R) (I hope you're happy
+            // now Zakir)
+            tail_p->qclass = htons(0x01);
+            // MAGIC NUMBER. Let's be honest. This is only ever 1
+        }
+
+        return EXIT_SUCCESS;
+    }
