@@ -663,3 +663,70 @@ static bool process_response_answer_cse(char **data, uint16_t *data_len,
 
     return 0;
 }
+
+static int load_question_from_str_cse(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dnscse", dnscse_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_cse >= num_questions_cse) {
+            log_error("dnscse", "less probes than questions configured. Add "
+                                "additional questions.");
+            return EXIT_FAILURE;
+        }
+
+        int domain_len = 0;
+
+        if (probe_arg_delimiter_p) {
+            domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+        } else {
+            domain_len = strlen(probe_q_delimiter_p) - 1;
+        }
+        assert(domain_len > 0);
+
+        if (label_type_cse == DNS_LTYPE_STR) {
+            domains_cse[index_questions_cse] =
+                xmalloc(label_len_cse + 1 + domain_len + 1);
+            strncpy(domains_cse[index_questions_cse], label_cse, label_len_cse);
+            domains_cse[index_questions_cse][label_len_cse] = '.';
+            strncpy(domains_cse[index_questions_cse] + label_len_cse + 1,
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_cse[index_questions_cse][label_len_cse + 1 + domain_len] =
+                '\0';
+        } else {
+            domains_cse[index_questions_cse] = xmalloc(domain_len + 1);
+            strncpy(domains_cse[index_questions_cse], probe_q_delimiter_p + 1,
+                    domain_len);
+            domains_cse[index_questions_cse][domain_len] = '\0';
+        }
+
+        char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+        strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+        qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+
+        qtypes_cse[index_questions_cse] =
+            qtype_str_to_code_cse(strupr(qtype_str));
+        if (!qtypes_cse[index_questions_cse]) {
+            log_error("dnscse", "incorrect qtype supplied: %s", qtype_str);
+            free(qtype_str);
+            return EXIT_FAILURE;
+        }
+        free(qtype_str);
+
+        index_questions_cse++;
+        if (probe_arg_delimiter_p)
+            type_q_str = probe_q_delimiter_p + domain_len + 2;
+        else
+            type_q_str = probe_q_delimiter_p + domain_len + 1;
+    }
+}
