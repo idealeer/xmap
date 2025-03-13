@@ -960,4 +960,56 @@ int dnsc_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
         ip_header->ip_sum = 0;
         ip_header->ip_sum = ip_checksum_((unsigned short *) ip_header);
-    }
+    } else {
+        char *new_domain        = xmalloc(MAX_NAME_LENGTH);
+        int   new_label_max_len = 64;
+        char *new_label         = xmalloc(new_label_max_len);
+        memset(new_label, 0, new_label_max_len);
+
+        switch (label_type_c) {
+        case DNS_LTYPE_TIME: {
+            struct timeval t;
+            gettimeofday(&t, NULL);
+            snprintf(new_label, 18, "%u-%06u", (uint64_t) t.tv_sec,
+                     (uint64_t) t.tv_usec);
+            new_label[17] = '\0';
+            break;
+        }
+        case DNS_LTYPE_RANDOM: {
+            aesrand_t *aes = (aesrand_t *) arg;
+            dns_random_bytes_c(new_label, 8, charset_alpha_lower_c, 26, aes);
+            new_label[8] = '\0';
+            break;
+        }
+        case DNS_LTYPE_SRCIP: {
+            //            snprintf(new_label, new_label_max_len,
+            //            "%u-%u-%u-%u-%u-%u-%u",
+            //                     probe_num + 1, dst_ip[0], dst_ip[1],
+            //                     dst_ip[2], dst_ip[3], src_port, dns_txid);
+            snprintf(new_label, new_label_max_len, "%d-%02x%02x%02x%02x",
+                     probe_num, dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3]);
+            new_label[strlen(new_label)] = '\0';
+            break;
+        }
+        default:
+            log_fatal("dnsc", dnsc_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
+                 domains_c[index]);
+
+        // dns packet
+        free(qnames_c[index]);
+
+        qname_lens_c[index] =
+            domain_to_qname_c(&qnames_c[index], new_domain);
+        dns_packet_lens_c[index] = sizeof(dns_header) + qname_lens_c[index] +
+                                   sizeof(dns_question_tail);
+        if (dns_packet_lens_c[index] > DNS_SEND_LEN) {
+            log_fatal("dnsc", "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_c[index], DNS_SEND_LEN);
+            return EXIT_FAILURE;
+        }
+
+        free(dns_packets_c[index]);
