@@ -1553,4 +1553,63 @@ void dns6aecsv_process_packet(const u_char *packet, uint32_t len,
                               (void *) &udp_header[1], 0);
 
                 return;
+            }         else if (ip6_header->ip6_nxt == IPPROTO_ICMPV6) {
+                struct icmp6_hdr *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
+                struct ip6_hdr *ip6_inner_header = (struct ip6_hdr *) &icmp6_header[1];
+
+                // This is the packet we sent
+                struct udphdr *udp_inner_header =
+                    (struct udphdr *) (&ip6_inner_header[1]);
+                uint16_t udp_len = ntohs(udp_inner_header->uh_ulen);
+
+                // High level info
+                fs_add_string(fs, "clas", get_icmp6_type_str(icmp6_header->icmp6_type),
+                              0);
+                fs_add_bool(fs, "success", 0);
+                fs_add_bool(fs, "app_success", 0);
+
+                // UDP info
+                fs_add_uint64(fs, "sport", ntohs(udp_inner_header->uh_sport));
+                fs_add_uint64(fs, "dport", ntohs(udp_inner_header->uh_dport));
+                fs_add_uint64(fs, "udp_pkt_size", udp_len);
+
+                // ICMP info
+                // XXX This is legacy. not well tested.
+                fs_add_string(fs, "icmp_responder",
+                              make_ipv6_str((struct in6_addr *) &(ip6_header->ip6_src)),
+                              1);
+                fs_add_uint64(fs, "icmp_type", icmp6_header->icmp6_type);
+                fs_add_uint64(fs, "icmp_code", icmp6_header->icmp6_code);
+                fs_add_string(fs, "icmp_str",
+                              (char *) get_icmp6_type_code_str(
+                                  icmp6_header->icmp6_type, icmp6_header->icmp6_code),
+                              0);
+
+                // DNS header
+                fs_add_null(fs, "dns_id");
+                fs_add_null(fs, "dns_rd");
+                fs_add_null(fs, "dns_tc");
+                fs_add_null(fs, "dns_aa");
+                fs_add_null(fs, "dns_opcode");
+                fs_add_null(fs, "dns_qr");
+                fs_add_null(fs, "dns_rcode");
+                fs_add_null(fs, "dns_cd");
+                fs_add_null(fs, "dns_ad");
+                fs_add_null(fs, "dns_z");
+                fs_add_null(fs, "dns_ra");
+                fs_add_null(fs, "dns_qdcount");
+                fs_add_null(fs, "dns_ancount");
+                fs_add_null(fs, "dns_nscount");
+                fs_add_null(fs, "dns_arcount");
+
+                fs_add_repeated(fs, "dns_questions", fs_new_repeated_fieldset());
+                fs_add_repeated(fs, "dns_answers", fs_new_repeated_fieldset());
+                fs_add_repeated(fs, "dns_authorities", fs_new_repeated_fieldset());
+                fs_add_repeated(fs, "dns_additionals", fs_new_repeated_fieldset());
+
+                fs_add_uint64(fs, "dns_unconsumed_bytes", 0);
+                fs_add_uint64(fs, "dns_parse_err", 1);
+                fs_add_binary(fs, "raw_data", len, (char *) packet, 0);
+
+                return;
             }
