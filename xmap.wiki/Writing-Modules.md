@@ -1,1 +1,0 @@
-If you want to develop a new module, please refer to [ZMap's Writing Modules](https://github.com/zmap/zmap/wiki/Writing-Modules).
