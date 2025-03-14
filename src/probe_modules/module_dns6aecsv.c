@@ -859,3 +859,61 @@ static int dns6aecsv_global_init(struct state_conf *conf) {
                   "invalid number of probes for the DNS module: %d",
                   num_questions_6aecsv);
     }
+
+        // Setup the global structures
+        dns_packets_6aecsv     = xmalloc(sizeof(char *) * num_questions_6aecsv);
+        dns_packet_lens_6aecsv = xmalloc(sizeof(uint16_t) * num_questions_6aecsv);
+        qname_lens_6aecsv      = xmalloc(sizeof(uint16_t) * num_questions_6aecsv);
+        qnames_6aecsv          = xmalloc(sizeof(char *) * num_questions_6aecsv);
+        qtypes_6aecsv          = xmalloc(sizeof(uint16_t) * num_questions_6aecsv);
+        domains_6aecsv         = xmalloc(sizeof(char *) * num_questions_6aecsv);
+
+        for (int i = 0; i < num_questions_6aecsv; i++) {
+            domains_6aecsv[i] = (char *) default_domain_6aecsv;
+            qtypes_6aecsv[i]  = default_qtype_6aecsv;
+        }
+
+        // This is xmap boilerplate. Why do I have to write this?
+        dns_num_ports_6aecsv = conf->source_port_last - conf->source_port_first + 1;
+        setup_qtype_str_map_6aecsv();
+
+        if (conf->probe_args &&
+            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+            char *c = strchr(conf->probe_args, ':');
+            if (!c) {
+                log_error("dns6aecsv", dns6aecsv_usage_error);
+                return EXIT_FAILURE;
+            }
+            ++c;
+
+            // label type
+            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+                label_type_6aecsv = DNS_LTYPE_RAW;
+                log_debug("dns6aecsv", "raw label prefix");
+            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+                label_type_6aecsv = DNS_LTYPE_TIME;
+                log_debug("dns6aecsv", "time label prefix");
+            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+                label_type_6aecsv = DNS_LTYPE_RANDOM;
+                log_debug("dns6aecsv", "random label prefix");
+            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+                label_type_6aecsv = DNS_LTYPE_STR;
+                conf->probe_args  = c;
+                c                 = strchr(conf->probe_args, ':');
+                if (!c) {
+                    log_error("dns6aecsv", dns6aecsv_usage_error);
+                    return EXIT_FAILURE;
+                }
+                label_len_6aecsv = c - conf->probe_args;
+                label_6aecsv     = xmalloc(label_len_6aecsv);
+                strncpy(label_6aecsv, conf->probe_args, label_len_6aecsv);
+                ++c;
+                log_debug("dns6aecsv", "label prefix: %s, len: %d", label_6aecsv,
+                          label_len_6aecsv);
+            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+                label_type_6aecsv = DNS_LTYPE_SRCIP;
+                log_debug("dns6aecsv", "dst-ip label prefix");
+            } else {
+                log_error("dns6aecsv", dns6aecsv_usage_error);
+                return EXIT_FAILURE;
+            }
