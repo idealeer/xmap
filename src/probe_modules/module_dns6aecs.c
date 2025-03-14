@@ -1496,3 +1496,58 @@ void dns6aecs_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
         char    *data     = ((char *) dns_header_p) + sizeof(dns_header);
         uint16_t data_len = udp_len - sizeof(udp_header) - sizeof(dns_header);
         bool     err      = 0;
+
+                // Questions
+                fieldset_t *list = fs_new_repeated_fieldset();
+                for (int i = 0; i < ntohs(dns_header_p->qdcount) && !err; i++) {
+                    err = process_response_question_6aecs(
+                        &data, &data_len, (char *) dns_header_p, udp_len, list);
+                }
+                fs_add_repeated(fs, "dns_questions", list);
+
+                // Answers
+                list = fs_new_repeated_fieldset();
+                for (int i = 0; i < ntohs(dns_header_p->ancount) && !err; i++) {
+                    err = process_response_answer_6aecs(
+                        &data, &data_len, (char *) dns_header_p, udp_len, list);
+                }
+                fs_add_repeated(fs, "dns_answers", list);
+
+                // Authorities
+                list = fs_new_repeated_fieldset();
+                for (int i = 0; i < ntohs(dns_header_p->nscount) && !err; i++) {
+                    err = process_response_answer_6aecs(
+                        &data, &data_len, (char *) dns_header_p, udp_len, list);
+                }
+                fs_add_repeated(fs, "dns_authorities", list);
+
+                // Additionals
+                list = fs_new_repeated_fieldset();
+                for (int i = 0; i < ntohs(dns_header_p->arcount) && !err; i++) {
+                    err = process_response_answer_6aecs(
+                        &data, &data_len, (char *) dns_header_p, udp_len, list);
+                }
+                fs_add_repeated(fs, "dns_additionals", list);
+
+                // Do we have unconsumed data?
+                fs_add_uint64(fs, "dns_unconsumed_bytes", data_len);
+                if (data_len != 0) {
+                    err = 1;
+                }
+
+                // Did we parse OK?
+                fs_add_uint64(fs, "dns_parse_err", err);
+
+                // Now the raw stuff.
+                fs_add_binary(fs, "raw_data", (udp_len - sizeof(struct udphdr)),
+                              (void *) &udp_header[1], 0);
+
+                return;
+            } else if (ip6_header->ip6_nxt == IPPROTO_ICMPV6) {
+                struct icmp6_hdr *icmp6_header = (struct icmp6_hdr *) (&ip6_header[1]);
+                struct ip6_hdr *ip6_inner_header = (struct ip6_hdr *) &icmp6_header[1];
+
+                // This is the packet we sent
+                struct udphdr *udp_inner_header =
+                    (struct udphdr *) (&ip6_inner_header[1]);
+                uint16_t udp_len = ntohs(udp_inner_header->uh_ulen);
