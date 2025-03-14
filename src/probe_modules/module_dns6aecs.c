@@ -1089,4 +1089,64 @@ int dns6aecs_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         udp_header->uh_sum = udp6_checksum(
             (struct in6_addr *) &(ip6_header->ip6_src),
             (struct in6_addr *) &(ip6_header->ip6_dst), udp_header);
-    }
+    } else {
+        char *new_domain        = xmalloc(MAX_NAME_LENGTH);
+        int   new_label_max_len = 64;
+        char *new_label         = xmalloc(new_label_max_len);
+        memset(new_label, 0, new_label_max_len);
+
+        switch (label_type_6aecs) {
+        case DNS_LTYPE_TIME: {
+            struct timeval t;
+            gettimeofday(&t, NULL);
+            snprintf(new_label, 18, "%u-%06u", (uint64_t) t.tv_sec,
+                     (uint64_t) t.tv_usec);
+            new_label[17] = '\0';
+            break;
+        }
+        case DNS_LTYPE_RANDOM: {
+            aesrand_t *aes = (aesrand_t *) arg;
+            dns_random_bytes_6aecs(new_label, 8, charset_alpha_lower_6aecs, 26,
+                                   aes);
+            new_label[8] = '\0';
+            break;
+        }
+        case DNS_LTYPE_SRCIP: {
+            //            snprintf(new_label, new_label_max_len,
+            //            "%u-%u-%u-%u-%u-%u-%u",
+            //                     probe_num + 1, dst_ip[0], dst_ip[1],
+            //                     dst_ip[2], dst_ip[3], src_port, dns_txid);
+            snprintf(new_label, new_label_max_len,
+                     "pr-%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%"
+                     "02x%02x%02x",
+                     dst_ip[0], dst_ip[1], dst_ip[2], dst_ip[3], dst_ip[4],
+                     dst_ip[5], dst_ip[6], dst_ip[7], dst_ip[8], dst_ip[9],
+                     dst_ip[10], dst_ip[11], dst_ip[12], dst_ip[13], dst_ip[14],
+                     dst_ip[15]);
+            new_label[strlen(new_label)] = '\0';
+            break;
+        }
+        default:
+            log_fatal("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        snprintf(new_domain, MAX_NAME_LENGTH, "%s-%s", new_label,
+                 domains_6aecs[index]);
+
+        // dns packet
+        free(qnames_6aecs[index]);
+
+        qname_lens_6aecs[index] =
+            domain_to_qname_6aecs(&qnames_6aecs[index], new_domain);
+        dns_packet_lens_6aecs[index] =
+            sizeof(dns_header) + qname_lens_6aecs[index] +
+            sizeof(dns_question_tail) + default_option_qname_len_6aecs +
+            sizeof(dns_option_tail) + default_option_rdata_len_6aecs;
+        if (dns_packet_lens_6aecs[index] > DNS_SEND_LEN) {
+            log_fatal("dns6aecs", "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_6aecs[index], DNS_SEND_LEN);
+            return EXIT_FAILURE;
+        }
+
+        free(dns_packets_6aecs[index]);
