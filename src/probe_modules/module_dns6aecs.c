@@ -412,3 +412,24 @@ static uint16_t get_name_helper_6aecs(const char *data, uint16_t data_len,
                             log_warn("dns6aecs", "Exceeded static name field allocation.");
                             return 0;
                         }
+
+                                                assert(data_len > 0);
+                                                memcpy(name, data, byte);
+                                                name += byte;
+                                                name_len -= byte;
+                                                data_len -= byte;
+                                                data += byte;
+                                                bytes_consumed += byte;
+                                                // Handled in the byte+1 check above.
+                                                assert(data_len > 0);
+                                            }
+                            }
+                            // We should never get here.
+                            // For each byte we either have:
+                            // -- a ptr, which terminates
+                            // -- a null byte, which terminates
+                            // -- a segment length which either terminates or ensures we keep
+                            // looping
+                            assert(0);
+                            return 0;
+                        }
