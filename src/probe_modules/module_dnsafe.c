@@ -632,11 +632,14 @@ static bool process_response_answer_afe(char **data, uint16_t *data_len,
     } else if (type == DNS_QTYPE_OPT) {
         dns_option_tail *option_tail =
             (dns_option_tail *) (*data + bytes_consumed);
-        uint16_t udpsize        = ntohs(option_tail->udpsize);
-        uint8_t  ercode         = option_tail->ercode;
-        uint8_t  eversion       = option_tail->eversion;
-        uint16_t dodnssec       = option_tail->dodnssec;
-        uint16_t option_z       = option_tail->z;
+        uint16_t udpsize  = ntohs(option_tail->udpsize);
+        uint8_t  ercode   = option_tail->ercode;
+        uint8_t  eversion = option_tail->eversion;
+        uint16_t dodnssec = option_tail->dodnssec;
+        uint16_t option_z =
+            (((option_tail->dodnssec << 7) + option_tail->z1) << 8) +
+            option_tail->z2;
+        ;
         uint16_t option_dlength = ntohs(option_tail->dlength);
         char    *option_data    = option_tail->data;
 
