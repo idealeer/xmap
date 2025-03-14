@@ -54,11 +54,28 @@ typedef struct __attribute__((packed)) {
     uint16_t udpsize;      /* UDP payload size */
     uint8_t  ercode;       /* higher bits in extended rcode */
     uint8_t  eversion;     /* EDNS0 version */
+    uint16_t z1 : 7;       /* reserved set to 0 */
     uint16_t dodnssec : 1; /* handle DNSSEC security or not */
-    uint16_t z : 15;       /* reserved set to 0 */
+    uint16_t z2 : 8;       /* reserved set to 0 */
     uint16_t dlength;      /* data length */
     char     data[];       /* data */
 } dns_option_tail;
+
+typedef struct __attribute__((packed)) {
+    uint16_t optcode;   /* option code */
+    uint16_t optlength; /* option length */
+    uint16_t family;    /* family */
+    uint8_t  srcnmask;  /* source netmask */
+    uint8_t  scpnmask;  /* scope netmask */
+    char     cs[];      /* client subnet */
+} dns_option_ecs;
+
+typedef struct __attribute__((packed)) {
+    uint16_t optcode;         /* option code */
+    uint16_t optlength;       /* option length */
+    char     clientcookie[8]; /* client cookie */
+    char     servercookie[];  /* server cookie */
+} dns_option_cookie;
 
 typedef enum {
     DNS_QTYPE_A        = 1,
@@ -91,6 +108,16 @@ typedef enum {
     DNS_RCODE_QTYPENOTIMPL = 4,
     DNS_RCODE_QRYREFUSED   = 5
 } dns_rcode;
+
+typedef enum {
+    DNS_OPTCODE_ECS    = 8,
+    DNS_OPTCODE_COOKIE = 10,
+} dns_optcode;
+
+typedef enum {
+    DNS_ADDRFAMILY_IP  = 1,
+    DNS_ADDRFAMILY_IP6 = 2,
+} dns_addrfamily;
 
 typedef enum {
     DNS_LTYPE_RAW    = 1,

@@ -115,13 +115,13 @@ static int       index_questions_6an = 0;
 
 /* Array of qtypes_6an we support. Jumping through some hops (1 level of
  * indirection) so the per-packet processing time is fast. Keep this in sync
- * with: dns_qtype (.h) qtype_strid_to_qtype_6an (below) qtype_qtype_to_strid_6an
- * (below, and setup_qtype_str_map_6an())
+ * with: dns_qtype (.h) qtype_strid_to_qtype_6an (below)
+ * qtype_qtype_to_strid_6an (below, and setup_qtype_str_map_6an())
  */
 const char *qtype_strs_6an[]   = {"A",    "NS",    "CNAME", "SOA",     "PTR",
-                                 "MX",   "TXT",   "AAAA",  "RRSIG",   "ANY",
-                                 "SIG",  "SRV",   "DS",    "DNSKEY",  "TLSA",
-                                 "SVCB", "HTTPS", "CAA",   "HTTPSSVC"};
+                                  "MX",   "TXT",   "AAAA",  "RRSIG",   "ANY",
+                                  "SIG",  "SRV",   "DS",    "DNSKEY",  "TLSA",
+                                  "SVCB", "HTTPS", "CAA",   "HTTPSSVC"};
 const int   qtype_strs_len_6an = 19;
 
 const dns_qtype qtype_strid_to_qtype_6an[] = {
@@ -216,7 +216,7 @@ static int build_global_dns_packets_6an(char **domains, int num_domains) {
             return EXIT_FAILURE;
         }
 
-        dns_packets_6an[i]               = xmalloc(dns_packet_lens_6an[i]);
+        dns_packets_6an[i]              = xmalloc(dns_packet_lens_6an[i]);
         dns_header        *dns_header_p = (dns_header *) dns_packets_6an[i];
         char              *qname_p = dns_packets_6an[i] + sizeof(dns_header);
         dns_question_tail *tail_p =
@@ -241,9 +241,9 @@ static int build_global_dns_packets_6an(char **domains, int num_domains) {
 }
 
 static uint16_t get_name_helper_6an(const char *data, uint16_t data_len,
-                                   const char *payload, uint16_t payload_len,
-                                   char *name, uint16_t name_len,
-                                   uint16_t recursion_level) {
+                                    const char *payload, uint16_t payload_len,
+                                    char *name, uint16_t name_len,
+                                    uint16_t recursion_level) {
     log_trace("dns6an",
               "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
               data_len, name_len, recursion_level);
@@ -291,7 +291,8 @@ static uint16_t get_name_helper_6an(const char *data, uint16_t data_len,
             if (recursion_level > 0 || bytes_consumed > 0) {
 
                 if (name_len < 1) {
-                    log_warn("dns6an", "Exceeded static name field allocation.");
+                    log_warn("dns6an",
+                             "Exceeded static name field allocation.");
                     return 0;
                 }
 
@@ -335,8 +336,9 @@ static uint16_t get_name_helper_6an(const char *data, uint16_t data_len,
             // iteration. Do we have enough data left (must have
             // null byte too)?
             if ((byte + 1) > data_len) {
-                log_trace("dns6an", "_get_name_helper OUT. ERR. Not enough data "
-                                   "for segment %hd");
+                log_trace("dns6an",
+                          "_get_name_helper OUT. ERR. Not enough data "
+                          "for segment %hd");
                 return 0;
             }
             // If we've consumed any bytes and are in a label, we're
@@ -344,7 +346,8 @@ static uint16_t get_name_helper_6an(const char *data, uint16_t data_len,
             if (bytes_consumed > 0) {
 
                 if (name_len < 1) {
-                    log_warn("dns6an", "Exceeded static name field allocation.");
+                    log_warn("dns6an",
+                             "Exceeded static name field allocation.");
                     return 0;
                 }
 
@@ -384,29 +387,30 @@ static uint16_t get_name_helper_6an(const char *data, uint16_t data_len,
 // data: Where we are in the dns payload
 // payload: the entire udp payload
 static char *get_name_6an(const char *data, uint16_t data_len,
-                         const char *payload, uint16_t payload_len,
-                         uint16_t *bytes_consumed) {
+                          const char *payload, uint16_t payload_len,
+                          uint16_t *bytes_consumed) {
     log_trace("dns6an", "call to get_name_6an, data_len: %d", data_len);
     char *name      = xmalloc(MAX_NAME_LENGTH);
     *bytes_consumed = get_name_helper_6an(data, data_len, payload, payload_len,
-                                         name, MAX_NAME_LENGTH - 1, 0);
+                                          name, MAX_NAME_LENGTH - 1, 0);
     if (*bytes_consumed == 0) {
         free(name);
         return NULL;
     }
     // Our memset ensured null byte.
     assert(name[MAX_NAME_LENGTH - 1] == '\0');
-    log_trace("dns6an",
-              "return success from get_name_6an, bytes_consumed: %d, string: %s",
-              *bytes_consumed, name);
+    log_trace(
+        "dns6an",
+        "return success from get_name_6an, bytes_consumed: %d, string: %s",
+        *bytes_consumed, name);
 
     return name;
 }
 
 static bool process_response_question_6an(char **data, uint16_t *data_len,
-                                         const char *payload,
-                                         uint16_t    payload_len,
-                                         fieldset_t *list) {
+                                          const char *payload,
+                                          uint16_t    payload_len,
+                                          fieldset_t *list) {
     // Payload is the start of the DNS packet, including header
     // data is handle to the start of this RR
     // data_len is a pointer to the how much total data we have to work
@@ -453,8 +457,9 @@ static bool process_response_question_6an(char **data, uint16_t *data_len,
 }
 
 static bool process_response_answer_6an(char **data, uint16_t *data_len,
-                                       const char *payload,
-                                       uint16_t payload_len, fieldset_t *list) {
+                                        const char *payload,
+                                        uint16_t    payload_len,
+                                        fieldset_t *list) {
     log_trace("dns6an", "call to process_response_answer_6an, data_len: %d",
               *data_len);
     // Payload is the start of the DNS packet, including header
@@ -495,7 +500,8 @@ static bool process_response_answer_6an(char **data, uint16_t *data_len,
         // I've written worse things than this 3rd arg. But I want to be
         // fast.
         fs_add_string(afs, "type_str",
-                      (char *) qtype_strs_6an[qtype_qtype_to_strid_6an[type]], 0);
+                      (char *) qtype_strs_6an[qtype_qtype_to_strid_6an[type]],
+                      0);
     }
     fs_add_uint64(afs, "class", class);
     fs_add_uint64(afs, "ttl", ttl);
@@ -504,8 +510,8 @@ static bool process_response_answer_6an(char **data, uint16_t *data_len,
     // XXX Fill this out for the other types we care about.
     if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
         uint16_t rdata_bytes_consumed = 0;
-        char    *rdata_name = get_name_6an(rdata, rdlength, payload, payload_len,
-                                          &rdata_bytes_consumed);
+        char *rdata_name = get_name_6an(rdata, rdlength, payload, payload_len,
+                                        &rdata_bytes_consumed);
         if (rdata_name == NULL) {
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -520,7 +526,7 @@ static bool process_response_answer_6an(char **data, uint16_t *data_len,
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
         } else {
             char *rdata_name = get_name_6an(rdata + 2, rdlength - 2, payload,
-                                           payload_len, &rdata_bytes_consumed);
+                                            payload_len, &rdata_bytes_consumed);
             if (rdata_name == NULL) {
                 fs_add_uint64(afs, "rdata_is_parsed", 0);
                 fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -538,7 +544,8 @@ static bool process_response_answer_6an(char **data, uint16_t *data_len,
         }
     } else if (type == DNS_QTYPE_TXT) {
         if (rdlength >= 1 && (rdlength - 1) != *(uint8_t *) rdata) {
-            log_warn("dns6an", "TXT record with wrong TXT len. Not processing.");
+            log_warn("dns6an",
+                     "TXT record with wrong TXT len. Not processing.");
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
         } else if (rdlength < 1) {
@@ -630,7 +637,7 @@ static int load_question_from_str_6an(const char *type_q_str) {
 
         if (index_questions_6an >= num_questions_6an) {
             log_error("dns6an", "less probes than questions configured. Add "
-                               "additional questions.");
+                                "additional questions.");
             return EXIT_FAILURE;
         }
 
@@ -663,7 +670,8 @@ static int load_question_from_str_6an(const char *type_q_str) {
         strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
         qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
 
-        qtypes_6an[index_questions_6an] = qtype_str_to_code_6an(strupr(qtype_str));
+        qtypes_6an[index_questions_6an] =
+            qtype_str_to_code_6an(strupr(qtype_str));
         if (!qtypes_6an[index_questions_6an]) {
             log_error("dns6an", "incorrect qtype supplied: %s", qtype_str);
             free(qtype_str);
@@ -704,7 +712,7 @@ static int load_question_from_file_6an(const char *file) {
 }
 
 int dns_random_bytes_6an(char *dst, int len, const unsigned char *charset,
-                        int charset_len, aesrand_t *aes) {
+                         int charset_len, aesrand_t *aes) {
     int i;
     for (i = 0; i < len; i++) {
         *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
@@ -722,7 +730,7 @@ static int dns6an_global_init(struct state_conf *conf) {
 
     if (!conf->probe_args) {
         conf->target_index_num = 1;
-        num_questions_6an       = 1;
+        num_questions_6an      = 1;
     }
 
     if (num_questions_6an < 1) {
@@ -767,7 +775,7 @@ static int dns6an_global_init(struct state_conf *conf) {
             label_type_6an = DNS_LTYPE_RANDOM;
             log_debug("dns6an", "random label prefix");
         } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-            label_type_6an    = DNS_LTYPE_STR;
+            label_type_6an   = DNS_LTYPE_STR;
             conf->probe_args = c;
             c                = strchr(conf->probe_args, ':');
             if (!c) {
@@ -826,7 +834,7 @@ static int dns6an_global_init(struct state_conf *conf) {
 
         if (index_questions_6an < num_questions_6an) {
             log_error("dns6an", "more probes than questions configured. Add "
-                               "additional probes.");
+                                "additional probes.");
             return EXIT_FAILURE;
         }
     }
@@ -838,8 +846,8 @@ static int dns6an_global_init(struct state_conf *conf) {
 }
 
 static int dns6an_global_cleanup(UNUSED struct state_conf *xconf,
-                                UNUSED struct state_send *xsend,
-                                UNUSED struct state_recv *xrecv) {
+                                 UNUSED struct state_send *xsend,
+                                 UNUSED struct state_recv *xrecv) {
     if (dns_packets_6an) {
         for (int i = 0; i < num_questions_6an; i++) {
             if (dns_packets_6an[i]) {
@@ -878,25 +886,25 @@ static int dns6an_global_cleanup(UNUSED struct state_conf *xconf,
 }
 
 int dns6an_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
-                      void **arg_ptr) {
+                       void **arg_ptr) {
     memset(buf, 0, MAX_PACKET_SIZE);
 
     // Setup assuming num_questions_6an == 0
     struct ether_header *eth_header = (struct ether_header *) buf;
     make_eth6_header(eth_header, src, gw);
 
-    struct ip6_hdr *ip6_header  = (struct ip6_hdr *) (&eth_header[1]);
-    uint16_t        payload_len = sizeof(struct udphdr) + dns_packet_lens_6an[0];
+    struct ip6_hdr *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
+    uint16_t payload_len       = sizeof(struct udphdr) + dns_packet_lens_6an[0];
     make_ip6_header(ip6_header, IPPROTO_UDP, payload_len);
 
     struct udphdr *udp6_header = (struct udphdr *) (&ip6_header[1]);
     uint16_t       udp_len     = sizeof(struct udphdr) + dns_packet_lens_6an[0];
     make_udp_header(udp6_header, udp_len);
 
-    char *payload              = (char *) (&udp6_header[1]);
-    module_dns6an.packet_length = sizeof(struct ether_header) +
-                                 sizeof(struct ip6_hdr) +
-                                 sizeof(struct udphdr) + dns_packet_lens_6an[0];
+    char *payload = (char *) (&udp6_header[1]);
+    module_dns6an.packet_length =
+        sizeof(struct ether_header) + sizeof(struct ip6_hdr) +
+        sizeof(struct udphdr) + dns_packet_lens_6an[0];
     assert(module_dns6an.packet_length <= MAX_PACKET_SIZE);
 
     memcpy(payload, dns_packets_6an[0], dns_packet_lens_6an[0]);
@@ -910,8 +918,8 @@ int dns6an_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 }
 
 int dns6an_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
-                      ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                      int probe_num, index_h_t index, void *arg) {
+                       ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
+                       int probe_num, index_h_t index, void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
     struct ip6_hdr      *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
     struct udphdr       *udp_header = (struct udphdr *) (&ip6_header[1]);
@@ -923,8 +931,8 @@ int dns6an_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
     uint16_t dns_txid = get_dnsa_txid(validation, 0);
 
     if (label_type_6an == DNS_LTYPE_RAW || label_type_6an == DNS_LTYPE_STR) {
-        // For num_questions_6an == 1, we handle this in per-thread init. Do less
-        // work
+        // For num_questions_6an == 1, we handle this in per-thread init. Do
+        // less work
         if (num_questions_6an > 1) {
             uint16_t payload_len =
                 sizeof(struct udphdr) + dns_packet_lens_6an[index];
@@ -979,7 +987,8 @@ int dns6an_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         }
         case DNS_LTYPE_RANDOM: {
             aesrand_t *aes = (aesrand_t *) arg;
-            dns_random_bytes_6an(new_label, 8, charset_alpha_lower_6an, 26, aes);
+            dns_random_bytes_6an(new_label, 8, charset_alpha_lower_6an, 26,
+                                 aes);
             new_label[8] = '\0';
             break;
         }
@@ -1006,8 +1015,9 @@ int dns6an_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
         qname_lens_6an[index] =
             domain_to_qname_6an(&qnames_6an[index], new_domain);
-        dns_packet_lens_6an[index] = sizeof(dns_header) + qname_lens_6an[index] +
-                                    sizeof(dns_question_tail);
+        dns_packet_lens_6an[index] = sizeof(dns_header) +
+                                     qname_lens_6an[index] +
+                                     sizeof(dns_question_tail);
         if (dns_packet_lens_6an[index] > DNS_SEND_LEN) {
             log_fatal("dns6an", "DNS packet bigger (%d) than our limit (%d)",
                       dns_packet_lens_6an[index], DNS_SEND_LEN);
@@ -1016,9 +1026,9 @@ int dns6an_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
         free(dns_packets_6an[index]);
 
-        dns_packets_6an[index]           = xmalloc(dns_packet_lens_6an[index]);
-        dns_header        *dns_header_p = (dns_header *) dns_packets_6an[index];
-        char              *qname_p = dns_packets_6an[index] + sizeof(dns_header);
+        dns_packets_6an[index]   = xmalloc(dns_packet_lens_6an[index]);
+        dns_header *dns_header_p = (dns_header *) dns_packets_6an[index];
+        char       *qname_p      = dns_packets_6an[index] + sizeof(dns_header);
         dns_question_tail *tail_p =
             (dns_question_tail *) (dns_packets_6an[index] + sizeof(dns_header) +
                                    qname_lens_6an[index]);
@@ -1089,10 +1099,10 @@ void dns6an_print_packet(FILE *fp, void *packet) {
     char    *data           = ((char *) dns_header_p) + sizeof(dns_header);
     uint16_t data_len       = udp_len - sizeof(udp_header) - sizeof(dns_header);
     uint16_t bytes_consumed = 0;
-    char    *question_name  = get_name_6an(data, data_len, (char *) dns_header_p,
+    char    *question_name = get_name_6an(data, data_len, (char *) dns_header_p,
                                           udp_len, &bytes_consumed);
-    char    *qname          = ((char *) dns_header_p) + sizeof(dns_header);
-    int      qname_len      = strlen(qname) + 1;
+    char    *qname         = ((char *) dns_header_p) + sizeof(dns_header);
+    int      qname_len     = strlen(qname) + 1;
     dns_question_tail *tail_p =
         (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
                                qname_len);
@@ -1128,8 +1138,8 @@ void dns6an_print_packet(FILE *fp, void *packet) {
 }
 
 int dns6an_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                          UNUSED int *is_repeat, UNUSED void *buf,
-                          UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
+                           UNUSED int *is_repeat, UNUSED void *buf,
+                           UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
     dns_header     *dns_header_p;
 
@@ -1253,7 +1263,7 @@ int dns6an_validate_packet(const struct ip *ip_hdr, uint32_t len,
 }
 
 void dns6an_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
-                          UNUSED struct timespec ts) {
+                           UNUSED struct timespec ts) {
     struct ip6_hdr *ip6_header =
         (struct ip6_hdr *) &packet[sizeof(struct ether_header)];
 
@@ -1415,8 +1425,8 @@ void dns6an_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
         // This should not happen. Both the pcap filter and validate
         // packet prevent this.
         log_fatal("dns6an", "Die. This can only happen if you "
-                           "change the pcap filter and don't update the "
-                           "process function.");
+                            "change the pcap filter and don't update the "
+                            "process function.");
         return;
     }
 }

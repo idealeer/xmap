@@ -125,9 +125,9 @@ static int      default_option_rdata_len_6ape = 0;
  * qtype_qtype_to_strid_6ape (below, and setup_qtype_str_map_6ape())
  */
 const char *qtype_strs_6ape[]   = {"A",    "NS",    "CNAME", "SOA",      "PTR",
-                                  "MX",   "TXT",   "AAAA",  "RRSIG",    "ANY",
-                                  "SIG",  "SRV",   "DS",    "DNSKEY",   "TLSA",
-                                  "SVCB", "HTTPS", "CAA",   "HTTPSSVC", "OPT"};
+                                   "MX",   "TXT",   "AAAA",  "RRSIG",    "ANY",
+                                   "SIG",  "SRV",   "DS",    "DNSKEY",   "TLSA",
+                                   "SVCB", "HTTPS", "CAA",   "HTTPSSVC", "OPT"};
 const int   qtype_strs_len_6ape = 20;
 
 const dns_qtype qtype_strid_to_qtype_6ape[] = {
@@ -216,16 +216,16 @@ static int build_global_dns_packets_6ape(char **domains, int num_domains) {
             free(domains[i]);
         }
         dns_packet_lens_6ape[i] =
-            sizeof(dns_header) + qname_lens_6ape[i] + sizeof(dns_question_tail) +
-            default_option_qname_len_6ape + sizeof(dns_option_tail) +
-            default_option_rdata_len_6ape;
+            sizeof(dns_header) + qname_lens_6ape[i] +
+            sizeof(dns_question_tail) + default_option_qname_len_6ape +
+            sizeof(dns_option_tail) + default_option_rdata_len_6ape;
         if (dns_packet_lens_6ape[i] > DNS_SEND_LEN) {
             log_fatal("dns6ape", "DNS packet bigger (%d) than our limit (%d)",
                       dns_packet_lens_6ape[i], DNS_SEND_LEN);
             return EXIT_FAILURE;
         }
 
-        dns_packets_6ape[i]              = xmalloc(dns_packet_lens_6ape[i]);
+        dns_packets_6ape[i]             = xmalloc(dns_packet_lens_6ape[i]);
         dns_header        *dns_header_p = (dns_header *) dns_packets_6ape[i];
         char              *qname_p = dns_packets_6ape[i] + sizeof(dns_header);
         dns_question_tail *tail_p =
@@ -236,7 +236,8 @@ static int build_global_dns_packets_6ape(char **domains, int num_domains) {
                       qname_lens_6ape[i] + sizeof(dns_question_tail));
         dns_option_tail *option_tail_p =
             (dns_option_tail *) (dns_packets_6ape[i] + sizeof(dns_header) +
-                                 qname_lens_6ape[i] + sizeof(dns_question_tail) +
+                                 qname_lens_6ape[i] +
+                                 sizeof(dns_question_tail) +
                                  default_option_qname_len_6ape);
 
         // All other header fields should be 0. Except id, which we set
@@ -264,9 +265,9 @@ static int build_global_dns_packets_6ape(char **domains, int num_domains) {
 }
 
 static uint16_t get_name_helper_6ape(const char *data, uint16_t data_len,
-                                    const char *payload, uint16_t payload_len,
-                                    char *name, uint16_t name_len,
-                                    uint16_t recursion_level) {
+                                     const char *payload, uint16_t payload_len,
+                                     char *name, uint16_t name_len,
+                                     uint16_t recursion_level) {
     log_trace("dns6ape",
               "_get_name_helper IN, datalen: %d namelen: %d recusion: %d",
               data_len, name_len, recursion_level);
@@ -330,7 +331,8 @@ static uint16_t get_name_helper_6ape(const char *data, uint16_t data_len,
             // We are done so don't bother to increment the
             // pointers.
             if (rec_bytes_consumed == 0) {
-                log_trace("dns6ape", "_get_name_helper OUT. rec level %d failed",
+                log_trace("dns6ape",
+                          "_get_name_helper OUT. rec level %d failed",
                           recursion_level);
                 return 0;
             } else {
@@ -410,12 +412,12 @@ static uint16_t get_name_helper_6ape(const char *data, uint16_t data_len,
 // data: Where we are in the dns payload
 // payload: the entire udp payload
 static char *get_name_6ape(const char *data, uint16_t data_len,
-                          const char *payload, uint16_t payload_len,
-                          uint16_t *bytes_consumed) {
+                           const char *payload, uint16_t payload_len,
+                           uint16_t *bytes_consumed) {
     log_trace("dns6ape", "call to get_name_6ape, data_len: %d", data_len);
     char *name      = xmalloc(MAX_NAME_LENGTH);
     *bytes_consumed = get_name_helper_6ape(data, data_len, payload, payload_len,
-                                          name, MAX_NAME_LENGTH - 1, 0);
+                                           name, MAX_NAME_LENGTH - 1, 0);
     if (*bytes_consumed == 0) {
         free(name);
         return NULL;
@@ -431,9 +433,9 @@ static char *get_name_6ape(const char *data, uint16_t data_len,
 }
 
 static bool process_response_question_6ape(char **data, uint16_t *data_len,
-                                          const char *payload,
-                                          uint16_t    payload_len,
-                                          fieldset_t *list) {
+                                           const char *payload,
+                                           uint16_t    payload_len,
+                                           fieldset_t *list) {
     // Payload is the start of the DNS packet, including header
     // data is handle to the start of this RR
     // data_len is a pointer to the how much total data we have to work
@@ -459,14 +461,15 @@ static bool process_response_question_6ape(char **data, uint16_t *data_len,
     fs_add_unsafe_string(qfs, "name", question_name, 1);
     fs_add_uint64(qfs, "qtype", qtype);
 
-    if (qtype > MAX_QTYPE || qtype_qtype_to_strid_6ape[qtype] == BAD_QTYPE_VAL) {
+    if (qtype > MAX_QTYPE ||
+        qtype_qtype_to_strid_6ape[qtype] == BAD_QTYPE_VAL) {
         fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
     } else {
         // I've written worse things than this 3rd arg. But I want to be
         // fast.
-        fs_add_string(qfs, "qtype_str",
-                      (char *) qtype_strs_6ape[qtype_qtype_to_strid_6ape[qtype]],
-                      0);
+        fs_add_string(
+            qfs, "qtype_str",
+            (char *) qtype_strs_6ape[qtype_qtype_to_strid_6ape[qtype]], 0);
     }
 
     fs_add_uint64(qfs, "qclass", qclass);
@@ -480,9 +483,9 @@ static bool process_response_question_6ape(char **data, uint16_t *data_len,
 }
 
 static bool process_response_answer_6ape(char **data, uint16_t *data_len,
-                                        const char *payload,
-                                        uint16_t    payload_len,
-                                        fieldset_t *list) {
+                                         const char *payload,
+                                         uint16_t    payload_len,
+                                         fieldset_t *list) {
     log_trace("dns6ape", "call to process_response_answer_6ape, data_len: %d",
               *data_len);
     // Payload is the start of the DNS packet, including header
@@ -536,7 +539,7 @@ static bool process_response_answer_6ape(char **data, uint16_t *data_len,
     if (type == DNS_QTYPE_NS || type == DNS_QTYPE_CNAME) {
         uint16_t rdata_bytes_consumed = 0;
         char *rdata_name = get_name_6ape(rdata, rdlength, payload, payload_len,
-                                        &rdata_bytes_consumed);
+                                         &rdata_bytes_consumed);
         if (rdata_name == NULL) {
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -550,8 +553,9 @@ static bool process_response_answer_6ape(char **data, uint16_t *data_len,
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
         } else {
-            char *rdata_name = get_name_6ape(rdata + 2, rdlength - 2, payload,
-                                            payload_len, &rdata_bytes_consumed);
+            char *rdata_name =
+                get_name_6ape(rdata + 2, rdlength - 2, payload, payload_len,
+                              &rdata_bytes_consumed);
             if (rdata_name == NULL) {
                 fs_add_uint64(afs, "rdata_is_parsed", 0);
                 fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -584,7 +588,8 @@ static bool process_response_answer_6ape(char **data, uint16_t *data_len,
         }
     } else if (type == DNS_QTYPE_A) {
         if (rdlength != 4) {
-            log_warn("dns6ape", "A record with IP of length %d. Not processing.",
+            log_warn("dns6ape",
+                     "A record with IP of length %d. Not processing.",
                      rdlength);
             fs_add_uint64(afs, "rdata_is_parsed", 0);
             fs_add_binary(afs, "rdata", rdlength, rdata, 0);
@@ -632,11 +637,14 @@ static bool process_response_answer_6ape(char **data, uint16_t *data_len,
     } else if (type == DNS_QTYPE_OPT) {
         dns_option_tail *option_tail =
             (dns_option_tail *) (*data + bytes_consumed);
-        uint16_t udpsize        = ntohs(option_tail->udpsize);
-        uint8_t  ercode         = option_tail->ercode;
-        uint8_t  eversion       = option_tail->eversion;
-        uint16_t dodnssec       = option_tail->dodnssec;
-        uint16_t option_z       = option_tail->z;
+        uint16_t udpsize  = ntohs(option_tail->udpsize);
+        uint8_t  ercode   = option_tail->ercode;
+        uint8_t  eversion = option_tail->eversion;
+        uint16_t dodnssec = option_tail->dodnssec;
+        uint16_t option_z =
+            (((option_tail->dodnssec << 7) + option_tail->z1) << 8) +
+            option_tail->z2;
+        ;
         uint16_t option_dlength = ntohs(option_tail->dlength);
         char    *option_data    = option_tail->data;
 
@@ -680,7 +688,7 @@ static int load_question_from_str_6ape(const char *type_q_str) {
 
         if (index_questions_6ape >= num_questions_6ape) {
             log_error("dns6ape", "less probes than questions configured. Add "
-                                "additional questions.");
+                                 "additional questions.");
             return EXIT_FAILURE;
         }
 
@@ -696,12 +704,13 @@ static int load_question_from_str_6ape(const char *type_q_str) {
         if (label_type_6ape == DNS_LTYPE_STR) {
             domains_6ape[index_questions_6ape] =
                 xmalloc(label_len_6ape + 1 + domain_len + 1);
-            strncpy(domains_6ape[index_questions_6ape], label_6ape, label_len_6ape);
+            strncpy(domains_6ape[index_questions_6ape], label_6ape,
+                    label_len_6ape);
             domains_6ape[index_questions_6ape][label_len_6ape] = '.';
             strncpy(domains_6ape[index_questions_6ape] + label_len_6ape + 1,
                     probe_q_delimiter_p + 1, domain_len);
-            domains_6ape[index_questions_6ape][label_len_6ape + 1 + domain_len] =
-                '\0';
+            domains_6ape[index_questions_6ape]
+                        [label_len_6ape + 1 + domain_len] = '\0';
         } else {
             domains_6ape[index_questions_6ape] = xmalloc(domain_len + 1);
             strncpy(domains_6ape[index_questions_6ape], probe_q_delimiter_p + 1,
@@ -755,7 +764,7 @@ static int load_question_from_file_6ape(const char *file) {
 }
 
 int dns_random_bytes_6ape(char *dst, int len, const unsigned char *charset,
-                         int charset_len, aesrand_t *aes) {
+                          int charset_len, aesrand_t *aes) {
     int i;
     for (i = 0; i < len; i++) {
         *dst++ = charset[(aesrand_getword(aes) & 0xFFFFFFFF) % charset_len];
@@ -773,7 +782,7 @@ static int dns6ape_global_init(struct state_conf *conf) {
 
     if (!conf->probe_args) {
         conf->target_index_num = 1;
-        num_questions_6ape      = 1;
+        num_questions_6ape     = 1;
     }
 
     if (num_questions_6ape < 1) {
@@ -818,7 +827,7 @@ static int dns6ape_global_init(struct state_conf *conf) {
             label_type_6ape = DNS_LTYPE_RANDOM;
             log_debug("dns6ape", "random label prefix");
         } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-            label_type_6ape   = DNS_LTYPE_STR;
+            label_type_6ape  = DNS_LTYPE_STR;
             conf->probe_args = c;
             c                = strchr(conf->probe_args, ':');
             if (!c) {
@@ -877,7 +886,7 @@ static int dns6ape_global_init(struct state_conf *conf) {
 
         if (index_questions_6ape < num_questions_6ape) {
             log_error("dns6ape", "more probes than questions configured. Add "
-                                "additional probes.");
+                                 "additional probes.");
             return EXIT_FAILURE;
         }
     }
@@ -889,8 +898,8 @@ static int dns6ape_global_init(struct state_conf *conf) {
 }
 
 static int dns6ape_global_cleanup(UNUSED struct state_conf *xconf,
-                                 UNUSED struct state_send *xsend,
-                                 UNUSED struct state_recv *xrecv) {
+                                  UNUSED struct state_send *xsend,
+                                  UNUSED struct state_recv *xrecv) {
     if (dns_packets_6ape) {
         for (int i = 0; i < num_questions_6ape; i++) {
             if (dns_packets_6ape[i]) {
@@ -929,7 +938,7 @@ static int dns6ape_global_cleanup(UNUSED struct state_conf *xconf,
 }
 
 int dns6ape_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
-                       void **arg_ptr) {
+                        void **arg_ptr) {
     memset(buf, 0, MAX_PACKET_SIZE);
 
     // Setup assuming num_questions_6ape == 0
@@ -937,11 +946,11 @@ int dns6ape_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
     make_eth6_header(eth_header, src, gw);
 
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
-    uint16_t payload_len       = sizeof(struct udphdr) + dns_packet_lens_6ape[0];
+    uint16_t payload_len = sizeof(struct udphdr) + dns_packet_lens_6ape[0];
     make_ip6_header(ip6_header, IPPROTO_UDP, payload_len);
 
     struct udphdr *udp6_header = (struct udphdr *) (&ip6_header[1]);
-    uint16_t       udp_len     = sizeof(struct udphdr) + dns_packet_lens_6ape[0];
+    uint16_t       udp_len = sizeof(struct udphdr) + dns_packet_lens_6ape[0];
     make_udp_header(udp6_header, udp_len);
 
     char *payload = (char *) (&udp6_header[1]);
@@ -961,8 +970,8 @@ int dns6ape_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 }
 
 int dns6ape_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
-                       ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
-                       int probe_num, index_h_t index, void *arg) {
+                        ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
+                        int probe_num, index_h_t index, void *arg) {
     struct ether_header *eth_header = (struct ether_header *) buf;
     struct ip6_hdr      *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
     struct udphdr       *udp_header = (struct udphdr *) (&ip6_header[1]);
@@ -991,7 +1000,8 @@ int dns6ape_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
             assert(*buf_len <= MAX_PACKET_SIZE);
 
-            memcpy(payload, dns_packets_6ape[index], dns_packet_lens_6ape[index]);
+            memcpy(payload, dns_packets_6ape[index],
+                   dns_packet_lens_6ape[index]);
         }
 
         uint8_t *ip6_src = (uint8_t *) &(ip6_header->ip6_src);
@@ -1031,7 +1041,7 @@ int dns6ape_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         case DNS_LTYPE_RANDOM: {
             aesrand_t *aes = (aesrand_t *) arg;
             dns_random_bytes_6ape(new_label, 8, charset_alpha_lower_6ape, 26,
-                                 aes);
+                                  aes);
             new_label[8] = '\0';
             break;
         }
@@ -1070,12 +1080,12 @@ int dns6ape_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
 
         free(dns_packets_6ape[index]);
 
-        dns_packets_6ape[index]   = xmalloc(dns_packet_lens_6ape[index]);
+        dns_packets_6ape[index]  = xmalloc(dns_packet_lens_6ape[index]);
         dns_header *dns_header_p = (dns_header *) dns_packets_6ape[index];
         char       *qname_p      = dns_packets_6ape[index] + sizeof(dns_header);
         dns_question_tail *tail_p =
-            (dns_question_tail *) (dns_packets_6ape[index] + sizeof(dns_header) +
-                                   qname_lens_6ape[index]);
+            (dns_question_tail *) (dns_packets_6ape[index] +
+                                   sizeof(dns_header) + qname_lens_6ape[index]);
         char *option_qname_p =
             (char *) (dns_packets_6ape[index] + sizeof(dns_header) +
                       qname_lens_6ape[index] + sizeof(dns_question_tail));
@@ -1158,10 +1168,10 @@ void dns6ape_print_packet(FILE *fp, void *packet) {
     char    *data           = ((char *) dns_header_p) + sizeof(dns_header);
     uint16_t data_len       = udp_len - sizeof(udp_header) - sizeof(dns_header);
     uint16_t bytes_consumed = 0;
-    char    *question_name = get_name_6ape(data, data_len, (char *) dns_header_p,
-                                          udp_len, &bytes_consumed);
-    char    *qname         = ((char *) dns_header_p) + sizeof(dns_header);
-    int      qname_len     = strlen(qname) + 1;
+    char *question_name = get_name_6ape(data, data_len, (char *) dns_header_p,
+                                        udp_len, &bytes_consumed);
+    char *qname         = ((char *) dns_header_p) + sizeof(dns_header);
+    int   qname_len     = strlen(qname) + 1;
     dns_question_tail *tail_p =
         (dns_question_tail *) ((char *) dns_header_p + sizeof(dns_header) +
                                qname_len);
@@ -1212,8 +1222,8 @@ void dns6ape_print_packet(FILE *fp, void *packet) {
 }
 
 int dns6ape_validate_packet(const struct ip *ip_hdr, uint32_t len,
-                           UNUSED int *is_repeat, UNUSED void *buf,
-                           UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
+                            UNUSED int *is_repeat, UNUSED void *buf,
+                            UNUSED size_t *buf_len, UNUSED uint8_t ttl) {
     struct ip6_hdr *ip6_header = (struct ip6_hdr *) ip_hdr;
     dns_header     *dns_header_p;
 
@@ -1337,7 +1347,7 @@ int dns6ape_validate_packet(const struct ip *ip_hdr, uint32_t len,
 }
 
 void dns6ape_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
-                           UNUSED struct timespec ts) {
+                            UNUSED struct timespec ts) {
     struct ip6_hdr *ip6_header =
         (struct ip6_hdr *) &packet[sizeof(struct ether_header)];
 
@@ -1499,8 +1509,8 @@ void dns6ape_process_packet(const u_char *packet, uint32_t len, fieldset_t *fs,
         // This should not happen. Both the pcap filter and validate
         // packet prevent this.
         log_fatal("dns6ape", "Die. This can only happen if you "
-                            "change the pcap filter and don't update the "
-                            "process function.");
+                             "change the pcap filter and don't update the "
+                             "process function.");
         return;
     }
 }
