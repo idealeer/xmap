@@ -1032,3 +1032,61 @@ int dns6aecs_thread_init(void *buf, macaddr_t *src, macaddr_t *gw,
 
     return EXIT_SUCCESS;
 }
+
+int dns6aecs_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
+                         ipaddr_n_t *dst_ip, port_h_t dst_port, uint8_t ttl,
+                         int probe_num, index_h_t index, void *arg) {
+    struct ether_header *eth_header = (struct ether_header *) buf;
+    struct ip6_hdr      *ip6_header = (struct ip6_hdr *) (&eth_header[1]);
+    struct udphdr       *udp_header = (struct udphdr *) (&ip6_header[1]);
+
+    uint8_t validation[VALIDATE_BYTES];
+    validate_gen(src_ip, dst_ip, dst_port, validation);
+
+    port_h_t src_port =
+        get_src_port(dns_num_ports_6aecs, probe_num, validation);
+    uint16_t dns_txid = get_dnsa_txid(validation, probe_num);
+
+    if (label_type_6aecs == DNS_LTYPE_RAW ||
+        label_type_6aecs == DNS_LTYPE_STR) {
+        // For num_questions_6aecs == 1, we handle this in per-thread init. Do
+        // less work
+        if (num_questions_6aecs > 1) {
+            uint16_t payload_len =
+                sizeof(struct udphdr) + dns_packet_lens_6aecs[index];
+            make_ip6_header(ip6_header, IPPROTO_UDP, payload_len);
+
+            uint16_t udp_len =
+                sizeof(struct udphdr) + dns_packet_lens_6aecs[index];
+            make_udp_header(udp_header, udp_len);
+
+            char *payload = (char *) (&udp_header[1]);
+            *buf_len = sizeof(struct ether_header) + sizeof(struct ip6_hdr) +
+                       sizeof(struct udphdr) + dns_packet_lens_6aecs[index];
+
+            assert(*buf_len <= MAX_PACKET_SIZE);
+
+            memcpy(payload, dns_packets_6aecs[index],
+                   dns_packet_lens_6aecs[index]);
+        }
+
+        uint8_t *ip6_src = (uint8_t *) &(ip6_header->ip6_src);
+        uint8_t *ip6_dst = (uint8_t *) &(ip6_header->ip6_dst);
+        for (int i = 0; i < 16; i++) {
+            ip6_src[i] = src_ip[i];
+            ip6_dst[i] = dst_ip[i];
+        }
+        ip6_header->ip6_hlim = ttl;
+
+        udp_header->uh_sport = htons(src_port);
+        udp_header->uh_dport = htons(dst_port);
+
+        dns_header *dns_header_p = (dns_header *) (&udp_header[1]);
+
+        dns_header_p->id = dns_txid;
+
+        udp_header->uh_sum = 0;
+        udp_header->uh_sum = udp6_checksum(
+            (struct in6_addr *) &(ip6_header->ip6_src),
+            (struct in6_addr *) &(ip6_header->ip6_dst), udp_header);
+    }
