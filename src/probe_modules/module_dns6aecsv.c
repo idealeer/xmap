@@ -170,3 +170,59 @@ static uint16_t qtype_str_to_code_6aecsv(const char *str) {
 
     return 0;
 }
+
+static char    *label_6aecsv      = NULL;
+static uint16_t label_len_6aecsv  = 0;
+static uint16_t label_type_6aecsv = DNS_LTYPE_RAW;
+static uint16_t recursive_6aecsv  = 1;
+
+static uint16_t domain_to_qname_6aecsv(char      **qname_handle,
+                                       const char *domain) {
+    if (domain[0] == '.') {
+        char *qname   = xmalloc(1);
+        qname[0]      = 0x00;
+        *qname_handle = qname;
+        return 1;
+    }
+
+    // String + 1byte header + null byte
+    uint16_t len   = strlen(domain) + 1 + 1;
+    char    *qname = xmalloc(len);
+    // Add a . before the domain. This will make the following simpler.
+    qname[0] = '.';
+    // Move the domain into the qname buffer.
+    strcpy(qname + 1, domain);
+
+    for (int i = 0; i < len; i++) {
+        if (qname[i] == '.') {
+            int j;
+            for (j = i + 1; j < (len - 1); j++) {
+                if (qname[j] == '.') {
+                    break;
+                }
+            }
+            qname[i] = j - i - 1;
+        }
+    }
+    *qname_handle = qname;
+    assert((*qname_handle)[len - 1] == '\0');
+
+    return len;
+}
+
+static int build_global_dns_packets_6aecsv(char **domains, int num_domains) {
+    for (int i = 0; i < num_domains; i++) {
+        qname_lens_6aecsv[i] =
+            domain_to_qname_6aecsv(&qnames_6aecsv[i], domains[i]);
+        if (domains[i] != (char *) default_domain_6aecsv) {
+            free(domains[i]);
+        }
+        dns_packet_lens_6aecsv[i] =
+            sizeof(dns_header) + qname_lens_6aecsv[i] +
+            sizeof(dns_question_tail) + default_option_qname_len_6aecsv +
+            sizeof(dns_option_tail) + default_option_rdata_len_6aecsv;
+        if (dns_packet_lens_6aecsv[i] > DNS_SEND_LEN) {
+            log_fatal("dns6aecsv", "DNS packet bigger (%d) than our limit (%d)",
+                      dns_packet_lens_6aecsv[i], DNS_SEND_LEN);
+            return EXIT_FAILURE;
+        }
