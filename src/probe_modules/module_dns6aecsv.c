@@ -738,3 +738,72 @@ static bool process_response_answer_6aecsv(char **data, uint16_t *data_len,
 
     return 0;
 }
+
+static int load_question_from_str_6aecsv(const char *type_q_str) {
+    char *probe_q_delimiter_p   = NULL;
+    char *probe_arg_delimiter_p = NULL;
+    while (1) {
+        probe_q_delimiter_p   = strchr(type_q_str, ',');
+        probe_arg_delimiter_p = strchr(type_q_str, ';');
+
+        if (probe_q_delimiter_p == NULL) return EXIT_SUCCESS;
+
+        if (probe_q_delimiter_p == type_q_str ||
+            type_q_str + strlen(type_q_str) == (probe_q_delimiter_p + 1)) {
+            log_error("dns6aecsv", dns6aecsv_usage_error);
+            return EXIT_FAILURE;
+        }
+
+        if (index_questions_6aecsv >= num_questions_6aecsv) {
+            log_error("dns6aecsv", "less probes than questions configured. Add "
+                                   "additional questions.");
+            return EXIT_FAILURE;
+        }
+
+        int domain_len = 0;
+
+        if (probe_arg_delimiter_p) {
+            domain_len = probe_arg_delimiter_p - probe_q_delimiter_p - 1;
+        } else {
+            domain_len = strlen(probe_q_delimiter_p) - 1;
+        }
+        assert(domain_len > 0);
+
+        if (label_type_6aecsv == DNS_LTYPE_STR) {
+            domains_6aecsv[index_questions_6aecsv] =
+                xmalloc(label_len_6aecsv + 1 + domain_len + 1);
+            strncpy(domains_6aecsv[index_questions_6aecsv], label_6aecsv,
+                    label_len_6aecsv);
+            domains_6aecsv[index_questions_6aecsv][label_len_6aecsv] = '.';
+            strncpy(domains_6aecsv[index_questions_6aecsv] + label_len_6aecsv +
+                        1,
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_6aecsv[index_questions_6aecsv]
+                          [label_len_6aecsv + 1 + domain_len] = '\0';
+        } else {
+            domains_6aecsv[index_questions_6aecsv] = xmalloc(domain_len + 1);
+            strncpy(domains_6aecsv[index_questions_6aecsv],
+                    probe_q_delimiter_p + 1, domain_len);
+            domains_6aecsv[index_questions_6aecsv][domain_len] = '\0';
+        }
+
+        char *qtype_str = xmalloc(probe_q_delimiter_p - type_q_str + 1);
+        strncpy(qtype_str, type_q_str, probe_q_delimiter_p - type_q_str);
+        qtype_str[probe_q_delimiter_p - type_q_str] = '\0';
+
+        qtypes_6aecsv[index_questions_6aecsv] =
+            qtype_str_to_code_6aecsv(strupr(qtype_str));
+        if (!qtypes_6aecsv[index_questions_6aecsv]) {
+            log_error("dns6aecsv", "incorrect qtype supplied: %s", qtype_str);
+            free(qtype_str);
+            return EXIT_FAILURE;
+        }
+        free(qtype_str);
+
+        index_questions_6aecsv++;
+        if (probe_arg_delimiter_p)
+            type_q_str = probe_q_delimiter_p + domain_len + 2;
+        else
+            type_q_str = probe_q_delimiter_p + domain_len + 1;
+    }
+}
