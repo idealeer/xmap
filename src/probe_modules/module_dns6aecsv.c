@@ -1158,3 +1158,63 @@ int dns6aecsv_make_packet(void *buf, size_t *buf_len, ipaddr_n_t *src_ip,
         }
 
         free(dns_packets_6aecsv[index]);
+
+                dns_packets_6aecsv[index] = xmalloc(dns_packet_lens_6aecsv[index]);
+                dns_header *dns_header_p  = (dns_header *) dns_packets_6aecsv[index];
+                char       *qname_p = dns_packets_6aecsv[index] + sizeof(dns_header);
+                dns_question_tail *tail_p =
+                    (dns_question_tail *) (dns_packets_6aecsv[index] +
+                                           sizeof(dns_header) +
+                                           qname_lens_6aecsv[index]);
+                char *option_qname_p =
+                    (char *) (dns_packets_6aecsv[index] + sizeof(dns_header) +
+                              qname_lens_6aecsv[index] + sizeof(dns_question_tail));
+                dns_option_tail *option_tail_p =
+                    (dns_option_tail *) (dns_packets_6aecsv[index] +
+                                         sizeof(dns_header) + qname_lens_6aecsv[index] +
+                                         sizeof(dns_question_tail) +
+                                         default_option_qname_len_6aecsv);
+                dns_option_ecs *option_ecs_p =
+                    (dns_option_ecs *) (dns_packets_6aecsv[index] + sizeof(dns_header) +
+                                        qname_lens_6aecsv[index] +
+                                        sizeof(dns_question_tail) +
+                                        default_option_qname_len_6aecsv +
+                                        sizeof(dns_option_tail));
+
+                // All other header fields should be 0. Except id, which we set
+                // per thread. Please recurse as needed.
+                dns_header_p->rd = recursive_6aecsv; // Is one bit. Don't need htons
+                // We have 1 question
+                dns_header_p->qdcount = htons(1);
+                memcpy(qname_p, qnames_6aecsv[index], qname_lens_6aecsv[index]);
+                // Set the qtype to what we passed from args
+                tail_p->qtype = htons(qtypes_6aecsv[index]);
+                // Set the qclass to The Internet (TM) (R) (I hope you're happy
+                // now Zakir)
+                tail_p->qclass = htons(0x01);
+                // MAGIC NUMBER. Let's be honest. This is only ever 1
+
+                // option, others set to 0
+                dns_header_p->arcount = htons(1);
+                memcpy(option_qname_p, default_option_qname_6aecsv,
+                       default_option_qname_len_6aecsv);
+                option_tail_p->type    = htons(DNS_QTYPE_OPT);
+                option_tail_p->udpsize = htons(default_option_udpsize_6aecsv);
+                option_tail_p->dlength = htons(default_option_rdata_len_6aecsv);
+
+                // ecs
+                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);    // 8
+                option_ecs_p->optlength  = htons(11);                 // fixed for /56
+                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP6); // IPv6
+                option_ecs_p->srcnmask   = 56;                        // source netmask
+                option_ecs_p->scpnmask   = 0;                         // scope netmask
+                uint8_t client_subnet[7] = {
+                    src_ip[0],                             // First byte
+                    src_ip[1],                             // Second byte
+                    src_ip[2],                             // Third byte
+                    src_ip[3],                             // Fourth byte
+                    src_ip[4],                             // Fifth byte
+                    (src_ip[5] + (probe_num / 256)) % 256, // Sixth byte
+                    (src_ip[6] + probe_num) % 256          // Seventh byte
+                };
+                memcpy(option_ecs_p->cs, client_subnet, 7);
