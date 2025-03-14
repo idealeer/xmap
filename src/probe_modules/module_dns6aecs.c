@@ -853,110 +853,110 @@ static int dns6aecs_global_init(struct state_conf *conf) {
                   num_questions_6aecs);
     }
 
-        // Setup the global structures
-        dns_packets_6aecs     = xmalloc(sizeof(char *) * num_questions_6aecs);
-        dns_packet_lens_6aecs = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
-        qname_lens_6aecs      = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
-        qnames_6aecs          = xmalloc(sizeof(char *) * num_questions_6aecs);
-        qtypes_6aecs          = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
-        domains_6aecs         = xmalloc(sizeof(char *) * num_questions_6aecs);
+    // Setup the global structures
+    dns_packets_6aecs     = xmalloc(sizeof(char *) * num_questions_6aecs);
+    dns_packet_lens_6aecs = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
+    qname_lens_6aecs      = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
+    qnames_6aecs          = xmalloc(sizeof(char *) * num_questions_6aecs);
+    qtypes_6aecs          = xmalloc(sizeof(uint16_t) * num_questions_6aecs);
+    domains_6aecs         = xmalloc(sizeof(char *) * num_questions_6aecs);
 
-        for (int i = 0; i < num_questions_6aecs; i++) {
-            domains_6aecs[i] = (char *) default_domain_6aecs;
-            qtypes_6aecs[i]  = default_qtype_6aecs;
+    for (int i = 0; i < num_questions_6aecs; i++) {
+        domains_6aecs[i] = (char *) default_domain_6aecs;
+        qtypes_6aecs[i]  = default_qtype_6aecs;
+    }
+
+    // This is xmap boilerplate. Why do I have to write this?
+    dns_num_ports_6aecs = conf->source_port_last - conf->source_port_first + 1;
+    setup_qtype_str_map_6aecs();
+
+    if (conf->probe_args &&
+        strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
+        char *c = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
         }
+        ++c;
 
-        // This is xmap boilerplate. Why do I have to write this?
-        dns_num_ports_6aecs = conf->source_port_last - conf->source_port_first + 1;
-        setup_qtype_str_map_6aecs();
-
-        if (conf->probe_args &&
-            strlen(conf->probe_args) > 0) { // no parameters passed in. Use defaults
-            char *c = strchr(conf->probe_args, ':');
+        // label type
+        if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
+            label_type_6aecs = DNS_LTYPE_RAW;
+            log_debug("dns6aecs", "raw label prefix");
+        } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
+            label_type_6aecs = DNS_LTYPE_TIME;
+            log_debug("dns6aecs", "time label prefix");
+        } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
+            label_type_6aecs = DNS_LTYPE_RANDOM;
+            log_debug("dns6aecs", "random label prefix");
+        } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
+            label_type_6aecs = DNS_LTYPE_STR;
+            conf->probe_args = c;
+            c                = strchr(conf->probe_args, ':');
             if (!c) {
                 log_error("dns6aecs", dns6aecs_usage_error);
                 return EXIT_FAILURE;
             }
+            label_len_6aecs = c - conf->probe_args;
+            label_6aecs     = xmalloc(label_len_6aecs);
+            strncpy(label_6aecs, conf->probe_args, label_len_6aecs);
             ++c;
+            log_debug("dns6aecs", "label prefix: %s, len: %d", label_6aecs,
+                      label_len_6aecs);
+        } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
+            label_type_6aecs = DNS_LTYPE_SRCIP;
+            log_debug("dns6aecs", "dst-ip label prefix");
+        } else {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-            // label type
-            if (strncasecmp(conf->probe_args, "raw", 3) == 0) {
-                label_type_6aecs = DNS_LTYPE_RAW;
-                log_debug("dns6aecs", "raw label prefix");
-            } else if (strncasecmp(conf->probe_args, "time", 4) == 0) {
-                label_type_6aecs = DNS_LTYPE_TIME;
-                log_debug("dns6aecs", "time label prefix");
-            } else if (strncasecmp(conf->probe_args, "random", 6) == 0) {
-                label_type_6aecs = DNS_LTYPE_RANDOM;
-                log_debug("dns6aecs", "random label prefix");
-            } else if (strncasecmp(conf->probe_args, "str", 3) == 0) {
-                label_type_6aecs = DNS_LTYPE_STR;
-                conf->probe_args = c;
-                c                = strchr(conf->probe_args, ':');
-                if (!c) {
-                    log_error("dns6aecs", dns6aecs_usage_error);
-                    return EXIT_FAILURE;
-                }
-                label_len_6aecs = c - conf->probe_args;
-                label_6aecs     = xmalloc(label_len_6aecs);
-                strncpy(label_6aecs, conf->probe_args, label_len_6aecs);
-                ++c;
-                log_debug("dns6aecs", "label prefix: %s, len: %d", label_6aecs,
-                          label_len_6aecs);
-            } else if (strncasecmp(conf->probe_args, "dst-ip", 6) == 0) {
-                label_type_6aecs = DNS_LTYPE_SRCIP;
-                log_debug("dns6aecs", "dst-ip label prefix");
-            } else {
-                log_error("dns6aecs", dns6aecs_usage_error);
-                return EXIT_FAILURE;
-            }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dns6aecs", dns6aecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
+        // recursive query
+        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+            recursive_6aecs = 1;
+        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+            recursive_6aecs = 0;
+        } else {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // recursive query
-                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
-                            recursive_6aecs = 1;
-                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
-                            recursive_6aecs = 0;
-                        } else {
-                            log_error("dns6aecs", dns6aecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        conf->probe_args = c;
+        c                = strchr(conf->probe_args, ':');
+        if (!c) {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
+        ++c;
 
-                        conf->probe_args = c;
-                        c                = strchr(conf->probe_args, ':');
-                        if (!c) {
-                            log_error("dns6aecs", dns6aecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
-                        ++c;
+        // input query
+        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+            if (load_question_from_str_6aecs(c)) return EXIT_FAILURE;
+        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+            if (load_question_from_file_6aecs(c)) return EXIT_FAILURE;
+        } else {
+            log_error("dns6aecs", dns6aecs_usage_error);
+            return EXIT_FAILURE;
+        }
 
-                        // input query
-                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
-                            if (load_question_from_str_6aecs(c)) return EXIT_FAILURE;
-                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
-                            if (load_question_from_file_6aecs(c)) return EXIT_FAILURE;
-                        } else {
-                            log_error("dns6aecs", dns6aecs_usage_error);
-                            return EXIT_FAILURE;
-                        }
+        if (index_questions_6aecs < num_questions_6aecs) {
+            log_error("dns6aecs", "more probes than questions configured. Add "
+                                  "additional probes.");
+            return EXIT_FAILURE;
+        }
+    }
 
-                        if (index_questions_6aecs < num_questions_6aecs) {
-                            log_error("dns6aecs", "more probes than questions configured. Add "
-                                                  "additional probes.");
-                            return EXIT_FAILURE;
-                        }
-                    }
-
-                    if (label_type_6aecs == DNS_LTYPE_RAW || label_type_6aecs == DNS_LTYPE_STR)
-                        return build_global_dns_packets_6aecs(domains_6aecs,
-                                                              num_questions_6aecs);
-                    else
-                        return EXIT_SUCCESS;
-            }
+    if (label_type_6aecs == DNS_LTYPE_RAW || label_type_6aecs == DNS_LTYPE_STR)
+        return build_global_dns_packets_6aecs(domains_6aecs,
+                                              num_questions_6aecs);
+    else
+        return EXIT_SUCCESS;
+}
