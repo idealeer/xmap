@@ -62,6 +62,15 @@ extern probe_module_t module_tcp6_syn;
 extern probe_module_t module_icmp6_echo_tmxd;
 extern probe_module_t module_icmp6_echo_gw;
 // ADD YOUR MODULE HERE
+// 03/14/2025
+extern probe_module_t module_dnsc;
+extern probe_module_t module_dnscse;
+extern probe_module_t module_dnsaecs;
+extern probe_module_t module_dnsaecsv;
+extern probe_module_t module_dns6aecs;
+extern probe_module_t module_dns6aecsv;
+extern probe_module_t module_dnsacookiev;
+extern probe_module_t module_dns6acookiev;
 
 probe_module_t *probe_modules[] = {
     &module_udp,
@@ -104,6 +113,15 @@ probe_module_t *probe_modules[] = {
     &module_icmp6_echo_gw,
     &module_icmp6_echo_tmxd,
     // ADD YOUR MODULE HERE
+    // 03/14/2025
+    &module_dnsc,
+    &module_dnscse,
+    &module_dnsaecs,
+    &module_dnsaecsv,
+    &module_dns6aecs,
+    &module_dns6aecsv,
+    &module_dnsacookiev,
+    &module_dns6acookiev,
 };
 
 probe_module_t *get_probe_module_by_name(const char *name, int ipv46_flag) {

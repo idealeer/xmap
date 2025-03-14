@@ -83,6 +83,14 @@ set(SOURCES_PROBE_MODULES
         probe_modules/module_dns6ape.c
         probe_modules/module_dns6af.c
         probe_modules/module_dns6afe.c
+        probe_modules/module_dnsc.c
+        probe_modules/module_dnscse.c
+        probe_modules/module_dnsaecs.c
+        probe_modules/module_dnsaecsv.c
+        probe_modules/module_dns6aecs.c
+        probe_modules/module_dns6aecsv.c
+        probe_modules/module_dnsacookiev.c
+        probe_modules/module_dns6acookiev.c
         )
 
 set(SOURCES_IID_MODULES

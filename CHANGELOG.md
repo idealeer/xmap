@@ -47,14 +47,33 @@
 * XMap 2.0.0 New Version Release.
 * New feature:
   * new module `dnsx`                : enable DNS over IPv6
-  * new module `dnsa`     (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port>
-  * new module `dnsae`    (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
-  * new module `dnsan`    (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port>
-  * new module `dnsane`   (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
-  * new module `dnsane16` (IPv4&IPv6): enable fixed source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=65535
-  * new module `dnsai`    (IPv4&IPv6): enable changing TXID when sending multiple queries towards the same target <IP, port>
-  * new module `dnsaie`   (IPv4&IPv6): enable changing TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096
+  * new module `dnsa`     (IPv4&IPv6): enable changing source port & TxID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsae`    (IPv4&IPv6): enable changing source port & TxID when sending multiple queries towards the same target <IP, port> with EDNS0=4,096
+  * new module `dnsan`    (IPv4&IPv6): enable fixed source port & TxID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsane`   (IPv4&IPv6): enable fixed source port & TxID when sending multiple queries towards the same target <IP, port> with EDNS0=4,096
+  * new module `dnsane16` (IPv4&IPv6): enable fixed source port & TxID when sending multiple queries towards the same target <IP, port> with EDNS0=65,535
+  * new module `dnsai`    (IPv4&IPv6): enable changing TxID when sending multiple queries towards the same target <IP, port>
+  * new module `dnsaie`   (IPv4&IPv6): enable changing TxID when sending multiple queries towards the same target <IP, port> with EDNS0=4,096
   * new module `dnsap`    (IPv4&IPv6): enable changing source port when sending multiple queries towards the same target <IP, port>
-  * new module `dnsape`   (IPv4&IPv6): enable changing source port when sending multiple queries towards the same target <IP, port> with EDNS0=4096
-  * new module `dnsaf`    (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with fake source IP
-  * new module `dnsafe`   (IPv4&IPv6): enable changing source port & TXID when sending multiple queries towards the same target <IP, port> with EDNS0=4096 & source IP
+  * new module `dnsape`   (IPv4&IPv6): enable changing source port when sending multiple queries towards the same target <IP, port> with EDNS0=4,096
+  * new module `dnsaf`    (IPv4&IPv6): enable changing source port & TxID when sending multiple queries towards the same target <IP, port> with fake source IP
+  * new module `dnsafe`   (IPv4&IPv6): enable changing source port & TxID when sending multiple queries towards the same target <IP, port> with EDNS0=4,096 & source IP
+
+# 2.0.1 01/05/2024
+* XMap 2.0.1 Minor Release.
+* Fix Bugs:
+  * Fix the compiling issuein Mac M1-M3
+
+# 2.0.2 08/06/2024
+* XMap 2.0.2 Minor Release.
+* Fix Bugs:
+  * Fix Bugs [#23](https://github.com/idealeer/xmap/issues/23) & [#24](https://github.com/idealeer/xmap/issues/23), thanks [@xiota](https://github.com/xiota)
+
+# 2.0.3 03/14/2025
+* XMap 2.0.3 Minor Release.
+* New feature:
+  * new module `dnsc`                   : enable using fake src IP addresses from the same sub network from the target IP address
+  * new module `dnscse`                 : enable using fake src IP addresses from the same sub network from the target IP address with EDNS0=4,096
+  * new module `dnsaecs`     (IPv4&IPv6): enable using EDNS0=4,096 and ECS with fixed src_ip/24/0
+  * new module `dnsaecsv`    (IPv4&IPv6): enable using EDNS0=4,096 and ECS with variable src_ip/24/0
+  * new module `dnsacookiev` (IPv4&IPv6): enable using EDNS0=4,096 with variable cookie

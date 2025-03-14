@@ -1591,6 +1591,8 @@ probe_module_t module_dnscse = {
     .fields          = fields,
     .numfields       = sizeof(fields) / sizeof(fields[0]),
     .helptext =
+        "This module queries specific UDP DNS resolvers using fake src IP \n"
+        "addresses from the same sub network from the target IP address.\n"
         "This module sends out DNS queries and parses basic responses.\n"
         "When many queries (a qname) are sent to a target, same port&txid.\n"
         "Queries are appended with an EDNS0 option: UDP = 4,096 & DO = 1.\n"
