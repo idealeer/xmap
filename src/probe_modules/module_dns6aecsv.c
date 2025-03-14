@@ -917,3 +917,54 @@ static int dns6aecsv_global_init(struct state_conf *conf) {
                 log_error("dns6aecsv", dns6aecsv_usage_error);
                 return EXIT_FAILURE;
             }
+
+                        conf->probe_args = c;
+                        c                = strchr(conf->probe_args, ':');
+                        if (!c) {
+                            log_error("dns6aecsv", dns6aecsv_usage_error);
+                            return EXIT_FAILURE;
+                        }
+                        ++c;
+
+                        // recursive query
+                        if (strncasecmp(conf->probe_args, "recurse", 7) == 0) {
+                            recursive_6aecsv = 1;
+                        } else if (strncasecmp(conf->probe_args, "no-recurse", 10) == 0) {
+                            recursive_6aecsv = 0;
+                        } else {
+                            log_error("dns6aecsv", dns6aecsv_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        conf->probe_args = c;
+                        c                = strchr(conf->probe_args, ':');
+                        if (!c) {
+                            log_error("dns6aecsv", dns6aecsv_usage_error);
+                            return EXIT_FAILURE;
+                        }
+                        ++c;
+
+                        // input query
+                        if (strncasecmp(conf->probe_args, "text", 4) == 0) {
+                            if (load_question_from_str_6aecsv(c)) return EXIT_FAILURE;
+                        } else if (strncasecmp(conf->probe_args, "file", 4) == 0) {
+                            if (load_question_from_file_6aecsv(c)) return EXIT_FAILURE;
+                        } else {
+                            log_error("dns6aecsv", dns6aecsv_usage_error);
+                            return EXIT_FAILURE;
+                        }
+
+                        if (index_questions_6aecsv < num_questions_6aecsv) {
+                            log_error("dns6aecsv", "more probes than questions configured. Add "
+                                                   "additional probes.");
+                            return EXIT_FAILURE;
+                        }
+                    }
+
+                    if (label_type_6aecsv == DNS_LTYPE_RAW ||
+                        label_type_6aecsv == DNS_LTYPE_STR)
+                        return build_global_dns_packets_6aecsv(domains_6aecsv,
+                                                               num_questions_6aecsv);
+                    else
+                        return EXIT_SUCCESS;
+            }
