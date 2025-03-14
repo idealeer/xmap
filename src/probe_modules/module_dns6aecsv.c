@@ -487,3 +487,60 @@ static bool process_response_question_6aecsv(char **data, uint16_t *data_len,
     fieldset_t *qfs = fs_new_fieldset();
     fs_add_unsafe_string(qfs, "name", question_name, 1);
     fs_add_uint64(qfs, "qtype", qtype);
+
+        if (qtype > MAX_QTYPE ||
+            qtype_qtype_to_strid_6aecsv[qtype] == BAD_QTYPE_VAL) {
+            fs_add_string(qfs, "qtype_str", (char *) BAD_QTYPE_STR, 0);
+        } else {
+            // I've written worse things than this 3rd arg. But I want to be
+            // fast.
+            fs_add_string(
+                qfs, "qtype_str",
+                (char *) qtype_strs_6aecsv[qtype_qtype_to_strid_6aecsv[qtype]], 0);
+        }
+
+        fs_add_uint64(qfs, "qclass", qclass);
+        // Now we're adding the new fs to the list.
+        fs_add_fieldset(list, NULL, qfs);
+        // Now update the pointers.
+        *data     = *data + bytes_consumed + sizeof(dns_question_tail);
+        *data_len = *data_len - bytes_consumed - sizeof(dns_question_tail);
+
+        return 0;
+    }
+
+    static bool process_response_answer_6aecsv(char **data, uint16_t *data_len,
+                                               const char *payload,
+                                               uint16_t    payload_len,
+                                               fieldset_t *list) {
+        log_trace("dns6aecsv",
+                  "call to process_response_answer_6aecsv, data_len: %d",
+                  *data_len);
+        // Payload is the start of the DNS packet, including header
+        // data is handle to the start of this RR
+        // data_len is a pointer to the how much total data we have to work
+        // with. This is awful. I'm bad and should feel bad.
+        uint16_t bytes_consumed = 0;
+        char *answer_name = get_name_6aecsv(*data, *data_len, payload, payload_len,
+                                                  &bytes_consumed);
+        // Error.
+        if (answer_name == NULL) {
+            return 1;
+        }
+        assert(bytes_consumed > 0);
+        if ((bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+            free(answer_name);
+            return 1;
+        }
+
+        dns_answer_tail *tail = (dns_answer_tail *) (*data + bytes_consumed);
+        uint16_t         type = ntohs(tail->type);
+        uint16_t class        = ntohs(tail->class);
+        uint32_t ttl          = ntohl(tail->ttl);
+        uint16_t rdlength     = ntohs(tail->rdlength);
+        char    *rdata        = tail->rdata;
+
+        if ((rdlength + bytes_consumed + sizeof(dns_answer_tail)) > *data_len) {
+            free(answer_name);
+            return 1;
+        }
