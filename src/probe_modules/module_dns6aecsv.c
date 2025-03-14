@@ -1,47 +1,47 @@
 /*
-* XMap Copyright 2021 Xiang Li from Network and Information Security Lab
-* Tsinghua University
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at http://www.apache.org/licenses/LICENSE-2.0
-*/
+ * XMap Copyright 2021 Xiang Li from Network and Information Security Lab
+ * Tsinghua University
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ */
 
 /* Module for scanning for open UDP DNS resolvers.
-*
-* This module optionally takes in an argument of the form:
-* LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
-* str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
-*      LABEL_TYPE: raw, str, time, random, dst-ip
-*      RECURSE: recurse, no-recurse
-*      INPUT_SRC: text, file
-*      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
-*            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
-*      file: TYPE,QUESTION;TYPE,QUESTION in each line
-*
-* Given no arguments it will default to asking for an A record for
-* www.qq.com.
-*
-* This module does minimal answer verification. It only verifies that the
-* response roughly looks like a DNS response. It will not, for example,
-* require the QR bit be set to 1. All such analysis should happen offline.
-* Specifically, to be included in the output it requires:
-* And it is marked as success.
-* - That the ports match and the packet is complete.
-* - That the ID field matches.
-* To be marked as app_success it also requires:
-* - That the QR bit be 1 and rcode == 0.
-*
-* Usage: xmap -p 53 --probe-module=dns6aecsv --probe-args="raw:text:A,qq.com"
-*			-O json --output-fields=* 8.8.8.8
-*
-* We also support multiple questions, of the form:
-* "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
-* matches the number of questions in --probe-args, and --output-filter="" to
-* remove the implicit "filter_duplicates" configuration flag.
-*
-* Based on a deprecated udp_dns module.
-*/
+ *
+ * This module optionally takes in an argument of the form:
+ * LABEL_TYPE:RECURSE:INPUT_SRC:TYPE,QUESTION, e.g., raw:recurse:text:A,qq.com,
+ * str:www:recurse:text:A,qq.com;AAAA,qq.com, random:recurse:file:file_name
+ *      LABEL_TYPE: raw, str, time, random, dst-ip
+ *      RECURSE: recurse, no-recurse
+ *      INPUT_SRC: text, file
+ *      TYPE: A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, RRSIG, ANY, SIG, SRV,
+ *            DS, DNSKEY, TLSA, SVCB, HTTPS, CAA, and HTTPSSVC
+ *      file: TYPE,QUESTION;TYPE,QUESTION in each line
+ *
+ * Given no arguments it will default to asking for an A record for
+ * www.qq.com.
+ *
+ * This module does minimal answer verification. It only verifies that the
+ * response roughly looks like a DNS response. It will not, for example,
+ * require the QR bit be set to 1. All such analysis should happen offline.
+ * Specifically, to be included in the output it requires:
+ * And it is marked as success.
+ * - That the ports match and the packet is complete.
+ * - That the ID field matches.
+ * To be marked as app_success it also requires:
+ * - That the QR bit be 1 and rcode == 0.
+ *
+ * Usage: xmap -p 53 --probe-module=dns6aecsv --probe-args="raw:text:A,qq.com"
+ *			-O json --output-fields=* 8.8.8.8
+ *
+ * We also support multiple questions, of the form:
+ * "A,example.com;AAAA,www.example.com" This requires --target-index=X, where X
+ * matches the number of questions in --probe-args, and --output-filter="" to
+ * remove the implicit "filter_duplicates" configuration flag.
+ *
+ * Based on a deprecated udp_dns module.
+ */
 
 #include <assert.h>
 #include <dirent.h>
@@ -125,9 +125,9 @@ static int      default_option_rdata_len_6aecsv = 15;
  * qtype_qtype_to_strid_6aecsv (below, and setup_qtype_str_map_6aecsv())
  */
 const char *qtype_strs_6aecsv[] = {"A",    "NS",    "CNAME", "SOA",      "PTR",
-                                     "MX",   "TXT",   "AAAA",  "RRSIG",    "ANY",
-                                     "SIG",  "SRV",   "DS",    "DNSKEY",   "TLSA",
-                                     "SVCB", "HTTPS", "CAA",   "HTTPSSVC", "OPT"};
+                                   "MX",   "TXT",   "AAAA",  "RRSIG",    "ANY",
+                                   "SIG",  "SRV",   "DS",    "DNSKEY",   "TLSA",
+                                   "SVCB", "HTTPS", "CAA",   "HTTPSSVC", "OPT"};
 const int   qtype_strs_len_6aecsv = 20;
 
 const dns_qtype qtype_strid_to_qtype_6aecsv[] = {
@@ -227,65 +227,65 @@ static int build_global_dns_packets_6aecsv(char **domains, int num_domains) {
             return EXIT_FAILURE;
         }
 
-                dns_packets_6aecsv[i]           = xmalloc(dns_packet_lens_6aecsv[i]);
-                dns_header        *dns_header_p = (dns_header *) dns_packets_6aecsv[i];
-                char              *qname_p = dns_packets_6aecsv[i] + sizeof(dns_header);
-                dns_question_tail *tail_p =
-                    (dns_question_tail *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
-                                           qname_lens_6aecsv[i]);
-                char *option_qname_p =
-                    (char *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
-                              qname_lens_6aecsv[i] + sizeof(dns_question_tail));
-                dns_option_tail *option_tail_p =
-                    (dns_option_tail *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
-                                         qname_lens_6aecsv[i] +
-                                         sizeof(dns_question_tail) +
-                                         default_option_qname_len_6aecsv);
-                dns_option_ecs *option_ecs_p =
-                    (dns_option_ecs *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
-                                        qname_lens_6aecsv[i] +
-                                        sizeof(dns_question_tail) +
-                                        default_option_qname_len_6aecsv +
-                                        sizeof(dns_option_tail));
+        dns_packets_6aecsv[i]           = xmalloc(dns_packet_lens_6aecsv[i]);
+        dns_header        *dns_header_p = (dns_header *) dns_packets_6aecsv[i];
+        char              *qname_p = dns_packets_6aecsv[i] + sizeof(dns_header);
+        dns_question_tail *tail_p =
+            (dns_question_tail *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
+                                   qname_lens_6aecsv[i]);
+        char *option_qname_p =
+            (char *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
+                      qname_lens_6aecsv[i] + sizeof(dns_question_tail));
+        dns_option_tail *option_tail_p =
+            (dns_option_tail *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
+                                 qname_lens_6aecsv[i] +
+                                 sizeof(dns_question_tail) +
+                                 default_option_qname_len_6aecsv);
+        dns_option_ecs *option_ecs_p =
+            (dns_option_ecs *) (dns_packets_6aecsv[i] + sizeof(dns_header) +
+                                qname_lens_6aecsv[i] +
+                                sizeof(dns_question_tail) +
+                                default_option_qname_len_6aecsv +
+                                sizeof(dns_option_tail));
 
-                // All other header fields should be 0. Except id, which we set
-                // per thread. Please recurse as needed.
-                dns_header_p->rd = recursive_6aecsv; // Is one bit. Don't need htons
-                // We have 1 question
-                dns_header_p->qdcount = htons(1);
-                memcpy(qname_p, qnames_6aecsv[i], qname_lens_6aecsv[i]);
-                // Set the qtype to what we passed from args
-                tail_p->qtype = htons(qtypes_6aecsv[i]);
-                // Set the qclass to The Internet (TM) (R) (I hope you're happy
-                // now Zakir)
-                tail_p->qclass = htons(0x01);
-                // MAGIC NUMBER. Let's be honest. This is only ever 1
+        // All other header fields should be 0. Except id, which we set
+        // per thread. Please recurse as needed.
+        dns_header_p->rd = recursive_6aecsv; // Is one bit. Don't need htons
+        // We have 1 question
+        dns_header_p->qdcount = htons(1);
+        memcpy(qname_p, qnames_6aecsv[i], qname_lens_6aecsv[i]);
+        // Set the qtype to what we passed from args
+        tail_p->qtype = htons(qtypes_6aecsv[i]);
+        // Set the qclass to The Internet (TM) (R) (I hope you're happy
+        // now Zakir)
+        tail_p->qclass = htons(0x01);
+        // MAGIC NUMBER. Let's be honest. This is only ever 1
 
-                // option, others set to 0
-                dns_header_p->arcount = htons(1);
-                memcpy(option_qname_p, default_option_qname_6aecsv,
-                       default_option_qname_len_6aecsv);
-                option_tail_p->type    = htons(DNS_QTYPE_OPT);
-                option_tail_p->udpsize = htons(default_option_udpsize_6aecsv);
-                option_tail_p->dlength = htons(default_option_rdata_len_6aecsv);
+        // option, others set to 0
+        dns_header_p->arcount = htons(1);
+        memcpy(option_qname_p, default_option_qname_6aecsv,
+               default_option_qname_len_6aecsv);
+        option_tail_p->type    = htons(DNS_QTYPE_OPT);
+        option_tail_p->udpsize = htons(default_option_udpsize_6aecsv);
+        option_tail_p->dlength = htons(default_option_rdata_len_6aecsv);
 
-                // ecs
-                option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);    // 8
-                option_ecs_p->optlength  = htons(11);                 // fixed for /56
-                option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP6); // IPv6
-                option_ecs_p->srcnmask   = 56;                        // source netmask
-                option_ecs_p->scpnmask   = 0;                         // scope netmask
-                uint8_t client_subnet[7] = {
-                    0x20, // first byte
-                    0x01, // second byte
-                    0x00, // third byte
-                    0x00, // fourth byte
-                    0x00, // fifth byte
-                    0x00, // sixth byte
-                    0x00  // seventh byte
-                };
-                memcpy(option_ecs_p->cs, client_subnet, 7);
-            }
+        // ecs
+        option_ecs_p->optcode    = htons(DNS_OPTCODE_ECS);    // 8
+        option_ecs_p->optlength  = htons(11);                 // fixed for /56
+        option_ecs_p->family     = htons(DNS_ADDRFAMILY_IP6); // IPv6
+        option_ecs_p->srcnmask   = 56;                        // source netmask
+        option_ecs_p->scpnmask   = 0;                         // scope netmask
+        uint8_t client_subnet[7] = {
+            0x20, // first byte
+            0x01, // second byte
+            0x00, // third byte
+            0x00, // fourth byte
+            0x00, // fifth byte
+            0x00, // sixth byte
+            0x00  // seventh byte
+        };
+        memcpy(option_ecs_p->cs, client_subnet, 7);
+    }
 
-            return EXIT_SUCCESS;
-        }
+    return EXIT_SUCCESS;
+}
