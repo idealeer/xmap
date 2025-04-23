@@ -1,0 +1,40 @@
+name: Docker Image CI of XMap
+
+on:
+  workflow_dispatch:
+    inputs:
+      xmapVersion:
+        description: "XMap version (e.g., 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: |
+          docker build --build-arg xmapVersion=${{ github.event.inputs.xmapVersion }} -t xmap:v${{ github.event.inputs.xmapVersion }} .
+
+      - name: Tag Docker image
+        run: |
+          docker tag xmap:v${{ github.event.inputs.xmapVersion }} ${{ secrets.DOCKER_USERNAME }}/xmap:v${{ github.event.inputs.xmapVersion }}
+          docker tag xmap:v${{ github.event.inputs.xmapVersion }} ${{ secrets.DOCKER_USERNAME }}/xmap:latest
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/xmap:v${{ github.event.inputs.xmapVersion }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/xmap:latest
