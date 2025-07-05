@@ -29,7 +29,7 @@
 
 #include "../lib/logger.h"
 
-#define PCAP_PROMISC 1
+#define PCAP_PROMISC 0
 #define PCAP_TIMEOUT 1000
 
 static pcap_t *pc = NULL;
