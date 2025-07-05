@@ -77,3 +77,8 @@
   * new module `dnsaecs`     (IPv4&IPv6): enable using EDNS0=4,096 and ECS with fixed src_ip/24/0
   * new module `dnsaecsv`    (IPv4&IPv6): enable using EDNS0=4,096 and ECS with variable src_ip/24/0
   * new module `dnsacookiev` (IPv4&IPv6): enable using EDNS0=4,096 with variable cookie
+
+# 2.0.4 07/05/2025
+* XMap 2.0.4 Minor Release.
+* Fix Function:
+  * Change the recv socket to non-promiscuous
