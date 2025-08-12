@@ -82,3 +82,8 @@
 * XMap 2.0.4 Minor Release.
 * Fix Function:
   * Change the recv socket to non-promiscuous
+
+# 2.0.5 08/12/2025
+* XMap 2.0.5 Minor Release.
+* Fix Bugs:
+  * Crash when using EDNS0

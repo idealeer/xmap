@@ -122,6 +122,8 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
   * Presented in [XCon 2024](http://xcon.xfocus.net/)
 
+- **\[CCS '25\]** **Xiang Li**, Mingming Zhang, Zuyao Xu, Fasheng Miao, Yuqi Qiu, Baojun Liu, Jia Zhang, Xiaofeng Zheng, Haixin Duan, Zheli Liu, Yunhai Zhang, and Dunqiu Fan. [**RebirthDay Attack: Reviving DNS Cache Poisoning with the Birthday Paradox**](https://lixiang521.com/). In Proceedings of the 2025 ACM SIGSAC Conference on Computer and Communications Security ([**CCS '25**](https://www.sigsac.org/ccs/CCS2025/)).
+
 - [Other papers](https://scholar.google.com/scholar?oi=bibs&hl=en&cites=3737757293110831577) cite this tool or paper
 
 License and Copyright

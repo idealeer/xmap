@@ -674,7 +674,7 @@ static bool process_response_answer_aecs(char **data, uint16_t *data_len,
         fs_add_uint64(afs, "dlength", option_dlength);
         fs_add_binary(afs, "data", option_dlength, option_data, 0);
 
-        if (option_dlength >= 4) {
+        if (option_dlength >= sizeof(dns_option_ecs)) {
             dns_option_ecs *ecs_tail = (dns_option_ecs *) option_data;
             uint16_t        optcode  = ntohs(ecs_tail->optcode);
 
