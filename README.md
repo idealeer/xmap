@@ -13,7 +13,7 @@ With banner grab and TLS handshake tool, [ZGrab2](https://github.com/zmap/zgrab2
 Installation
 ------------
 
-The latest stable release of XMap is version 2.0.3 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
+The latest stable release of XMap is version 2.0.5 and supports Linux, macOS, and BSD. We recommend installing XMap from HEAD rather than using a distro package manager (not supported yet).
 
 **Instructions on building XMap from source** can be found in [INSTALL](https://github.com/idealeer/xmap/blob/master/INSTALL.md).
 
@@ -35,6 +35,20 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=idealeer/xmap&type=Date)](https://star-history.com/#idealeer/xmap&Date)
+
+
+## Presentation & Impact
+
+- Presented in [2021 West Lake Cybersecurity Conference](https://2021.gcsis.cn/): Cyberspace Security Tools Presentation
+
+- Presented in [Pentester Academy TV](https://www.youtube.com/channel/UChjC1q6Ami7W0E71TzPZELA)
+
+- Referenced by [10+ top-tier security conference papers](https://github.com/idealeer/xmap)
+
+- Supporting one patent [CN202110502369.2](https://patents.google.com/patent/CN113315814A/)
+
+- The 2nd Place of [ACSAC Cybersecurity Artifacts Impact Award](https://www.acsac.org/2025/submissions/artifacts_competition/) (First Mainland Chinese institution to receive this award)
+
 
 ## Paper
 
