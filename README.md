@@ -47,7 +47,7 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - Supporting one patent [CN202110502369.2](https://patents.google.com/patent/CN113315814A/)
 
-- The 2nd Place of [ACSAC Cybersecurity Artifacts Impact Award](https://www.acsac.org/2025/submissions/artifacts_competition/) (First Chinese institution to receive this award)
+- The 2nd Place of [2025 ACSAC Cybersecurity Artifacts Impact Award](https://www.acsac.org/2025/submissions/artifacts_competition/) (First Chinese institution to receive this award)
 
 
 ## Paper
