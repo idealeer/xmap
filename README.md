@@ -49,7 +49,6 @@ Watch the description video at [Pentester Academy TV](https://www.youtube.com/wa
 
 - The 2nd Place of [2025 ACSAC Cybersecurity Artifacts Impact Award](https://www.acsac.org/2025/submissions/artifacts_competition/) (First Chinese institution to receive this award)
 
-
 ## Paper
 
 - **\[DSN '21\]** **[Xiang Li](https://lixiang521.com/)**, [Baojun Liu](https://netsec.ccert.edu.cn/people/lbj20/), Xiaofeng Zheng, [Haixin Duan](https://netsec.ccert.edu.cn/people/duanhx/), [Qi Li](https://netsec.ccert.edu.cn/people/qli/), Youjun Huang. **[Fast IPv6 Network Periphery Discovery and Security Implications](https://lixiang521.com/publication/dsn21/).** In Proceedings of the 2021 IEEE/IFIP International Conference on Dependable Systems and Networks (**[DSN '21](http://dsn2021.ntu.edu.tw/)**). Taipei, Taiwan, June 21-24, 2021 (Virtually). [\[PDF\]](https://idealeer.github.io/publication/dsn21/dsn21-paper-li.pdf) [\[Slides\]](https://idealeer.github.io/publication/dsn21/dsn21-slides-li.pdf) [\[Video\]](https://www.youtube.com/watch?v=aMlo_91-RlY).
