@@ -1442,7 +1442,7 @@ int dnsacookiev_validate_packet(const struct ip *ip_hdr, uint32_t len,
    char    *data           = ((char *) dns_header_p) + sizeof(dns_header);
    uint16_t data_len       = udp_len - sizeof(struct udphdr) - sizeof(dns_header);
    uint16_t bytes_consumed = 0;
-   char    *qname = get_name_acookiev(data, &data_len, (char *) dns_header_p,
+   char    *qname = get_name_acookiev(data, data_len, (char *) dns_header_p,
                                                udp_len, &bytes_consumed);
    if (qname == NULL) {
        return PACKET_INVALID;
