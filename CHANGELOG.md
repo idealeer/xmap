@@ -87,3 +87,8 @@
 * XMap 2.0.5 Minor Release.
 * Fix Bugs:
   * Crash when using EDNS0
+
+# 2.0.5 03/10/2026
+* XMap 2.0.5 Minor Release.
+* Fix Bugs:
+  * Compile issues
