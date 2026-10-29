@@ -12,6 +12,8 @@
 *******************************************************************************/
 
 #include "bloom.h"
+#include <errno.h>
+#include <limits.h>
 #include <fcntl.h> /* O_RDWR */
 #include <math.h>  /* pow, exp */
 #include <stdio.h> /* printf */
@@ -47,9 +49,9 @@ static uint64_t *__default_hash(int num_hashes, const char *str, int len);
 
 static uint64_t __fnv_1a(const char *key, int len);
 
-static void __calculate_optimal_hashes(BloomFilter *bf);
+static int __calculate_optimal_hashes(BloomFilter *bf);
 
-static void __read_from_file(BloomFilter *bf, FILE *fp, short on_disk,
+static int __read_from_file(BloomFilter *bf, FILE *fp, short on_disk,
                              const char *filename);
 
 static void __write_to_file(BloomFilter *bf, FILE *fp, short on_disk);
@@ -63,15 +65,20 @@ static int __check_if_union_or_intersection_ok(BloomFilter *res,
 int bloom_filter_init_alt(BloomFilter *bf, uint64_t estimated_elements,
                           float             false_positive_rate,
                           BloomHashFunction hash_function) {
-    if (estimated_elements <= 0 || estimated_elements > UINT64_MAX ||
-        false_positive_rate <= 0.0 || false_positive_rate >= 1.0) {
+    if (bf == NULL) {
+        errno = EINVAL;
         return BLOOM_FAILURE;
     }
+    memset(bf, 0, sizeof(*bf));
     bf->estimated_elements         = estimated_elements;
     bf->false_positive_probability = false_positive_rate;
-    __calculate_optimal_hashes(bf);
-    bf->bloom          = calloc(bf->bloom_length + 1,
-                                sizeof(char)); // pad to ensure no running off the end
+    if (__calculate_optimal_hashes(bf) == BLOOM_FAILURE) {
+        return BLOOM_FAILURE;
+    }
+    bf->bloom = calloc((size_t) bf->bloom_length + 1, sizeof(char));
+    if (bf->bloom == NULL) {
+        return BLOOM_FAILURE;
+    }
     bf->elements_added = 0;
     bloom_filter_set_hash_function(bf, hash_function);
     bf->__is_on_disk = 0; // not on disk
@@ -88,7 +95,9 @@ int bloom_filter_init_on_disk_alt(BloomFilter *bf, uint64_t estimated_elements,
     }
     bf->estimated_elements         = estimated_elements;
     bf->false_positive_probability = false_positive_rate;
-    __calculate_optimal_hashes(bf);
+    if (__calculate_optimal_hashes(bf) == BLOOM_FAILURE) {
+        return BLOOM_FAILURE;
+    }
     bf->elements_added = 0;
     FILE *fp;
     fp = fopen(filepath, "w+b");
@@ -161,6 +170,8 @@ void bloom_filter_stats(BloomFilter *bf) {
 }
 
 int bloom_filter_add_string(BloomFilter *bf, const char *str, int len) {
+    if (bf == NULL || bf->bloom == NULL || bf->number_bits == 0 ||
+        bf->number_hashes == 0 || bf->hash_function == NULL) return BLOOM_FAILURE;
     uint64_t *hashes =
         bloom_filter_calculate_hashes(bf, str, bf->number_hashes, len);
     int res = bloom_filter_add_string_alt(bf, hashes, bf->number_hashes);
@@ -169,6 +180,8 @@ int bloom_filter_add_string(BloomFilter *bf, const char *str, int len) {
 }
 
 int bloom_filter_check_string(BloomFilter *bf, const char *str, int len) {
+    if (bf == NULL || bf->bloom == NULL || bf->number_bits == 0 ||
+        bf->number_hashes == 0 || bf->hash_function == NULL) return BLOOM_FAILURE;
     uint64_t *hashes =
         bloom_filter_calculate_hashes(bf, str, bf->number_hashes, len);
     int res = bloom_filter_check_string_alt(bf, hashes, bf->number_hashes);
@@ -184,7 +197,9 @@ uint64_t *bloom_filter_calculate_hashes(BloomFilter *bf, const char *str,
 /* Add a string to a bloom filter using the defined hashes */
 int bloom_filter_add_string_alt(BloomFilter *bf, uint64_t *hashes,
                                 unsigned int number_hashes_passed) {
-    if (number_hashes_passed < bf->number_hashes) {
+    if (bf == NULL || bf->bloom == NULL || hashes == NULL ||
+        bf->number_bits == 0 || bf->number_hashes == 0 ||
+        number_hashes_passed < bf->number_hashes) {
         fprintf(stderr,
                 "Error: not enough hashes passed in to correctly check!\n");
         return BLOOM_FAILURE;
@@ -212,7 +227,9 @@ int bloom_filter_add_string_alt(BloomFilter *bf, uint64_t *hashes,
 /* Check if a string is in the bloom filter using the passed hashes */
 int bloom_filter_check_string_alt(BloomFilter *bf, uint64_t *hashes,
                                   unsigned int number_hashes_passed) {
-    if (number_hashes_passed < bf->number_hashes) {
+    if (bf == NULL || bf->bloom == NULL || hashes == NULL ||
+        bf->number_bits == 0 || bf->number_hashes == 0 ||
+        number_hashes_passed < bf->number_hashes) {
         fprintf(stderr,
                 "Error: not enough hashes passed in to correctly check!\n");
         return BLOOM_FAILURE;
@@ -261,8 +278,11 @@ int bloom_filter_import_alt(BloomFilter *bf, const char *filepath,
         fprintf(stderr, "Can't open file %s!\n", filepath);
         return BLOOM_FAILURE;
     }
-    __read_from_file(bf, fp, 0, NULL);
+    int status = __read_from_file(bf, fp, 0, NULL);
+    int saved_errno = errno;
     fclose(fp);
+    errno = saved_errno;
+    if (status == BLOOM_FAILURE) return BLOOM_FAILURE;
     bloom_filter_set_hash_function(bf, hash_function);
     bf->__is_on_disk = 0; // not on disk
     return BLOOM_SUCCESS;
@@ -275,7 +295,13 @@ int bloom_filter_import_on_disk_alt(BloomFilter *bf, const char *filepath,
         fprintf(stderr, "Can't open file %s!\n", filepath);
         return BLOOM_FAILURE;
     }
-    __read_from_file(bf, bf->filepointer, 1, filepath);
+    if (__read_from_file(bf, bf->filepointer, 1, filepath) == BLOOM_FAILURE) {
+        int saved_errno = errno;
+        fclose(bf->filepointer);
+        bf->filepointer = NULL;
+        errno = saved_errno;
+        return BLOOM_FAILURE;
+    }
     // don't close the file pointer here...
     bloom_filter_set_hash_function(bf, hash_function);
     bf->__is_on_disk = 1; // on disk
@@ -305,7 +331,7 @@ char *bloom_filter_export_hex_string(BloomFilter *bf) {
 int bloom_filter_import_hex_string_alt(BloomFilter *bf, const char *hex,
                                        BloomHashFunction hash_function) {
     uint64_t len = strlen(hex);
-    if (len % 2 != 0) {
+    if (len < 40 || len % 2 != 0) {
         fprintf(stderr, "Unable to parse; exiting\n");
         return BLOOM_FAILURE;
     }
@@ -325,8 +351,16 @@ int bloom_filter_import_hex_string_alt(BloomFilter *bf, const char *hex,
     bf->false_positive_probability = f;
     bloom_filter_set_hash_function(bf, hash_function);
 
-    __calculate_optimal_hashes(bf);
-    bf->bloom        = calloc(bf->bloom_length + 1, sizeof(char)); // pad
+    if (__calculate_optimal_hashes(bf) == BLOOM_FAILURE) {
+        return BLOOM_FAILURE;
+    }
+    if ((len - 40) / 2 != (uint64_t) bf->bloom_length) {
+        errno = EINVAL;
+        return BLOOM_FAILURE;
+    }
+    bf->__is_on_disk = 0;
+    bf->bloom = calloc((size_t) bf->bloom_length + 1, sizeof(char));
+    if (bf->bloom == NULL) return BLOOM_FAILURE;
     bf->__is_on_disk = 0; // not on disk
 
     uint64_t i;
@@ -438,17 +472,30 @@ float bloom_filter_jaccard_index(BloomFilter *bf1, BloomFilter *bf2) {
 /*******************************************************************************
  *    PRIVATE FUNCTIONS
  *******************************************************************************/
-static void __calculate_optimal_hashes(BloomFilter *bf) {
-    // calc optimized values
-    long     n = bf->estimated_elements;
-    float    p = bf->false_positive_probability;
-    uint64_t m = ceil((-n * log(p)) / LOG_TWO_SQUARED); // AKA pow(log(2), 2);
-    unsigned int k = round(LOG_TWO * m / n);            // AKA log(2.0);
-    // set paramenters
-    bf->number_hashes = k; // should check to make sure it is at least 1...
-    bf->number_bits   = m;
-    long num_pos      = ceil(m / (CHAR_LEN * 1.0));
-    bf->bloom_length  = num_pos;
+static int __calculate_optimal_hashes(BloomFilter *bf) {
+    double n = (double) bf->estimated_elements;
+    double p = bf->false_positive_probability;
+    if (bf->estimated_elements == 0 || !isfinite(p) || p <= 0 || p >= 1) {
+        errno = EINVAL;
+        return BLOOM_FAILURE;
+    }
+    double bits = ceil((-n * log(p)) / LOG_TWO_SQUARED);
+    /* Use exclusive bounds: UINT64_MAX rounds up when converted to double. */
+    if (!isfinite(bits) || bits < 1 || bits >= (double) UINT64_MAX) {
+        errno = EOVERFLOW;
+        return BLOOM_FAILURE;
+    }
+    uint64_t m = (uint64_t) bits;
+    uint64_t bytes = m / CHAR_LEN + (m % CHAR_LEN != 0);
+    if (bytes >= (uint64_t) LONG_MAX || bytes >= SIZE_MAX) {
+        errno = EOVERFLOW;
+        return BLOOM_FAILURE;
+    }
+    unsigned int k = (unsigned int) round(LOG_TWO * bits / n);
+    bf->number_hashes = k ? k : 1;
+    bf->number_bits = m;
+    bf->bloom_length = (long) bytes;
+    return BLOOM_SUCCESS;
 }
 
 static int __sum_bits_set_char(char c) {
@@ -492,22 +539,31 @@ static void __write_to_file(BloomFilter *bf, FILE *fp, short on_disk) {
 }
 
 /* NOTE: this assumes that the file handler is open and ready to use */
-static void __read_from_file(BloomFilter *bf, FILE *fp, short on_disk,
+static int __read_from_file(BloomFilter *bf, FILE *fp, short on_disk,
                              const char *filename) {
     int offset = sizeof(uint64_t) * 2 + sizeof(float);
     fseek(fp, offset * -1, SEEK_END);
     size_t read;
-    read = fread(&bf->estimated_elements, sizeof(uint64_t), 1, fp);
-    read = fread(&bf->elements_added, sizeof(uint64_t), 1, fp);
-    read = fread(&bf->false_positive_probability, sizeof(float), 1, fp);
-    __calculate_optimal_hashes(bf);
+    if (fread(&bf->estimated_elements, sizeof(uint64_t), 1, fp) != 1 ||
+        fread(&bf->elements_added, sizeof(uint64_t), 1, fp) != 1 ||
+        fread(&bf->false_positive_probability, sizeof(float), 1, fp) != 1) {
+        errno = EINVAL;
+        return BLOOM_FAILURE;
+    }
+    if (__calculate_optimal_hashes(bf) == BLOOM_FAILURE) {
+        return BLOOM_FAILURE;
+    }
     rewind(fp);
     if (on_disk == 0) {
-        bf->bloom = calloc(bf->bloom_length + 1, sizeof(char));
+        bf->__is_on_disk = 0;
+        bf->bloom = calloc((size_t) bf->bloom_length + 1, sizeof(char));
+        if (bf->bloom == NULL) return BLOOM_FAILURE;
         read      = fread(bf->bloom, sizeof(char), bf->bloom_length, fp);
         if (read != (uint64_t) bf->bloom_length) {
-            perror("__read_from_file: ");
-            exit(1);
+            free(bf->bloom);
+            bf->bloom = NULL;
+            errno = EINVAL;
+            return BLOOM_FAILURE;
         }
     } else {
         struct stat buf;
@@ -527,11 +583,13 @@ static void __read_from_file(BloomFilter *bf, FILE *fp, short on_disk,
         // close the file descriptor
         close(fd);
     }
+    return BLOOM_SUCCESS;
 }
 
 /* NOTE: The caller will free the results */
 static uint64_t *__default_hash(int num_hashes, const char *str, int len) {
     uint64_t *results = calloc(num_hashes, sizeof(uint64_t));
+    if (results == NULL) return NULL;
     int       i;
     char      key[32] = {
         0}; // largest value is 7FFF,FFFF,FFFF,FFFF TODO the real str len

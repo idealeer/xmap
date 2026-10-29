@@ -274,9 +274,15 @@ static void start_xmap(void) {
         if (bloom_filter_init(&xrecv.bf, xconf.est_elements, (float) 1e-5) ==
             BLOOM_FAILURE) {
             log_fatal("xmap",
-                      "unable to create bloomfilter for unique results");
+                      "unable to create bloomfilter for %" PRIu64
+                      " estimated elements (%ld bytes plus padding): %s. "
+                      "Reduce -E/--est-elements or provide more memory",
+                      (uint64_t) xconf.est_elements, xrecv.bf.bloom_length,
+                      strerror(errno));
         }
-        log_debug("xmap", "bloomfilter for unique results <= 4e9");
+        log_debug("xmap", "bloomfilter for %" PRIu64
+                  " estimated elements: %ld bytes plus padding",
+                  (uint64_t) xconf.est_elements, xrecv.bf.bloom_length);
 
         sock_t sock; // used for sending pkt in recv thread for stateful probing
         if (xconf.dryrun) {
